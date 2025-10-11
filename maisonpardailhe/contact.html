@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact – Maison Pardailhe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <span class="brand-name">La Maison <span>Pardailhé</span></span>
+            </a>
+            <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="identite.html">Identité</a></li>
+                    <li><a href="contact.html" aria-current="page">Contact</a></li>
+                    <li><a href="index.html#click-collect" class="btn">Click &amp; Collecte</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="page-hero">
+        <p class="badge">Nous rencontrer</p>
+        <h1>Contact & informations</h1>
+        <p>Besoin d’un devis traiteur, de réserver la rôtissoire ou d’échanger sur nos produits ? Notre équipe vous répond sous 24 heures.</p>
+        <p class="breadcrumbs">Accueil / Contact</p>
+    </section>
+
+    <main>
+        <section>
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <h3>Coordonnées directes</h3>
+                    <div class="contact-info">
+                        <p>Téléphone : <a href="tel:+33562480229">05 62 48 02 29</a></p>
+                        <p>Email : <a href="mailto:maisonpardailhe@gmail.com">maisonpardailhe@gmail.com</a></p>
+                        <p>Adresse : Centre Commercial le Château, 31120 Roquettes, France</p>
+                    </div>
+                    <div class="highlights" style="margin-top:1.5rem;">
+                        <div class="highlight-item">Mar-Sam 09h00-13h00 / 16h00-19h30</div>
+                        <div class="highlight-item">Dimanche 08h30-13h00</div>
+                    </div>
+                </div>
+                <div class="contact-card">
+                    <form>
+                        <label for="fullname">Nom complet</label>
+                        <input id="fullname" name="fullname" type="text" placeholder="Votre nom">
+
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" placeholder="Votre adresse email">
+
+                        <label for="subject">Objet</label>
+                        <select id="subject" name="subject">
+                            <option value="commande">Commande boutique</option>
+                            <option value="traiteur">Demande traiteur</option>
+                            <option value="atelier">Atelier / dégustation</option>
+                            <option value="autre">Autre demande</option>
+                        </select>
+
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" placeholder="Parlez-nous de votre besoin, du nombre de convives, de la date..."></textarea>
+
+                        <button type="submit" class="btn">Envoyer</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">Nous situer</h2>
+            <p class="section-subtitle">La boutique se trouve au cœur de Roquettes, à 20 minutes de Toulouse. Stationnement facile et retrait express des commandes.</p>
+            <div class="map-embed">
+                <iframe title="Plan d'accès Maison Pardailhe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2887.141608042549!2d1.3569978765146686!3d43.498992171106636!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12aed72602461d2f%3A0xa6547f2dc80bd048!2sRoquettes!5e0!3m2!1sfr!2sfr!4v1700000000000"></iframe>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <h4>Maison Pardailhe</h4>
+                <p>Artisan charcutier-traiteur à Roquettes. Excellence rouge et noir, créations faites maison, service sur-mesure.</p>
+            </div>
+            <div>
+                <h4>Explorer</h4>
+                <a href="menu.html">Menu</a>
+                <a href="services.html">Services</a>
+                <a href="identite.html">Notre identité</a>
+                <a href="contact.html">Nous écrire</a>
+            </div>
+            <div>
+                <h4>Suivre</h4>
+                <a href="#">Instagram</a>
+                <a href="#">Pinterest</a>
+                <a href="#">Newsletter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Maison Pardailhe. Tous droits réservés.</div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

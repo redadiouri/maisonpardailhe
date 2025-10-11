@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maison Pardailhe – Artisan Charcutier</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <span class="brand-name">La Maison <span>Pardailhé</span></span>
+            </a>
+            <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html" aria-current="page">Accueil</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="identite.html">Identité</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="index.html#click-collect" class="btn">Click &amp; Collecte</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-divider" aria-hidden="true"></span>
+            <p class="hero-subtitle hero-subtitle--highlight">3 fois médaillée d'or au championnat de France de pâté en croûte, Maison Pardailhé célèbre l'excellence charcutière avec des créations gourmandes, locales et intemporelles.</p>
+        </div>
+    </section>
+
+    <main>
+        <section>
+            <h2 class="section-title">Un savoir-faire artisanal</h2>
+            <p class="section-subtitle">De la sélection des viandes à la cuisson lente, chaque geste perpétue la passion familiale. Nos recettes iconiques sont élaborées dans notre laboratoire de Roquettes, en Occitanie.</p>
+            <div class="grid grid--three">
+                <article class="card media-card">
+                    <img src="img/pate_en_croute.png" alt="Pâté en croûte Maison Pardailhé">
+                    <h3>Pâté en croûte</h3>
+                    <p>Champion de France 2018, 2020, 2023 : pâte croustillante, farce généreuse et jus corsé façonnent une pièce maîtresse rouge et noire.</p>
+                </article>
+                <article class="card media-card">
+                    <img src="img/saucisse.png" alt="Charcuterie fine Maison Pardailhé">
+                    <h3>Charcuterie fine</h3>
+                    <p>Saucisse de Toulouse, jambon blanc médaillé, terrines maison : une gamme signature élaborée sans compromis sur la qualité.</p>
+                </article>
+                <article class="card media-card">
+                    <img src="img/frere.png" alt="Traiteur sur-mesure Maison Pardailhé">
+                    <h3>Traiteur sur-mesure</h3>
+                    <p>Plateaux gourmands, buffets et click &amp; collecte : nous signons vos événements avec élégance et précision.</p>
+                </article>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">Informations pratiques</h2>
+            <div class="info-grid">
+                <article class="info-card">
+                    <h3>Adresse</h3>
+                    <p>Centre Commercial le Château<br>31120 Roquettes, France</p>
+                </article>
+                <article class="info-card">
+                    <h3>Horaires</h3>
+                    <p>Mardi - Samedi : 09h00 - 13h00 / 16h00 - 19h30<br>Dimanche : 08h30 - 13h00</p>
+                </article>
+                <article class="info-card">
+                    <h3>Contact</h3>
+                    <p>Tél : <a href="tel:+33562480229">05 62 48 02 29</a><br>Email : <a href="mailto:maisonpardailhe@gmail.com">maisonpardailhe@gmail.com</a></p>
+                </article>
+            </div>
+        </section>
+
+        <section id="click-collect">
+            <h2 class="section-title">Click &amp; Collecte</h2>
+            <p class="section-subtitle">Commandez vos pièces préférées et récupérez-les en boutique à l’horaire choisi. Une expérience rouge &amp; noir, rapide et personnalisée.</p>
+            <div class="contact-card">
+                <form>
+                    <label for="cc-name">Nom complet</label>
+                    <input id="cc-name" name="cc-name" type="text" placeholder="Votre nom">
+
+                    <label for="cc-phone">Téléphone</label>
+                    <input id="cc-phone" name="cc-phone" type="tel" placeholder="06 00 00 00 00">
+
+                    <label for="cc-selection">Sélection</label>
+                    <select id="cc-selection" name="cc-selection">
+                        <option value="pate">Pâté en croûte médaillé</option>
+                        <option value="jambon">Jambon blanc argent</option>
+                        <option value="saucisse">Saucisse de Toulouse</option>
+                        <option value="assortiment">Assortiment Maison</option>
+                    </select>
+
+                    <label for="cc-date">Date de retrait</label>
+                    <input id="cc-date" name="cc-date" type="date">
+
+                    <label for="cc-time">Créneau souhaité</label>
+                    <select id="cc-time" name="cc-time">
+                        <option value="matin">Matin (08h-12h)</option>
+                        <option value="apres-midi">Après-midi (14h-18h)</option>
+                        <option value="soir">Soirée (18h-20h)</option>
+                    </select>
+
+                    <label for="cc-notes">Précisions</label>
+                    <textarea id="cc-notes" name="cc-notes" placeholder="Quantités, accompagnements, instructions particulières..."></textarea>
+
+                    <button type="submit" class="btn">Valider la réservation</button>
+                </form>
+                <p style="margin-top:1.25rem; color:rgba(247,247,247,0.6); text-align:center;">Nous confirmons votre commande sous 2 heures ouvrées.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <h4>Maison Pardailhe</h4>
+                <p>Artisan charcutier-traiteur à Roquettes. Excellence rouge et noir, créations faites maison, service sur-mesure.</p>
+            </div>
+            <div>
+                <h4>Explorer</h4>
+                <a href="menu.html">Menu</a>
+                <a href="services.html">Services</a>
+                <a href="identite.html">Notre identité</a>
+                <a href="contact.html">Nous écrire</a>
+            </div>
+            <div>
+                <h4>Suivre</h4>
+                <a href="#">Instagram</a>
+                <a href="#">Pinterest</a>
+                <a href="#">Newsletter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Maison Pardailhe. Tous droits réservés.</div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
