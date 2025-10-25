@@ -70,15 +70,34 @@ function initClickCollectForm() {
             const qty = Number(inp.value) || 0;
             if (qty > 0) {
                 const item = inp.closest('.selection-item')?.dataset.item || (inp.name || 'item');
-                produits.push(`${item}×${qty}`);
+                produits.push({ item, qty });
             }
         });
-        const produit = produits.join('; ') || '';
+        const produit = produits.map(p => `${p.item}×${p.qty}`).join('; ');
 
         // Validation simple
         if (!nom_complet || !telephone || !date_retrait || !creneau) {
             showCCMessage('Merci de remplir tous les champs obligatoires.', true);
             return;
+        }
+
+        // Require at least one product selected
+        if (produits.length === 0) {
+            showCCMessage('Merci de sélectionner au moins un produit.', true);
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        // disable submit and show spinner
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            let spinner = submitBtn.querySelector('.btn-spinner');
+            if (!spinner) {
+                spinner = document.createElement('span');
+                spinner.className = 'btn-spinner';
+                spinner.setAttribute('aria-hidden', 'true');
+                submitBtn.appendChild(spinner);
+            }
         }
 
         try {
@@ -89,12 +108,29 @@ function initClickCollectForm() {
             });
             if (res.ok) {
                 form.reset();
-                showCCMessage('Votre commande a bien été enregistrée ! Nous vous confirmerons sous 2h ouvrées.', false);
+                // show selection summary in the confirmation
+                const selectionSummary = produits.map(p => `${p.qty} × ${p.item}`).join(', ');
+                showCCMessage(`Votre commande a bien été enregistrée : ${selectionSummary}. Nous vous confirmerons sous 2h ouvrées.`, false);
             } else {
-                showCCMessage("Une erreur est survenue. Merci de réessayer ou de nous contacter.", true);
+                // try to extract error details
+                let errMsg = 'Une erreur est survenue. Merci de réessayer ou de nous contacter.';
+                try {
+                    const data = await res.json();
+                    if (data && data.error) errMsg = data.error;
+                    else if (data && data.message) errMsg = data.message;
+                } catch (parseErr) {
+                    // ignore parse error
+                }
+                showCCMessage(errMsg, true);
             }
         } catch (err) {
             showCCMessage("Impossible d'enregistrer la commande. Merci de réessayer plus tard.", true);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                const spinner = submitBtn.querySelector('.btn-spinner');
+                if (spinner) spinner.remove();
+            }
         }
     });
 }
@@ -106,7 +142,10 @@ function showCCMessage(msg, isError) {
         info.id = 'cc-info-msg';
         info.style.textAlign = 'center';
         info.style.marginTop = '1rem';
-        document.querySelector('#click-collect .contact-card').appendChild(info);
+    const container = document.querySelector('#click-collect .contact-card') || document.body;
+    container.appendChild(info);
+        info.setAttribute('role', 'status');
+        info.setAttribute('aria-live', 'polite');
     }
     info.textContent = msg;
     info.style.color = isError ? '#f33' : '#090';
