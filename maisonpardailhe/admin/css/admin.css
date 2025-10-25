@@ -1,3 +1,108 @@
+.admin-dashboard-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-width: 700px;
+  max-width: 1200px;
+  width: 100%;
+  background: rgba(34,34,34,0.98);
+  border-radius: 24px;
+  box-shadow: 0 0 48px 12px #9008, 0 2px 16px #000a;
+  padding: 38px 32px 32px 32px;
+  gap: 0;
+}
+.admin-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-width: 220px;
+  max-width: 260px;
+  padding-right: 32px;
+  height: 100%;
+}
+.admin-sidebar h1 {
+  color: #900;
+  font-size: 2em;
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+.admin-sidebar .logout-btn {
+  margin-top: auto;
+  padding: 12px 22px;
+  background: linear-gradient(90deg,#900,#c00);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.08em;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #9003;
+  transition: background 0.2s, box-shadow 0.2s, border-radius 0.2s;
+}
+.admin-sidebar .logout-btn:hover, .admin-sidebar .logout-btn:focus {
+  background: linear-gradient(90deg,#c00,#900);
+  box-shadow: 0 4px 16px #9005;
+  border-radius: 14px;
+}
+.admin-tabs-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+.tab-btn-vertical {
+  background: #222;
+  color: #fff;
+  border: 2px solid #900;
+  padding: 18px 0;
+  border-radius: 14px;
+  font-size: 1.12em;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #9002;
+  transition: background 0.2s, box-shadow 0.2s, border-radius 0.2s;
+  width: 100%;
+}
+.tab-btn-vertical.active {
+  background: linear-gradient(90deg,#900,#c00);
+  color: #fff;
+  box-shadow: 0 4px 16px #9004;
+  border-radius: 18px;
+}
+.admin-main {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-left: 32px;
+  display: flex;
+  flex-direction: column;
+}
+.tab-content {
+  background: #222;
+  padding: 24px 18px 18px 18px;
+  border-radius: 16px;
+  min-height: 220px;
+  box-shadow: 0 2px 12px #9002;
+  margin-top: 0;
+}
+.admin-dashboard-card {
+  flex-direction: column;
+  min-width: 0;
+  max-width: 98vw;
+  padding: 18px 2vw 14px 2vw;
+}
+.admin-sidebar {
+  min-width: 0;
+  max-width: 100vw;
+  padding-right: 0;
+}
+.admin-main {
+  padding-left: 0;
+}
+.tab-content {
+  padding: 10px 4px 8px 4px;
+  border-radius: 10px;
+}
 .password-row {
   display: flex;
   width: 100%;
@@ -37,6 +142,28 @@ body.admin-bg {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.admin-dashboard-wrapper {
+  width: 100%;
+  min-height: 80vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-top: 8vh;
+}
+.admin-dashboard-card {
+  background: rgba(34,34,34,0.98);
+  border-radius: 24px;
+  box-shadow: 0 0 48px 12px #9008, 0 2px 16px #000a;
+  padding: 38px 32px 32px 32px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  min-width: 540px;
+  max-width: 900px;
+  width: auto;
+  gap: 32px;
 }
 .admin-login-box {
   width: 100%;
@@ -83,14 +210,15 @@ body.admin-bg {
   width: 100%;
   max-width: 370px;
   margin: auto;
-  background: rgba(34,34,34,0.97);
-  padding: 42px 32px 36px 32px;
-  border-radius: 20px;
-  box-shadow: 0 0 32px 8px #9006, 0 1px 8px #000a;
+  background: rgba(34,34,34,0.98);
+  padding: 44px 28px 38px 28px;
+  border-radius: 24px;
+  box-shadow: 0 0 48px 12px #9008, 0 2px 16px #000a;
   display: flex;
   flex-direction: column;
   align-items: center;
   border: 2px solid #900;
+  transition: box-shadow 0.3s, border-radius 0.3s;
 }
 .admin-login-box h1 {
   color: #900;
@@ -102,24 +230,23 @@ body.admin-bg {
   text-shadow: 0 2px 8px #9005;
 }
 .admin-login-box input {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
-  max-width: 320px;
-  padding: 11px 12px;
-  margin: 10px 0 12px 0;
+  width: 100%;
+  height: 44px;
+  padding: 10px 12px;
+  margin: 8px 0;
   border: none;
-  border-radius: 7px;
+  border-radius: 12px;
   font-size: 1em;
   background: #191919;
   color: #fff;
-  box-shadow: 0 1px 2px #9002 inset;
-  transition: box-shadow 0.2s, outline 0.2s;
+  box-shadow: 0 2px 8px #9003 inset;
+  transition: box-shadow 0.25s, outline 0.25s, border-radius 0.25s;
+  box-sizing: border-box;
 }
 .admin-login-box input:focus {
-  outline: 2px solid #900;
-  box-shadow: 0 0 8px #9006;
+  outline: 2px solid #c00;
+  box-shadow: 0 0 16px #9007, 0 2px 8px #c003 inset;
+  border-radius: 16px;
 }
 .admin-login-box button {
   width: 100%;
@@ -150,60 +277,146 @@ body.admin-bg {
   text-align: center;
   box-shadow: 0 1px 4px #9002 inset;
 }
-.admin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #222;
-  padding: 20px;
-}
+  .admin-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    min-width: 220px;
+    padding-top: 8px;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .admin-header h1 {
+    color: #900;
+    font-size: 2em;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px #9005;
+    margin-bottom: 18px;
+  }
+  .admin-header button {
+    margin-bottom: 0;
+  }
+  .admin-tabs {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 0;
+    margin: 0 0 18px 0;
+    min-width: 320px;
+  }
+  .tab-btn {
+    background: #222;
+    color: #fff;
+    border: 2px solid #900;
+    padding: 14px 0;
+    border-radius: 0;
+    font-size: 1.08em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background 0.2s, box-shadow 0.2s, border-radius 0.2s;
+    flex: 1 1 0;
+    min-width: 180px;
+    margin-left: 18px;
+  }
+  .tab-btn.active {
+    background: linear-gradient(90deg,#900,#c00);
+    color: #fff;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .tab-content {
+    display: block;
+    background: #222;
+    padding: 24px 0 0 0;
+    border-radius: 0 0 16px 16px;
+    min-width: 320px;
+    min-height: 180px;
+    box-shadow: none;
+  }
+  .commande-card {
+    background: #191919;
+    border: 2px solid #900;
+    border-radius: 16px;
+    margin: 14px 0;
+    padding: 18px 14px 14px 14px;
+    color: #fff;
+    box-shadow: none;
+    transition: box-shadow 0.2s, border-radius 0.2s;
+  }
 .admin-header h1 {
   color: #900;
+  font-size: 2em;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px #9005;
 }
 .admin-header button {
-  background: #900;
+  background: linear-gradient(90deg,#900,#c00);
   color: #fff;
   border: none;
-  padding: 10px 18px;
-  border-radius: 4px;
-  font-size: 1em;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 1.08em;
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 2px 8px #9003;
+  transition: background 0.2s, box-shadow 0.2s, border-radius 0.2s;
+}
+.admin-header button:hover, .admin-header button:focus {
+  background: linear-gradient(90deg,#c00,#900);
+  box-shadow: 0 4px 16px #9005;
+  border-radius: 14px;
 }
 .admin-tabs {
   display: flex;
-  justify-content: center;
-  margin: 30px 0 10px 0;
+  justify-content: stretch;
+  margin: 0 0 18px 0;
+  gap: 0;
 }
 .tab-btn {
   background: #222;
   color: #fff;
   border: 2px solid #900;
-  padding: 12px 30px;
-  margin: 0 10px;
-  border-radius: 4px 4px 0 0;
-  font-size: 1.1em;
+  padding: 14px 0;
+  border-radius: 0;
+  font-size: 1.08em;
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: none;
+  transition: background 0.2s, box-shadow 0.2s, border-radius 0.2s;
+  flex: 1 1 0;
 }
 .tab-btn.active {
-  background: #900;
+  background: linear-gradient(90deg,#900,#c00);
   color: #fff;
-  box-shadow: 0 2px 8px #9003;
+  box-shadow: none;
+  border-radius: 0;
 }
 .badge {
   background: #fff;
   color: #900;
   font-weight: bold;
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 0.9em;
-  margin-left: 6px;
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 1em;
+  margin-left: 8px;
+  box-shadow: 0 1px 4px #9002;
 }
 .tab-content {
   display: none;
   background: #222;
-  padding: 20px;
-  border-radius: 0 0 8px 8px;
-  min-height: 200px;
+  padding: 24px 0 0 0;
+  border-radius: 0 0 16px 16px;
+  min-height: 180px;
+  box-shadow: none;
 }
 .tab-content.active {
   display: block;
@@ -211,48 +424,119 @@ body.admin-bg {
 .commande-card {
   background: #191919;
   border: 2px solid #900;
-  border-radius: 8px;
-  margin: 15px 0;
-  padding: 18px;
+  border-radius: 16px;
+  margin: 14px 0;
+  padding: 18px 14px 14px 14px;
   color: #fff;
+  box-shadow: none;
+  transition: box-shadow 0.2s, border-radius 0.2s;
 }
 .commande-actions {
-  margin-top: 12px;
+  margin-top: 16px;
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 .commande-actions button {
   flex: 1;
-  padding: 10px;
-  font-size: 1em;
-  border-radius: 4px;
+  padding: 12px;
+  font-size: 1.08em;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 1px 6px #9002;
+  transition: background 0.2s, box-shadow 0.2s, border-radius 0.2s;
 }
 .commande-actions .accept {
-  background: #090;
+  background: linear-gradient(90deg,#090,#0c0);
   color: #fff;
+  border: 2px solid #090;
+}
+.commande-actions .accept:hover, .commande-actions .accept:focus {
+  background: linear-gradient(90deg,#0c0,#090);
+  box-shadow: 0 2px 12px #0905;
+  border-radius: 14px;
 }
 .commande-actions .refuse {
-  background: #900;
+  background: linear-gradient(90deg,#900,#c00);
   color: #fff;
+  border: 2px solid #900;
+}
+.commande-actions .refuse:hover, .commande-actions .refuse:focus {
+  background: linear-gradient(90deg,#c00,#900);
+  box-shadow: 0 2px 12px #9005;
+  border-radius: 14px;
 }
 .commande-actions .finish {
-  background: #333;
+  background: linear-gradient(90deg,#333,#666);
   color: #fff;
+  border: 2px solid #333;
+}
+.commande-actions .finish:hover, .commande-actions .finish:focus {
+  background: linear-gradient(90deg,#666,#333);
+  box-shadow: 0 2px 12px #3335;
+  border-radius: 14px;
 }
 @media (max-width: 600px) {
   .admin-header, .admin-login-box {
-    padding: 10px;
+    padding: 8px;
+  }
+  .admin-dashboard-card {
+    flex-direction: column;
+    min-width: 0;
+    max-width: 98vw;
+    border-radius: 16px;
+    gap: 0;
+    padding: 12px 2vw 10px 2vw;
+  }
+  .admin-header {
+    min-width: 0;
+    padding-top: 0;
+  }
+  .admin-tabs {
+    min-width: 0;
+    margin-left: 0;
   }
   .tab-btn {
-    padding: 10px 12px;
-    font-size: 1em;
+    min-width: 0;
+    margin-left: 0;
+    padding: 10px 0;
+    font-size: 0.98em;
+    border-radius: 0;
+  }
+  .tab-content {
+    min-width: 0;
+    padding: 10px 0 0 0;
+    border-radius: 0 0 10px 10px;
   }
   .commande-card {
-    padding: 10px;
+    padding: 10px 4px 8px 4px;
+    border-radius: 10px;
   }
-}
+  }
+  .tab-btn {
+    padding: 10px 0;
+    font-size: 0.98em;
+    border-radius: 0;
+  }
+  .tab-content {
+    padding: 10px 0 0 0;
+    border-radius: 0 0 10px 10px;
+  }
+  .commande-card {
+    padding: 10px 4px 8px 4px;
+    border-radius: 10px;
+  }
+  .commande-actions button {
+    padding: 8px;
+    font-size: 0.98em;
+    border-radius: 8px;
+  }
+  .badge {
+    font-size: 0.95em;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
 
 /* Override rules to ensure balanced login layout and proper eye icon placement */
 .admin-login-box form {
@@ -279,7 +563,9 @@ body.admin-bg {
   box-sizing: border-box;
 }
 .admin-login-box input::placeholder {
-  color: #9a9a9a;
+  color: #e0e0e0;
+  opacity: 0.85;
+  font-size: 1em;
 }
 .password-row {
   display: flex;
@@ -297,29 +583,128 @@ body.admin-bg {
 }
 #togglePwd {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
   color: #fff;
-  width: 56px;
+  width: 48px;
   height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 1.05em;
+  font-size: 1.18em;
+  transition: box-shadow 0.2s, border-radius 0.2s;
+}
+#togglePwd:focus, #togglePwd:hover {
+  box-shadow: 0 0 8px #9005;
+  border-radius: 16px;
 }
 .admin-login-box button {
   width: 100%;
-  padding: 13px;
+  padding: 15px;
   background: linear-gradient(90deg,#900,#c00);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 1.05em;
+  border-radius: 16px;
+  font-size: 1.12em;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 12px;
-  box-shadow: 0 2px 10px #9003;
-  transition: background 0.2s, box-shadow 0.2s;
-  letter-spacing: 0.4px;
+  margin-top: 14px;
+  box-shadow: 0 4px 18px #9005;
+  transition: background 0.2s, box-shadow 0.2s, border-radius 0.2s;
+  letter-spacing: 0.5px;
+}
+.admin-login-box button:focus, .admin-login-box button:hover {
+  background: linear-gradient(90deg,#c00,#900);
+  box-shadow: 0 6px 24px #9007;
+  border-radius: 20px;
+}
+@media (max-width: 600px) {
+  .admin-header, .admin-login-box {
+    padding: 8px;
+  }
+  .admin-login-box {
+    max-width: 98vw;
+    border-radius: 18px;
+    box-shadow: 0 0 24px 6px #9006, 0 1px 8px #000a;
+  }
+  .admin-login-box input {
+    font-size: 0.98em;
+    padding: 9px 8px;
+    border-radius: 10px;
+  }
+  .password-row {
+    gap: 6px;
+  }
+  #togglePwd {
+    width: 40px;
+    height: 40px;
+    font-size: 1em;
+    border-radius: 10px;
+  }
+  .admin-login-box button {
+    padding: 12px;
+    font-size: 1em;
+    border-radius: 14px;
+  }
+}
+
+/* Full-screen overrides: force admin panel to occupy the full viewport */
+body.admin-bg {
+  min-height: 100vh;
+  margin: 0;
+}
+.admin-dashboard-wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  box-sizing: border-box;
+}
+.admin-dashboard-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.admin-sidebar {
+  min-width: 220px;
+  max-width: 320px;
+  padding: 32px;
+  height: 100%;
+  box-sizing: border-box;
+  background: rgba(20,20,20,0.95);
+  border-right: 1px solid rgba(255,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+}
+.admin-sidebar .logout-btn { margin-top: auto; }
+.admin-main {
+  flex: 1 1 0;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  box-sizing: border-box;
+}
+.tab-content {
+  flex: 1 1 auto;
+  overflow: auto;
+  background: #222;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+@media (max-width: 900px) {
+  .admin-dashboard-card { flex-direction: column; }
+  .admin-sidebar { flex-direction: row; align-items: center; padding: 12px 16px; }
+  .admin-tabs-vertical { flex-direction: row; gap: 8px; }
+  .admin-main { padding: 12px; }
+  .tab-content { padding: 12px; }
 }

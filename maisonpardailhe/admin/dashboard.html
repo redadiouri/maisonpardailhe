@@ -6,23 +6,29 @@
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body class="admin-bg">
-  <div class="admin-header">
-    <h1>Panel Admin</h1>
-    <button id="logoutBtn">Déconnexion</button>
-  </div>
-  <div class="admin-tabs">
-    <button class="tab-btn active" data-tab="attente">Commandes en attente <span id="badge-attente" class="badge"></span></button>
-    <button class="tab-btn" data-tab="encours">Commandes en cours <span id="badge-encours" class="badge"></span></button>
-  </div>
-  <div id="tab-attente" class="tab-content active">
-    <h2>Commandes en attente</h2>
-    <div id="attente-loader" class="loader" style="display:none;"></div>
-    <div id="attente-list"></div>
-  </div>
-  <div id="tab-encours" class="tab-content">
-    <h2>Commandes en cours</h2>
-    <div id="encours-loader" class="loader" style="display:none;"></div>
-    <div id="encours-list"></div>
+  <div class="admin-dashboard-wrapper">
+    <div class="admin-dashboard-card">
+      <aside class="admin-sidebar">
+        <h1>Panel Admin</h1>
+        <div class="admin-tabs-vertical">
+          <button class="tab-btn tab-btn-vertical active" data-tab="attente">Commandes en attente <span id="badge-attente" class="badge"></span></button>
+          <button class="tab-btn tab-btn-vertical" data-tab="encours">Commandes en cours <span id="badge-encours" class="badge"></span></button>
+        </div>
+        <button id="logoutBtn" class="logout-btn">Déconnexion</button>
+      </aside>
+      <main class="admin-main">
+        <div id="tab-attente" class="tab-content active">
+          <h2>Commandes en attente</h2>
+          <div id="attente-loader" class="loader" style="display:none;"></div>
+          <div id="attente-list"></div>
+        </div>
+        <div id="tab-encours" class="tab-content">
+          <h2>Commandes en cours</h2>
+          <div id="encours-loader" class="loader" style="display:none;"></div>
+          <div id="encours-list"></div>
+        </div>
+      </main>
+    </div>
   </div>
   <script src="js/admin.js"></script>
 </body>

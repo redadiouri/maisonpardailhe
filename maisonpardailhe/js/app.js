@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     initSmoothAnchors();
     initClickCollectForm();
+    initSelectionPanel();
 });
 
 function initNavigation() {
@@ -15,7 +16,7 @@ function initNavigation() {
     const links = navLinks ? navLinks.querySelectorAll('a') : [];
 
     if (!navToggle || !navLinks) {
-        return;
+    initSelectionPanel();
     }
 
     const closeMenu = () => {
@@ -48,15 +49,34 @@ function initClickCollectForm() {
     if (!form) return;
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const nom_complet = form['cc-name'].value.trim();
-        const telephone = form['cc-phone'].value.trim();
-        const produit = form['cc-selection'].value;
-        const date_retrait = form['cc-date'].value;
-        const creneau = form['cc-time'].value;
-        const precisions = form['cc-notes'].value.trim();
+        // defensive: check elements exist before reading values
+        const field = (name) => form.elements[name] || form.querySelector('#' + name) || null;
+        const nomEl = field('cc-name');
+        const phoneEl = field('cc-phone');
+        const dateEl = field('cc-date');
+        const timeEl = field('cc-time');
+        const notesEl = field('cc-notes');
+
+        const nom_complet = nomEl ? (nomEl.value || '').trim() : '';
+        const telephone = phoneEl ? (phoneEl.value || '').trim() : '';
+        const date_retrait = dateEl ? (dateEl.value || '') : '';
+        const creneau = timeEl ? (timeEl.value || '') : '';
+        const precisions = notesEl ? (notesEl.value || '').trim() : '';
+
+        // build produit list from selection panel quantities (if any)
+        const produitInputs = document.querySelectorAll('#cc-selection-panel .selection-item__controls input[type="number"]');
+        const produits = [];
+        produitInputs.forEach((inp) => {
+            const qty = Number(inp.value) || 0;
+            if (qty > 0) {
+                const item = inp.closest('.selection-item')?.dataset.item || (inp.name || 'item');
+                produits.push(`${item}×${qty}`);
+            }
+        });
+        const produit = produits.join('; ') || '';
 
         // Validation simple
-        if (!nom_complet || !telephone || !produit || !date_retrait || !creneau) {
+        if (!nom_complet || !telephone || !date_retrait || !creneau) {
             showCCMessage('Merci de remplir tous les champs obligatoires.', true);
             return;
         }
@@ -111,4 +131,188 @@ function initSmoothAnchors() {
             }
         });
     });
+}
+
+function initSelectionPanel() {
+    const toggle = document.getElementById('cc-selection-toggle');
+    const panel = document.getElementById('cc-selection-panel');
+    const locationSelect = document.getElementById('cc-location');
+    const timeInput = document.getElementById('cc-time');
+    const timeHint = document.getElementById('cc-time-note');
+
+    if (!toggle || !panel) {
+        return;
+    }
+
+    const selectionGroup = toggle.closest('.selection-group');
+    const summary = toggle.querySelector('.selection-display__summary');
+    const closeButton = panel.querySelector('.selection-panel__close');
+    const quantityButtons = panel.querySelectorAll('.quantity-btn');
+    const quantityInputs = panel.querySelectorAll('.selection-item__controls input[type="number"]');
+
+    const normaliseInputValue = (input) => {
+        const value = Math.max(Number(input.value) || 0, 0);
+        input.value = String(value);
+        return value;
+    };
+
+    const updateDisplay = () => {
+        const parts = [];
+
+        quantityInputs.forEach((input) => {
+            const container = input.closest('.selection-item');
+            const value = normaliseInputValue(input);
+
+            if (container) {
+                container.classList.toggle('selection-item--active', value > 0);
+                const title = container.querySelector('h4')?.textContent?.trim() ?? '';
+
+                if (value > 0) {
+                    parts.push(`${title} × ${value}`);
+                }
+            }
+        });
+
+        if (summary) {
+            summary.textContent = parts.length ? parts.join(', ') : 'Aucune sélection';
+        }
+    };
+
+    const focusPanel = () => {
+        try {
+            panel.focus({ preventScroll: true });
+        } catch (error) {
+            panel.focus();
+        }
+    };
+
+    const openPanel = () => {
+        panel.hidden = false;
+        panel.removeAttribute('hidden');
+        panel.setAttribute('aria-hidden', 'false');
+        toggle.setAttribute('aria-expanded', 'true');
+        selectionGroup?.classList.add('is-open');
+        focusPanel();
+    };
+
+    const closePanel = () => {
+        panel.hidden = true;
+        panel.setAttribute('hidden', '');
+        panel.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+        selectionGroup?.classList.remove('is-open');
+    };
+
+    toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (panel.hidden) {
+            openPanel();
+        } else {
+            closePanel();
+        }
+    });
+
+    toggle.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            if (panel.hidden) {
+                openPanel();
+            } else {
+                closePanel();
+            }
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (panel.hidden) {
+            return;
+        }
+
+        const target = event.target;
+
+        if (target instanceof Node && !toggle.contains(target) && !panel.contains(target)) {
+            closePanel();
+        }
+    });
+
+    panel.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closePanel();
+            toggle.focus();
+        }
+    });
+
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            closePanel();
+            toggle.focus();
+        });
+    }
+
+    quantityButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const controls = button.closest('.selection-item__controls');
+            const input = controls?.querySelector('input[type="number"]');
+            if (!input) {
+                return;
+            }
+
+            const current = normaliseInputValue(input);
+            const action = button.dataset.action;
+
+            if (action === 'increment') {
+                input.value = String(current + 1);
+            }
+
+            if (action === 'decrement') {
+                input.value = String(Math.max(current - 1, 0));
+            }
+
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            updateDisplay();
+        });
+    });
+
+    quantityInputs.forEach((input) => {
+        input.addEventListener('input', updateDisplay);
+        input.addEventListener('blur', updateDisplay);
+    });
+
+    updateDisplay();
+
+    const locationSettings = {
+        roquettes: {
+            min: '08:30',
+            max: '19:30',
+            hint: 'Roquettes : mardi à samedi 09h00-13h00 / 16h00-19h30 · dimanche 08h30-13h00 · fermé lundi.',
+            label: '(Mardi – Samedi : 09h00-13h00 / 16h00-19h30 · Dimanche : 08h30-13h00)',
+        },
+        toulouse: {
+            min: '07:00',
+            max: '13:30',
+            hint: 'Marché Victor Hugo : mardi-vendredi 08h00-13h15 · samedi-dimanche 07h00-13h30 · fermé lundi.',
+            label: '(Marché Victor Hugo : 07h00-13h30 · Fermé lundi)',
+        },
+    };
+
+    const applyLocationSettings = (location) => {
+        if (!timeInput || !timeHint) {
+            return;
+        }
+
+        const settings = locationSettings[location] ?? locationSettings.roquettes;
+
+        timeInput.min = settings.min;
+        timeInput.max = settings.max;
+        timeInput.value = '';
+        timeHint.textContent = settings.hint;
+    };
+
+    if (locationSelect) {
+        applyLocationSettings(locationSelect.value);
+        locationSelect.addEventListener('change', () => {
+            applyLocationSettings(locationSelect.value);
+        });
+    }
 }
