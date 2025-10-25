@@ -1,0 +1,53 @@
+# Top-level .gitignore for the maisonpardailhe project
+# Keeps secrets, OS/IDE files, build artifacts and node modules out of git
+
+## Node
+node_modules/
+server/node_modules/
+maisonpardailhe/node_modules/
+
+## Environment / secrets
+# Keep local env files out of git. `.env.example` should remain tracked.
+.env
+.env.*
+server/.env
+server/.env.*
+
+## Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## IDEs / editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+/.history/
+
+## Build / cache
+dist/
+build/
+.cache/
+.parcel-cache/
+coverage/
+*.tsbuildinfo
+
+## Local DBs
+*.sqlite
+*.db
+*.sqlite3
+
+## OneDrive / temp
+~$*
+
+# Keep example files
+!.env.example
