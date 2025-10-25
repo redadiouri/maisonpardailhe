@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     initSmoothAnchors();
+    initClickCollectForm();
 });
 
 function initNavigation() {
@@ -40,6 +41,55 @@ function initNavigation() {
             closeMenu();
         }
     });
+}
+
+function initClickCollectForm() {
+    const form = document.querySelector('#click-collect form');
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nom_complet = form['cc-name'].value.trim();
+        const telephone = form['cc-phone'].value.trim();
+        const produit = form['cc-selection'].value;
+        const date_retrait = form['cc-date'].value;
+        const creneau = form['cc-time'].value;
+        const precisions = form['cc-notes'].value.trim();
+
+        // Validation simple
+        if (!nom_complet || !telephone || !produit || !date_retrait || !creneau) {
+            showCCMessage('Merci de remplir tous les champs obligatoires.', true);
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/commandes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nom_complet, telephone, produit, date_retrait, creneau, precisions })
+            });
+            if (res.ok) {
+                form.reset();
+                showCCMessage('Votre commande a bien été enregistrée ! Nous vous confirmerons sous 2h ouvrées.', false);
+            } else {
+                showCCMessage("Une erreur est survenue. Merci de réessayer ou de nous contacter.", true);
+            }
+        } catch (err) {
+            showCCMessage("Impossible d'enregistrer la commande. Merci de réessayer plus tard.", true);
+        }
+    });
+}
+
+function showCCMessage(msg, isError) {
+    let info = document.getElementById('cc-info-msg');
+    if (!info) {
+        info = document.createElement('div');
+        info.id = 'cc-info-msg';
+        info.style.textAlign = 'center';
+        info.style.marginTop = '1rem';
+        document.querySelector('#click-collect .contact-card').appendChild(info);
+    }
+    info.textContent = msg;
+    info.style.color = isError ? '#f33' : '#090';
 }
 
 function initSmoothAnchors() {
