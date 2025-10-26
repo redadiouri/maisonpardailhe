@@ -1,0 +1,56 @@
+Priorité haute (à corriger rapidement)
+
+Sécuriser les sessions en production
+
+Ne pas utiliser le store de session par défaut (mémoire). Utiliser un store persistant (ex : connect-redis, express-mysql-session) pour express-session.
+Configurer correctement les options cookie (secure: true en HTTPS, httpOnly: true, sameSite: 'lax' ou 'strict'), et définir rolling/session timeout.
+Exemple de changement : ajouter options cookie et store dans app.use(session(...)).
+Pourquoi : mémoire store perd les sessions et n’est pas adapté à la prod ; cookies non sécurisés exposent au vol de session.
+Protéger les endpoints sensibles (auth)
+
+Ajouter rate limiting sur routes d'authentification (/api/admin/login) (express-rate-limit) pour prévenir brute-force.
+Ajouter verrouillage ou délais après N échecs (optionnel).
+Pourquoi : protège compte admin.
+Hardening Express
+
+Ajouter helmet pour headers de sécurité.
+Restreindre CORS en prod (actuellement autorise quelques origines locales ; prévoir variable d'environnement PROD_ALLOWED_ORIGINS).
+Activer la validation CSRF pour formulaire sensibles si sessions + cookies (ex: csurf) ou utiliser JWT + header Authorization selon choix.
+Pourquoi : réduit surface d'attaque (XSS, clickjacking, etc.).
+Validation et sanitation côté serveur
+
+Utiliser un validateur (Joi, express-validator) pour les données entrantes (commande, login).
+Nettoyer/saniter les champs textuels avant stockage ou affichage (pour éviter XSS quand réaffiché).
+Pourquoi : le front valide déjà, mais validation serveur est indispensable.
+Session cookie SameSite & secure
+
+En prod, session cookie doit être secure (HTTPS) et HttpOnly. config express-session accordingly.
+Priorité moyenne
+6. Stockage des secrets et .env example
+
+Ajouter .env.example (si manquant) et documenter l'usage. Vérifier que .env ne soit pas commité (.gitignore).
+Pourquoi : évite fuite de secrets et aide setup dev.
+Remplacer le stub d'email par un envoi réel
+
+Utiliser nodemailer (ou un service externalisé via API) et s'assurer de retry & unsubscribe & logs.
+Sanity: ne pas exposer adresses dans logs.
+Logging & erreurs
+
+Centraliser logs (pino déjà utilisé), config niveau (dev/prod), rotation/transport (files, logstash).
+Corriger éventuels logs d'exception dévoilant secrets (le code masque bien DB_PASSWORD dans startup, bon).
+Tests / CI
+
+Ajouter tests unitaires simples (ex: tests pour commande.js et routes) et pipeline CI (GitHub Actions).
+Ajouter lint (ESLint) et format (Prettier) + npm scripts.
+Migration & sauvegarde DB
+
+Introduire script de migration (knex/migrate ou umzug/sequelize) plutôt que SQL ad-hoc.
+Prévoir sauvegardes régulières.
+Priorité faible / UX / Perf
+11. Performance frontend
+- Optimiser images (webp, compression) et ajouter attributs width/height, lazy-loading.
+- Ajouter cache-control headers côté serveur pour fichiers statiques.
+12. Accessibilité
+- Vérifier contraste, labels, focus order, ajouter landmark roles si besoin (le HTML est déjà bien structuré, bonnes pratiques ARIA utilisées).
+13. SEO / Meta
+- Ajouter meta description, Open Graph tags, favicon, and lang already set = good.
