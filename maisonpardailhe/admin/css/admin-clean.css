@@ -74,10 +74,22 @@ body.admin-bg{
   transform:translateY(0);
 }
 .tab-content .empty{text-align:center;padding:40px 16px;color:#9aa0a3}
-.commande-card{background:#111;border:1px solid rgba(255,255,255,0.04);padding:14px;border-radius:10px;margin-bottom:12px;color:#e8e8e8}
-.commande-actions{display:flex;gap:10px;margin-top:12px}
-.commande-actions button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-.commande-actions .accept{background:linear-gradient(90deg,#1fb26b,#14985a);color:#fff}
+.commande-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));border:1px solid rgba(255,255,255,0.06);padding:18px;border-radius:12px;margin-bottom:14px;color:#e8e8e8;display:grid;grid-template-columns:1fr 180px;gap:14px;align-items:start;box-shadow:0 6px 18px rgba(0,0,0,0.6)}
+.commande-card .left{display:block}
+.commande-card .right{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.commande-card .header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.commande-card .client{font-weight:800;font-size:1.05rem;color:#fff}
+.commande-card .phone{font-size:0.95rem;color:#d6d6d6}
+.commande-card .product{display:block;margin-top:8px;font-size:1rem;background:rgba(0,0,0,0.12);padding:8px;border-radius:8px;color:#fff}
+.commande-card .meta{margin-top:8px;font-size:0.9rem;color:var(--muted);line-height:1.4}
+.commande-card .meta b{color:#fff;font-weight:700}
+.commande-actions{display:flex;flex-direction:column;gap:10px;margin-top:0}
+.commande-actions .btn{display:inline-block;padding:10px;border-radius:10px;border:none;cursor:pointer;font-weight:800;text-align:center}
+.commande-actions .btn.primary{background:linear-gradient(90deg,#1fb26b,#14985a);color:#fff}
+.commande-actions .btn.ghost{background:#fff;color:var(--accent-dark);font-weight:700}
+.commande-actions .btn.danger{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#fff}
+.commande-actions .btn:active{transform:translateY(1px)}
+.commande-card .small-note{font-size:0.85rem;color:#bfbfbf;margin-top:8px}
 .admin-login-box input{width:100%;padding:12px;border-radius:8px;border:none;background:#0c0c0c;color:#fff;margin-bottom:10px}
 .admin-login-box button{width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;font-weight:700}
 

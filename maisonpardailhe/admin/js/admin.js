@@ -111,33 +111,60 @@ if (document.getElementById('logoutBtn')) {
           adjustListMaxHeight(containerId);
           return;
         }
+        // small helper to format ISO date strings to dd/mm/yyyy
+        function formatDateISO(d) {
+          if (!d) return '-';
+          try {
+            const dt = new Date(d + 'T00:00:00');
+            return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          } catch (e) { return d; }
+        }
+
         commandes.forEach(cmd => {
-          // create card element for this commande
+          // create card element for this commande with structured layout and labels
           const card = document.createElement('div');
           card.className = 'commande-card';
-          card.innerHTML = `<b>${cmd.nom_complet}</b> (${cmd.telephone})<br>
-            Produit: ${cmd.produit}<br>
-            Date: ${cmd.date_retrait} | Créneau: ${cmd.creneau}<br>
-            Précisions: ${cmd.precisions || '-'}<br>
-            <div class="commande-actions"></div>`;
+          const dateRetrait = formatDateISO(cmd.date_retrait);
+          const created = cmd.date_creation ? new Date(cmd.date_creation).toLocaleString('fr-FR') : '';
+          card.innerHTML = `
+            <div class="left">
+              <div class="header">
+                <div>
+                  <div class="client">${cmd.nom_complet} <span class="id" style="color:var(--muted);font-weight:600;font-size:0.85rem">#${cmd.id}</span></div>
+                  <div class="phone"><a href="tel:${cmd.telephone}" style="color:inherit;text-decoration:none">${cmd.telephone}</a></div>
+                </div>
+                <div class="status" style="font-size:0.9rem;color:var(--muted);text-transform:capitalize">${cmd.statut.replace('_',' ')}</div>
+              </div>
+              <div class="product">${cmd.produit}</div>
+              <div class="meta">
+                <div><b>Date retrait:</b> ${dateRetrait} &nbsp;|&nbsp; <b>Créneau:</b> ${cmd.creneau}</div>
+                <div><b>Commandé le:</b> ${created}</div>
+                <div><b>Précisions:</b> ${cmd.precisions || '-'}</div>
+              </div>
+              ${cmd.raison_refus ? `<div class="small-note"><b>Raison du refus:</b> ${cmd.raison_refus}</div>` : ''}
+            </div>
+            <div class="right">
+              <div class="commande-actions"></div>
+            </div>`;
           const actions = card.querySelector('.commande-actions');
           if (statut === 'en_attente') {
             const acceptBtn = document.createElement('button');
             acceptBtn.textContent = 'Accepter';
-            acceptBtn.className = 'accept';
+            acceptBtn.className = 'btn primary';
             acceptBtn.onclick = async () => {
-              card.style.opacity = '0.5';
+              acceptBtn.disabled = true;
+              acceptBtn.style.opacity = '0.8';
               await fetch(apiBase + `/commandes/${cmd.id}/accepter`, { method: 'POST', credentials: 'include' });
               loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
               loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
             };
             const refuseBtn = document.createElement('button');
             refuseBtn.textContent = 'Refuser';
-            refuseBtn.className = 'refuse';
+            refuseBtn.className = 'btn ghost';
             refuseBtn.onclick = () => {
               const raison = prompt('Raison du refus ?');
               if (raison) {
-                card.style.opacity = '0.5';
+                refuseBtn.disabled = true;
                 fetch(apiBase + `/commandes/${cmd.id}/refuser`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -154,13 +181,18 @@ if (document.getElementById('logoutBtn')) {
           if (statut === 'en_cours') {
             const finishBtn = document.createElement('button');
             finishBtn.textContent = 'Commande terminée';
-            finishBtn.className = 'finish';
+            finishBtn.className = 'btn primary';
             finishBtn.onclick = async () => {
-              card.style.opacity = '0.5';
+              finishBtn.disabled = true;
               await fetch(apiBase + `/commandes/${cmd.id}/terminer`, { method: 'POST', credentials: 'include' });
               loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
             };
+            const noteBtn = document.createElement('button');
+            noteBtn.textContent = 'Notes/Plus';
+            noteBtn.className = 'btn ghost';
+            noteBtn.onclick = () => { alert('ID: ' + cmd.id + "\nStatut: " + cmd.statut + "\nCréé: " + (created || '-')); };
             actions.appendChild(finishBtn);
+            actions.appendChild(noteBtn);
           }
           list.appendChild(card);
         });
