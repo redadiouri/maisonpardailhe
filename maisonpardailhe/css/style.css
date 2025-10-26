@@ -310,6 +310,7 @@ header {
     background: transparent;
     border: none;
     cursor: pointer;
+    margin-left: auto; /* Always push hamburger to the right */
 }
 
 .nav-toggle span {

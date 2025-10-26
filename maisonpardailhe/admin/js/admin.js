@@ -70,7 +70,17 @@ if (document.getElementById('logoutBtn')) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      const target = document.getElementById('tab-' + btn.dataset.tab);
+      if (target) {
+        target.classList.add('active');
+        // adjust list height then animate cards inside this tab
+        const listId = (btn.dataset.tab === 'attente') ? 'attente-list' : 'encours-list';
+        // small timeout to allow CSS transitions start
+        setTimeout(() => {
+          adjustListMaxHeight(listId);
+          animateCards(listId);
+        }, 80);
+      }
     };
   });
 
@@ -85,14 +95,24 @@ if (document.getElementById('logoutBtn')) {
     try {
       const res = await fetch(apiBase + '/commandes?statut=' + statut, { credentials: 'include' });
       loader.style.display = 'none';
+      // handle unauthorized (session expired / not logged in)
+      if (res.status === 401) {
+        // redirect to login so admin can re-authenticate
+        console.warn('Admin API returned 401 — redirecting to login');
+        window.location.href = 'login.html';
+        return;
+      }
+
       if (res.ok) {
         const commandes = await res.json();
         if (badge) badge.textContent = commandes.length;
         if (commandes.length === 0) {
           list.innerHTML = '<div style="color:#aaa; text-align:center; margin:30px 0;">Aucune commande.</div>';
+          adjustListMaxHeight(containerId);
           return;
         }
         commandes.forEach(cmd => {
+          // create card element for this commande
           const card = document.createElement('div');
           card.className = 'commande-card';
           card.innerHTML = `<b>${cmd.nom_complet}</b> (${cmd.telephone})<br>
@@ -144,6 +164,10 @@ if (document.getElementById('logoutBtn')) {
           }
           list.appendChild(card);
         });
+        // After rendering, adjust max-height to show exactly 3 cards (then scroll)
+        adjustListMaxHeight(containerId);
+        // Trigger staggered reveal (now that cards are in DOM)
+        animateCards(containerId);
       } else {
         list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur de chargement des commandes.</div>';
       }
@@ -152,6 +176,59 @@ if (document.getElementById('logoutBtn')) {
       list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur serveur.</div>';
     }
   }
+  // helper: measure card and set max-height so exactly 3 cards are visible
+  function adjustListMaxHeight(containerId) {
+    const list = document.getElementById(containerId);
+    if (!list) return;
+    // find first card
+    const first = list.querySelector('.commande-card');
+    if (!first) {
+      list.style.maxHeight = 'none';
+      list.style.overflow = 'visible';
+      return;
+    }
+    // measure height including margin
+    const cardRect = first.getBoundingClientRect();
+    const style = window.getComputedStyle(first);
+    const marginBottom = parseFloat(style.marginBottom) || 12;
+    // If measured height is 0 (element may be in a collapsed container), try computed height or fallback
+    let cardHeight = Math.ceil(cardRect.height);
+    if (cardHeight < 6) {
+      const computedH = parseFloat(style.height) || 0;
+      cardHeight = Math.ceil(computedH) || 120; // fallback to 120px if we can't measure
+    }
+    const visibleCount = 3;
+    const total = cardHeight * visibleCount + marginBottom * (visibleCount - 1);
+    list.style.maxHeight = total + 'px';
+    list.style.overflow = (list.children.length > visibleCount) ? 'auto' : 'visible';
+  }
+
+  // stagger reveal animation for cards inside a list
+  function animateCards(containerId) {
+    const list = document.getElementById(containerId);
+    if (!list) return;
+    const cards = Array.from(list.querySelectorAll('.commande-card'));
+    if (!cards.length) return;
+    // clear previous shows
+    cards.forEach(c => {
+      c.classList.remove('show');
+      c.style.transitionDelay = '0ms';
+    });
+    // add with stagger
+    cards.forEach((c, i) => {
+      const delay = i * 80; // ms
+      c.style.transitionDelay = delay + 'ms';
+      // ensure class addition happens after a tick
+      setTimeout(() => c.classList.add('show'), 10 + delay);
+    });
+  }
+
   loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
   loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
+
+  // re-adjust on resize (cards may wrap/change height)
+  window.addEventListener('resize', function () {
+    adjustListMaxHeight('attente-list');
+    adjustListMaxHeight('encours-list');
+  });
 }

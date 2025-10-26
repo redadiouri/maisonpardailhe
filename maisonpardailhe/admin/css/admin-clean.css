@@ -1,0 +1,155 @@
+/* admin-clean.css - Modern responsive admin panel styles */
+:root{
+  --bg:#0f1112;
+  --panel:#151617;
+  --card:#1b1d1e;
+  --muted:#bdbfc1;
+  --accent-dark:#8f1212;
+  --accent:#c02929;
+}
+*{box-sizing:border-box}
+body.admin-bg{
+  margin:0;min-height:100vh;background:linear-gradient(180deg,var(--bg),#0b0b0b);color:#fff;font-family:Inter, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* Login box styling */
+.admin-login-box{
+  width:100%;
+  max-width:420px;
+  margin:8vh auto;
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+  border-radius:14px;
+  padding:28px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.02);
+  text-align:center;
+}
+.admin-login-box h1{margin:0 0 18px 0;font-size:1.4rem;color:#fff}
+.admin-login-box form{display:block}
+.admin-login-box .password-row{display:flex;gap:8px;align-items:center}
+.admin-login-box .password-row input{flex:1}
+.admin-login-box .password-row button{width:44px;min-width:44px;height:44px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;cursor:pointer}
+.admin-login-box input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.35);color:#fff;margin-bottom:12px}
+.admin-login-box button[type="submit"]{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;font-weight:700;cursor:pointer}
+.admin-login-box .error{color:#ff6b6b;background:rgba(255,107,107,0.06);padding:8px;border-radius:8px;margin-top:10px}
+
+/* small loader */
+.admin-login-box .loader{height:28px;margin-top:10px}
+.admin-login-box .loader:after{content:"";display:inline-block;width:18px;height:18px;border-radius:50%;border:3px solid rgba(255,255,255,0.08);border-top-color:var(--accent);animation:spin 900ms linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.admin-dashboard-wrapper{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+.admin-dashboard-card{width:100%;max-width:1100px;display:flex;gap:24px;background:linear-gradient(180deg,var(--panel),#0f1112);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden}
+
+/* Sidebar */
+.admin-sidebar{width:260px;min-width:200px;background:linear-gradient(180deg,var(--accent-dark),var(--accent));padding:28px 18px;display:flex;flex-direction:column;gap:16px}
+.admin-sidebar h1{margin:0;color:#fff;font-size:1.6rem;font-weight:700}
+.admin-sidebar .logo-sub{color:rgba(255,255,255,0.9);font-size:0.9rem}
+.admin-tabs-vertical{display:flex;flex-direction:column;gap:12px}
+.tab-btn-vertical{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:transparent;color:#fff;font-weight:700;cursor:pointer;transition:all .16s}
+.tab-btn-vertical:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.45)}
+.tab-btn-vertical.active{background:rgba(0,0,0,0.16);border-color:rgba(255,255,255,0.14)}
+.badge{background:#fff;color:var(--accent);padding:4px 8px;border-radius:999px;font-weight:800}
+.admin-sidebar .logout-btn{margin-top:auto;padding:12px;border-radius:10px;border:none;background:#fff;color:var(--accent-dark);font-weight:700;cursor:pointer}
+
+/* Main */
+.admin-main{flex:1;padding:28px;display:flex;flex-direction:column;gap:18px}
+.admin-main .header-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.admin-main h2{margin:0;color:#fff}
+.tab-content{
+  background:var(--card);
+  border-radius:10px;
+  /* start collapsed to avoid taking vertical space when inactive */
+  max-height:0;
+  padding:0 20px; /* horizontal padding preserved so width doesn't jump */
+  color:var(--muted);
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(6px);
+  transition:opacity 240ms ease, transform 240ms ease, max-height 320ms ease, padding 240ms ease;
+}
+.tab-content.active{
+  max-height:2000px; /* large enough to fit content */
+  padding:20px;
+  opacity:1;
+  transform:translateY(0);
+}
+.tab-content .empty{text-align:center;padding:40px 16px;color:#9aa0a3}
+.commande-card{background:#111;border:1px solid rgba(255,255,255,0.04);padding:14px;border-radius:10px;margin-bottom:12px;color:#e8e8e8}
+.commande-actions{display:flex;gap:10px;margin-top:12px}
+.commande-actions button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+.commande-actions .accept{background:linear-gradient(90deg,#1fb26b,#14985a);color:#fff}
+.admin-login-box input{width:100%;padding:12px;border-radius:8px;border:none;background:#0c0c0c;color:#fff;margin-bottom:10px}
+.admin-login-box button{width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;font-weight:700}
+
+/* Responsive */
+@media (max-width:900px){
+  .admin-dashboard-card{flex-direction:column;max-width:94vw}
+
+
+  .admin-sidebar{width:100%;flex-direction:row;align-items:center;justify-content:space-between;padding:12px 16px}
+  .admin-tabs-vertical{flex-direction:row;gap:8px}
+  .tab-btn-vertical{padding:8px 10px;border-radius:8px}
+  .admin-main{padding:16px}
+  .tab-content{min-height:220px}
+}
+@media (max-width:520px){
+  .admin-dashboard-wrapper{padding:12px}
+  .admin-sidebar h1{font-size:1rem}
+  .tab-content{padding:14px}
+}
+
+/* small helpers */
+.hidden{display:none!important}
+
+/* Stagger reveal for cards */
+.commande-card{
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 320ms cubic-bezier(.2,.9,.2,1), transform 320ms cubic-bezier(.2,.9,.2,1);
+}
+.commande-card.show{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Limit visible commandes to 3 items and make list scrollable */
+.tab-content > div[id$="-list"]{
+  max-height: 420px; /* approx height to show ~3 cards */
+  overflow: auto;
+  padding-right: 6px; /* keep space for scrollbar */
+}
+
+/* Smaller screens: reduce max height so 3 items fit better */
+@media (max-width:520px){
+  .tab-content > div[id$="-list"]{ max-height: 360px; }
+}
+
+/* Custom scrollbar styles (WebKit + Firefox) for the commandes list */
+.tab-content > div[id$="-list"]::-webkit-scrollbar{
+  width:10px;
+  height:10px;
+}
+.tab-content > div[id$="-list"]::-webkit-scrollbar-track{
+  background: transparent;
+}
+.tab-content > div[id$="-list"]::-webkit-scrollbar-thumb{
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
+  border-radius:10px;
+  border: 2px solid rgba(0,0,0,0.15);
+}
+.tab-content > div[id$="-list"]::-webkit-scrollbar-thumb:hover{
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
+}
+
+/* Firefox */
+.tab-content > div[id$="-list"]{
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+
+/* Optional subtle overlay when list is scrollable: show a faint gradient at bottom */
+.tab-content > div[id$="-list"]:after{
+  content: '';
+  pointer-events: none;
+  position: absolute;
+}
