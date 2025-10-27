@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maison Pardailhe – Artisan Charcutier</title>
     <link rel="stylesheet" href="css/style.css">
+        <!-- flatpickr (lightweight datepicker) -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
     <header>
@@ -109,6 +111,9 @@
 
                     <label for="cc-phone">Téléphone</label>
                     <input id="cc-phone" name="cc-phone" type="tel" placeholder="06 00 00 00 00">
+
+                    <label for="cc-email">Email <span aria-hidden="true">*</span></label>
+                    <input id="cc-email" name="cc-email" type="email" placeholder="votre@email.com" required aria-required="true">
 
                     <label for="cc-selection-toggle">Sélection</label>
                     <div class="selection-group">
@@ -321,6 +326,9 @@
         <div class="footer-bottom">© 2025 Maison Pardailhe. Tous droits réservés.</div>
     </footer>
 
-    <script src="js/app.js"></script>
+        <!-- flatpickr + locale -->
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+        <script src="js/app.js"></script>
 </body>
 </html>

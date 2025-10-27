@@ -132,12 +132,13 @@ if (document.getElementById('logoutBtn')) {
                 <div>
                   <div class="client">${cmd.nom_complet} <span class="id" style="color:var(--muted);font-weight:600;font-size:0.85rem">#${cmd.id}</span></div>
                   <div class="phone"><a href="tel:${cmd.telephone}" style="color:inherit;text-decoration:none">${cmd.telephone}</a></div>
+                  ${cmd.email ? `<div class="email"><a href="mailto:${cmd.email}" style="color:inherit;text-decoration:none">${cmd.email}</a></div>` : ''}
                 </div>
                 <div class="status" style="font-size:0.9rem;color:var(--muted);text-transform:capitalize">${cmd.statut.replace('_',' ')}</div>
               </div>
               <div class="product">${cmd.produit}</div>
               <div class="meta">
-                <div><b>Date retrait:</b> ${dateRetrait} &nbsp;|&nbsp; <b>Créneau:</b> ${cmd.creneau}</div>
+                <div><b>Date retrait:</b> ${dateRetrait} &nbsp;|&nbsp; <b>Créneau:</b> ${cmd.creneau} &nbsp;|&nbsp; <b>Lieu:</b> ${cmd.location || '-'} </div>
                 <div><b>Commandé le:</b> ${created}</div>
                 <div><b>Précisions:</b> ${cmd.precisions || '-'}</div>
               </div>

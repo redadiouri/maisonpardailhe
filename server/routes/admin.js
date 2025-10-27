@@ -60,7 +60,8 @@ router.post('/commandes/:id/accepter', auth, wrap(async (req, res) => {
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
   await Commande.updateStatut(id, 'en_cours');
-  sendEmail(commande.telephone, 'acceptation', commande);
+  // Prefer email if present, otherwise fallback to telephone (stub behaviour)
+  sendEmail(commande.email || commande.telephone, 'acceptation', commande);
   res.json({ success: true });
 }));
 
@@ -71,7 +72,7 @@ router.post('/commandes/:id/refuser', auth, wrap(async (req, res) => {
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
   await Commande.updateStatut(id, 'refusée', raison);
-  sendEmail(commande.telephone, 'refus', commande, raison);
+  sendEmail(commande.email || commande.telephone, 'refus', commande, raison);
   res.json({ success: true });
 }));
 

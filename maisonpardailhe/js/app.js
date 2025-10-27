@@ -6,9 +6,50 @@
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     initSmoothAnchors();
-    initClickCollectForm();
+    // init selection panel first so it can set time min/max
     initSelectionPanel();
+    initClickCollectForm();
 });
+
+// Helper: format Date to YYYY-MM-DD
+function todayIso() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+// Helper: format time hh:mm from Date
+function formatTimeHHMM(date) {
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+}
+
+// Round date up to next slot (minutesStep)
+function roundUpToSlot(date = new Date(), minutesStep = 15) {
+    const ms = 1000 * 60;
+    const minutes = date.getMinutes();
+    const remainder = minutes % minutesStep;
+    if (remainder === 0) return formatTimeHHMM(date);
+    const add = minutesStep - remainder;
+    const rounded = new Date(date.getTime() + add * ms);
+    return formatTimeHHMM(rounded);
+}
+
+// Check hh:mm between min and max (inclusive)
+function isTimeInRange(time, min, max) {
+    if (!time) return false;
+    const toMinutes = (t) => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    };
+    const t = toMinutes(time);
+    const a = toMinutes(min);
+    const b = toMinutes(max);
+    return t >= a && t <= b;
+}
 
 function initNavigation() {
     const navToggle = document.querySelector('.nav-toggle');
@@ -47,6 +88,48 @@ function initNavigation() {
 function initClickCollectForm() {
     const form = document.querySelector('#click-collect form');
     if (!form) return;
+    // set default date and time constraints
+    const dateEl = form.querySelector('#cc-date');
+    const timeEl = form.querySelector('#cc-time');
+    const locationSelect = form.querySelector('#cc-location');
+
+    // helper to add days
+    const addDays = (iso, days) => {
+        const d = new Date(iso + 'T00:00:00');
+        d.setDate(d.getDate() + days);
+        return d.toISOString().slice(0,10);
+    };
+
+    // default date = today, restrict selectable range to 30 days
+    if (dateEl) {
+        // If flatpickr is available, initialize it to show French format (dd/mm/YYYY)
+        // while keeping the input value in ISO (Y-m-d) for the API.
+        if (window.flatpickr) {
+            // ensure French locale is available
+            const locale = (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.fr) ? window.flatpickr.l10ns.fr : 'default';
+            const fp = window.flatpickr(dateEl, {
+                dateFormat: 'Y-m-d', // value format (ISO)
+                altInput: true,
+                altFormat: 'd/m/Y', // visible format to users (fr)
+                locale: locale,
+                defaultDate: todayIso(),
+                minDate: todayIso(),
+                maxDate: addDays(todayIso(), 30),
+            });
+        } else {
+            dateEl.min = todayIso();
+            dateEl.max = addDays(todayIso(), 30);
+            if (!dateEl.value) dateEl.value = todayIso();
+        }
+    }
+
+    // default time: round up to next slot and clamp to min/max (if defined)
+    if (timeEl) {
+        const candidate = roundUpToSlot(new Date(), 15);
+        const min = timeEl.min || '08:30';
+        const max = timeEl.max || '19:30';
+        timeEl.value = isTimeInRange(candidate, min, max) ? candidate : min;
+    }
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         // defensive: check elements exist before reading values
@@ -54,12 +137,16 @@ function initClickCollectForm() {
         const nomEl = field('cc-name');
         const phoneEl = field('cc-phone');
         const dateEl = field('cc-date');
+        const emailEl = field('cc-email');
+        const locationEl = field('cc-location');
         const timeEl = field('cc-time');
         const notesEl = field('cc-notes');
 
         const nom_complet = nomEl ? (nomEl.value || '').trim() : '';
         const telephone = phoneEl ? (phoneEl.value || '').trim() : '';
         const date_retrait = dateEl ? (dateEl.value || '') : '';
+        const email = emailEl ? (emailEl.value || '').trim() : '';
+        const location = locationEl ? (locationEl.value || '') : '';
         const creneau = timeEl ? (timeEl.value || '') : '';
         const precisions = notesEl ? (notesEl.value || '').trim() : '';
 
@@ -76,8 +163,46 @@ function initClickCollectForm() {
         const produit = produits.map(p => `${p.item}×${p.qty}`).join('; ');
 
         // Validation simple
-        if (!nom_complet || !telephone || !date_retrait || !creneau) {
+        if (!nom_complet || !telephone || !date_retrait || !creneau || !location) {
             showCCMessage('Merci de remplir tous les champs obligatoires.', true);
+            return;
+        }
+
+        // Date validations: not in the past and within 30 days
+        const today = todayIso();
+        const maxDate = (function(){ const d = new Date(); d.setDate(d.getDate()+30); return d.toISOString().slice(0,10); })();
+        if (date_retrait < today) {
+            showCCMessage('La date de retrait ne peut pas être antérieure à aujourd\'hui.', true);
+            return;
+        }
+        if (date_retrait > maxDate) {
+            showCCMessage('La date de retrait ne peut pas être au-delà de 30 jours.', true);
+            return;
+        }
+
+        // Time must respect min/max for selected location
+        const timeInputEl = document.getElementById('cc-time');
+        const selectedLocation = document.getElementById('cc-location')?.value;
+        const minTime = timeInputEl?.min || '00:00';
+        const maxTime = timeInputEl?.max || '23:59';
+        if (!isTimeInRange(creneau, minTime, maxTime)) {
+            showCCMessage('Le créneau horaire sélectionné n\'est pas disponible pour le lieu choisi.', true);
+            return;
+        }
+
+        // If date is today, ensure time is not in the past relative to now
+        if (date_retrait === today) {
+            const nowRounded = roundUpToSlot(new Date(), 15);
+            if (!isTimeInRange(creneau, nowRounded, maxTime)) {
+                showCCMessage('Le créneau horaire doit être ultérieur à l\'heure actuelle.', true);
+                return;
+            }
+        }
+
+        // Email validation (required)
+        const emailRe = /^\S+@\S+\.\S+$/;
+        if (!email || !emailRe.test(email)) {
+            showCCMessage('Merci de saisir une adresse email valide.', true);
             return;
         }
 
@@ -104,7 +229,7 @@ function initClickCollectForm() {
             const res = await fetch('/api/commandes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nom_complet, telephone, produit, date_retrait, creneau, precisions })
+                body: JSON.stringify({ nom_complet, telephone, email, produit, date_retrait, creneau, precisions, location })
             });
             if (res.ok) {
                 form.reset();
@@ -342,10 +467,12 @@ function initSelectionPanel() {
 
         const settings = locationSettings[location] ?? locationSettings.roquettes;
 
-        timeInput.min = settings.min;
-        timeInput.max = settings.max;
-        timeInput.value = '';
-        timeHint.textContent = settings.hint;
+    timeInput.min = settings.min;
+    timeInput.max = settings.max;
+    // set a sensible default time: round up to next slot and clamp to min/max
+    const candidate = roundUpToSlot(new Date(), 15);
+    timeInput.value = isTimeInRange(candidate, settings.min, settings.max) ? candidate : settings.min;
+    timeHint.textContent = settings.hint;
     };
 
     if (locationSelect) {

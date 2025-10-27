@@ -3,8 +3,8 @@ const db = require('./db');
 const Commande = {
   create: async (data) => {
     const [result] = await db.execute(
-      `INSERT INTO commandes (nom_complet, telephone, produit, date_retrait, creneau, precisions, statut) VALUES (?, ?, ?, ?, ?, ?, 'en_attente')`,
-      [data.nom_complet, data.telephone, data.produit, data.date_retrait, data.creneau, data.precisions]
+      `INSERT INTO commandes (nom_complet, telephone, email, produit, date_retrait, creneau, location, precisions, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
+    [data.nom_complet, data.telephone, data.email || '', data.produit, data.date_retrait, data.creneau, data.location || 'roquettes', data.precisions]
     );
     return result.insertId;
   },
