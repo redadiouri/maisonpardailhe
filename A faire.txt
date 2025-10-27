@@ -1,56 +1,162 @@
-Priorité haute (à corriger rapidement)
+🛡️ Prompt 1 — Sécuriser les sessions en production
 
-Sécuriser les sessions en production
+Corrige le code Express pour sécuriser les sessions en production :
 
-Ne pas utiliser le store de session par défaut (mémoire). Utiliser un store persistant (ex : connect-redis, express-mysql-session) pour express-session.
-Configurer correctement les options cookie (secure: true en HTTPS, httpOnly: true, sameSite: 'lax' ou 'strict'), et définir rolling/session timeout.
-Exemple de changement : ajouter options cookie et store dans app.use(session(...)).
-Pourquoi : mémoire store perd les sessions et n’est pas adapté à la prod ; cookies non sécurisés exposent au vol de session.
-Protéger les endpoints sensibles (auth)
+Ne plus utiliser le store par défaut (mémoire).
 
-Ajouter rate limiting sur routes d'authentification (/api/admin/login) (express-rate-limit) pour prévenir brute-force.
-Ajouter verrouillage ou délais après N échecs (optionnel).
-Pourquoi : protège compte admin.
-Hardening Express
+Mettre un store persistant (ex: connect-redis ou express-mysql-session).
 
-Ajouter helmet pour headers de sécurité.
-Restreindre CORS en prod (actuellement autorise quelques origines locales ; prévoir variable d'environnement PROD_ALLOWED_ORIGINS).
-Activer la validation CSRF pour formulaire sensibles si sessions + cookies (ex: csurf) ou utiliser JWT + header Authorization selon choix.
-Pourquoi : réduit surface d'attaque (XSS, clickjacking, etc.).
-Validation et sanitation côté serveur
+Ajouter les options cookie :
 
-Utiliser un validateur (Joi, express-validator) pour les données entrantes (commande, login).
-Nettoyer/saniter les champs textuels avant stockage ou affichage (pour éviter XSS quand réaffiché).
-Pourquoi : le front valide déjà, mais validation serveur est indispensable.
-Session cookie SameSite & secure
+cookie: {
+  secure: true, // en prod (HTTPS)
+  httpOnly: true,
+  sameSite: 'lax',
+  maxAge: 1000 * 60 * 60 // 1h
+}
 
-En prod, session cookie doit être secure (HTTPS) et HttpOnly. config express-session accordingly.
-Priorité moyenne
-6. Stockage des secrets et .env example
 
-Ajouter .env.example (si manquant) et documenter l'usage. Vérifier que .env ne soit pas commité (.gitignore).
-Pourquoi : évite fuite de secrets et aide setup dev.
-Remplacer le stub d'email par un envoi réel
+Activer rolling: true pour refresh la session active.
 
-Utiliser nodemailer (ou un service externalisé via API) et s'assurer de retry & unsubscribe & logs.
-Sanity: ne pas exposer adresses dans logs.
-Logging & erreurs
+Exemple : mettre le store et les options dans app.use(session(...)).
 
-Centraliser logs (pino déjà utilisé), config niveau (dev/prod), rotation/transport (files, logstash).
-Corriger éventuels logs d'exception dévoilant secrets (le code masque bien DB_PASSWORD dans startup, bon).
-Tests / CI
+Objectif : éviter la perte de session et protéger contre le vol de cookies.
 
-Ajouter tests unitaires simples (ex: tests pour commande.js et routes) et pipeline CI (GitHub Actions).
-Ajouter lint (ESLint) et format (Prettier) + npm scripts.
-Migration & sauvegarde DB
+🔐 Prompt 2 — Protéger les endpoints sensibles (auth)
 
-Introduire script de migration (knex/migrate ou umzug/sequelize) plutôt que SQL ad-hoc.
-Prévoir sauvegardes régulières.
-Priorité faible / UX / Perf
-11. Performance frontend
-- Optimiser images (webp, compression) et ajouter attributs width/height, lazy-loading.
-- Ajouter cache-control headers côté serveur pour fichiers statiques.
-12. Accessibilité
-- Vérifier contraste, labels, focus order, ajouter landmark roles si besoin (le HTML est déjà bien structuré, bonnes pratiques ARIA utilisées).
-13. SEO / Meta
-- Ajouter meta description, Open Graph tags, favicon, and lang already set = good.
+Ajoute un rate limiter sur les routes sensibles comme /api/admin/login avec express-rate-limit.
+
+Ex : 5 tentatives max par 15 minutes.
+
+Optionnel : délai ou blocage temporaire après plusieurs échecs.
+
+But : empêcher le brute-force sur le compte admin.
+
+🧱 Prompt 3 — Hardening Express
+
+Améliore la sécurité globale d’Express :
+
+Ajoute helmet() pour les headers de sécurité.
+
+Restreins le CORS en prod via une variable PROD_ALLOWED_ORIGINS (plutôt que tout autoriser).
+
+Si tu utilises les sessions + cookies : mets une protection CSRF avec csurf.
+
+Sinon, si t’es en JWT : assure-toi que l’Authorization header est bien vérifié.
+
+But : bloquer les attaques XSS, CSRF, clickjacking, etc.
+
+🧼 Prompt 4 — Validation et sanitation serveur
+
+Mets en place une validation et sanitation côté serveur :
+
+Utilise express-validator ou Joi pour vérifier les données entrantes (login, commande, etc.).
+
+Nettoie les champs textuels (remove <script> et caractères dangereux).
+
+But : éviter les injections et attaques XSS côté serveur, même si le front valide déjà.
+
+🍪 Prompt 5 — Session cookie secure & SameSite
+
+Mets à jour la config cookie dans express-session pour la prod :
+
+cookie: {
+  secure: true, // HTTPS obligatoire
+  httpOnly: true,
+  sameSite: 'lax'
+}
+
+
+Le but est de rendre les cookies invisibles côté client (pas d’accès JS) et protégés contre les vols de session via cross-site.
+
+🔑 Prompt 6 — Stockage des secrets & .env.example
+
+Vérifie la sécurité des variables d’environnement :
+
+Ajoute un fichier .env.example pour documenter les variables nécessaires.
+
+Assure-toi que .env est dans .gitignore.
+
+Objectif : éviter toute fuite de secrets (API keys, DB passwords, etc.).
+
+📧 Prompt 7 — Remplacer le stub d’email
+
+Implémente un vrai système d’envoi d’emails :
+
+Utilise nodemailer ou un service externe (SendGrid, Mailgun, etc.).
+
+Gère les retries, les logs, et les options d’unsubscribe.
+
+Attention à ne pas loguer les adresses email en clair.
+
+Objectif : fiabiliser la communication avec les clients.
+
+🧾 Prompt 8 — Logging & erreurs
+
+Améliore le logging avec pino :
+
+Mets des niveaux de logs différents (info, warn, error) selon l’environnement.
+
+Configure une rotation/transport (ex : fichiers journaux ou Logstash).
+
+Vérifie que rien ne logue des secrets sensibles.
+
+But : garder une traçabilité sans exposer de données confidentielles.
+
+🧪 Prompt 9 — Tests / CI
+
+Mets en place une base de tests et CI :
+
+Ajoute quelques tests unitaires (pour commande.js, routes, etc.).
+
+Configure une CI (GitHub Actions) pour lancer les tests automatiquement.
+
+Intègre ESLint + Prettier + scripts npm (npm run lint, npm run format).
+
+Objectif : code plus propre et stable.
+
+🗃️ Prompt 10 — Migration & backup DB
+
+Ajoute un système de migration de base de données :
+
+Utilise knex/migrate ou umzug (si t’es sur Sequelize).
+
+Évite les scripts SQL manuels.
+
+Prévois des backups réguliers.
+
+But : gérer les changements de schéma proprement et éviter la perte de données.
+
+⚡ Prompt 11 — Performance frontend
+
+Optimise les performances du frontend :
+
+Compresse les images (WebP, compression).
+
+Ajoute width / height sur les balises <img> et active le lazy-loading.
+
+Côté serveur, ajoute des headers Cache-Control pour les fichiers statiques.
+
+Objectif : chargement plus rapide et score Lighthouse boosté.
+
+♿ Prompt 12 — Accessibilité
+
+Vérifie l’accessibilité :
+
+Bon contraste texte/fond.
+
+Labels et ordre de focus cohérents.
+
+Ajouter des roles ARIA si besoin.
+
+Objectif : rendre le site utilisable par tous, même sans souris.
+
+🔍 Prompt 13 — SEO / Meta
+
+Améliore le SEO :
+
+Ajoute une meta description, des balises Open Graph, favicon, etc.
+
+Garde l’attribut lang sur <html>.
+
+Objectif : meilleure visibilité sur Google et partage stylé sur les réseaux.
