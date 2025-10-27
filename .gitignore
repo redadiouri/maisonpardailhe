@@ -51,3 +51,4 @@ coverage/
 
 # Keep example files
 !.env.example
+server/.env
