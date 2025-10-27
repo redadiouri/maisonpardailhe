@@ -263,4 +263,68 @@ if (document.getElementById('logoutBtn')) {
     adjustListMaxHeight('attente-list');
     adjustListMaxHeight('encours-list');
   });
+
+  // Change password UI handling
+  const toggleChangePwd = document.getElementById('toggleChangePwd');
+  const changePwdForm = document.getElementById('changePwdForm');
+  const cancelChangePwd = document.getElementById('cancelChangePwd');
+  const changePwdMsg = document.getElementById('changePwdMsg');
+
+  if (toggleChangePwd && changePwdForm) {
+    const setFormVisible = (visible) => {
+      changePwdForm.style.display = visible ? 'grid' : 'none';
+      changePwdForm.setAttribute('aria-hidden', String(!visible));
+      toggleChangePwd.setAttribute('aria-expanded', String(visible));
+    };
+
+    toggleChangePwd.addEventListener('click', () => setFormVisible(changePwdForm.style.display === 'none'));
+    cancelChangePwd.addEventListener('click', () => setFormVisible(false));
+
+    changePwdForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      changePwdMsg.style.color = '#f33';
+      changePwdMsg.textContent = '';
+      const currentPassword = document.getElementById('currentPassword')?.value || '';
+      const newPassword = document.getElementById('newPassword')?.value || '';
+      const confirmNewPassword = document.getElementById('confirmNewPassword')?.value || '';
+
+      if (!currentPassword || !newPassword || !confirmNewPassword) {
+        changePwdMsg.textContent = 'Merci de remplir tous les champs.';
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        changePwdMsg.textContent = 'Les nouveaux mots de passe ne correspondent pas.';
+        return;
+      }
+      if (newPassword.length < 8) {
+        changePwdMsg.textContent = 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
+        return;
+      }
+
+      const submitBtn = document.getElementById('changePwdBtn');
+      submitBtn.disabled = true;
+      try {
+        const res = await fetch(apiBase + '/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          changePwdMsg.style.color = '#0a0';
+          changePwdMsg.textContent = data.message || 'Mot de passe mis à jour.';
+          // reset form
+          changePwdForm.reset();
+          setTimeout(() => setFormVisible(false), 1200);
+        } else {
+          changePwdMsg.textContent = data.message || 'Erreur lors de la mise à jour.';
+        }
+      } catch (err) {
+        changePwdMsg.textContent = 'Erreur réseau. Réessayez plus tard.';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
 }

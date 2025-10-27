@@ -25,6 +25,27 @@ router.post('/logout', auth, (req, res) => {
   res.json({ success: true });
 });
 
+// Change password for current admin
+router.post('/change-password', auth, wrap(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) return res.status(400).json({ message: 'Champs requis manquants.' });
+  if (typeof newPassword !== 'string' || newPassword.length < 8) return res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 8 caractères.' });
+
+  // Load admin from session id
+  const adminId = req.session?.admin?.id;
+  if (!adminId) return res.status(401).json({ message: 'Non autorisé.' });
+
+  const admin = await Admin.getById(adminId);
+  if (!admin) return res.status(404).json({ message: "Administrateur introuvable." });
+
+  const match = await bcrypt.compare(currentPassword, admin.password_hash);
+  if (!match) return res.status(401).json({ message: 'Mot de passe actuel incorrect.' });
+
+  const hash = await bcrypt.hash(newPassword, 10);
+  await Admin.updatePassword(adminId, hash);
+  res.json({ success: true, message: 'Mot de passe mis à jour.' });
+}));
+
 // Get commandes by statut
 router.get('/commandes', auth, wrap(async (req, res) => {
   const { statut } = req.query;
