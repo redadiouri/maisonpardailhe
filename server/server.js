@@ -66,9 +66,11 @@ app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'
 
 const commandesRoutes = require('./routes/commandes');
 const adminRoutes = require('./routes/admin');
+const stockRoutes = require('./routes/stock');
 
 app.use('/api/commandes', commandesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/stock', stockRoutes);
 
 // Global error handler to avoid crashing on DB errors and to return 500
 app.use((err, req, res, next) => {

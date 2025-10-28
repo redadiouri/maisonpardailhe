@@ -57,6 +57,46 @@ const style = document.createElement('style');
 style.innerHTML = `@keyframes shake { 0%{transform:translateX(0);} 25%{transform:translateX(-5px);} 50%{transform:translateX(5px);} 75%{transform:translateX(-5px);} 100%{transform:translateX(0);} }`;
 document.head.appendChild(style);
 
+// countdown and badge styles
+const cdStyle = document.createElement('style');
+cdStyle.innerHTML = `
+.countdown { font-weight:700; }
+.countdown--expired { color: #ff4d4f; }
+.countdown--warning { color: #ff9900; }
+.countdown-badge { display:inline-block; min-width:44px; text-align:center; padding:2px 8px; border-radius:12px; font-size:0.75rem; margin-left:8px; color:#fff; background:transparent; }
+.countdown-badge.warn { background:#ff9900; }
+.countdown-badge.expired { background:#ff4d4f; }
+`;
+document.head.appendChild(cdStyle);
+
+// cell edit styles (badge / spinner / success / rollback / modified)
+const cellEditStyle = document.createElement('style');
+cellEditStyle.innerHTML = `
+.cell-badge { display:inline-block; margin-left:8px; padding:2px 6px; border-radius:10px; font-size:0.75rem; background:#eee; color:#333; }
+.cell-badge.pending { background:#f0f3ff; color:#123; }
+.cell-spinner { display:inline-block; width:12px; height:12px; border-radius:50%; border:2px solid rgba(0,0,0,0.12); border-top-color: rgba(0,0,0,0.6); animation: spin 0.8s linear infinite; vertical-align:middle; margin-left:6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.cell-success { display:inline-block; margin-left:8px; color: #0a0; font-weight:700; }
+.cell-rollback { animation: rollback 700ms ease; }
+@keyframes rollback { 0% { background: rgba(255,100,100,0.15); } 40% { background: rgba(255,60,60,0.25); } 100% { background: transparent; } }
+.col-modified { width:64px; text-align:center; }
+.row-modified-badge { display:inline-block; background:#ffebcc; color:#7a4b00; padding:2px 6px; border-radius:8px; font-size:0.75rem; }
+.cell-undo { margin-left:6px; cursor:pointer; color:#0366d6; text-decoration:underline; font-size:0.75rem; }
+`;
+document.head.appendChild(cellEditStyle);
+
+// Debug helper: use console.debug when ADMIN_DEBUG is enabled
+function adminDebug(...args) {
+  try {
+    const enabledGlobal = (typeof window !== 'undefined' && window.ADMIN_DEBUG === true);
+    const enabledStorage = (typeof localStorage !== 'undefined' && (localStorage.getItem('admin.debug') === '1' || localStorage.getItem('admin.debug') === 'true'));
+    if (enabledGlobal || enabledStorage) {
+      if (console && typeof console.debug === 'function') console.debug(...args);
+      else if (console && typeof console.log === 'function') console.log(...args);
+    }
+  } catch (e) { /* ignore */ }
+}
+
 // Dashboard
 if (document.getElementById('logoutBtn')) {
   document.getElementById('logoutBtn').onclick = async () => {
@@ -67,22 +107,46 @@ if (document.getElementById('logoutBtn')) {
   // Tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      const target = document.getElementById('tab-' + btn.dataset.tab);
-      if (target) {
-        target.classList.add('active');
-        // adjust list height then animate cards inside this tab
-        const listId = (btn.dataset.tab === 'attente') ? 'attente-list' : 'encours-list';
-        // small timeout to allow CSS transitions start
+      const tabName = btn.dataset.tab;
+      // activation helper
+      const activate = (name) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        const targetBtn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+        const target = document.getElementById('tab-' + name);
+        if (target) target.classList.add('active');
+        const listId = (name === 'attente') ? 'attente-list' : 'encours-list';
         setTimeout(() => {
           adjustListMaxHeight(listId);
           animateCards(listId);
         }, 80);
-      }
+        try { localStorage.setItem('admin.activeTab', name); } catch (e) {}
+        // If the stockage tab is activated, load the stock list so seeded items appear
+        try {
+          if (name === 'stockage' && typeof loadStock === 'function') loadStock();
+        } catch (e) { /* ignore */ }
+      };
+      activate(tabName);
     };
   });
+
+  // Restore last active tab from localStorage (keeps dashboard on same tab after reload)
+  (function restoreActiveTab() {
+    try {
+      const saved = localStorage.getItem('admin.activeTab');
+      if (saved) {
+        const btn = document.querySelector(`.tab-btn[data-tab="${saved}"]`);
+        if (btn) {
+          btn.click();
+          return;
+        }
+      }
+    } catch (e) {}
+    // fallback: ensure default first tab is active
+    const first = document.querySelector('.tab-btn');
+    if (first) first.click();
+  })();
 
   // Load commandes
   async function loadCommandes(statut, containerId, badgeId, loaderId) {
@@ -111,13 +175,34 @@ if (document.getElementById('logoutBtn')) {
           adjustListMaxHeight(containerId);
           return;
         }
-        // small helper to format ISO date strings to dd/mm/yyyy
+        // small helper to format date strings to dd/mm/yyyy
+        // Accepts ISO (YYYY-MM-DD) or French (DD/MM/YYYY) and falls back safely
         function formatDateISO(d) {
           if (!d) return '-';
-          try {
+          // ISO YYYY-MM-DD
+          if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
             const dt = new Date(d + 'T00:00:00');
-            return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-          } catch (e) { return d; }
+            if (!isNaN(dt.getTime())) {
+              return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            }
+          }
+          // French DD/MM/YYYY
+          const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(d);
+          if (fr) {
+            const day = Number(fr[1]);
+            const month = Number(fr[2]) - 1;
+            const year = Number(fr[3]);
+            const dt = new Date(year, month, day);
+            if (dt.getFullYear() === year && dt.getMonth() === month && dt.getDate() === day) {
+              return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            }
+          }
+          // Fallback: try general Date parsing
+          try {
+            const dt = new Date(d);
+            if (!isNaN(dt.getTime())) return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          } catch (e) {}
+          return d;
         }
 
         commandes.forEach(cmd => {
@@ -148,6 +233,44 @@ if (document.getElementById('logoutBtn')) {
               <div class="commande-actions"></div>
             </div>`;
           const actions = card.querySelector('.commande-actions');
+
+          // helper to parse combined date + time into a Date object
+          function parseDateTime(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return null;
+            // If dateStr already contains a time or timezone, try parsing directly
+            if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr) || dateStr.includes('Z')) {
+              try {
+                // create a date from dateStr then overwrite hours/minutes from timeStr
+                const base = new Date(dateStr);
+                if (isNaN(base.getTime())) return null;
+                const [hh, mm] = timeStr.split(':').map(Number);
+                base.setHours(hh, mm, 0, 0);
+                return base;
+              } catch (e) { /* fallthrough */ }
+            }
+            // ISO YYYY-MM-DD (with or without time)
+            if (/^\d{4}-\d{2}-\d{2}/.test(dateStr) && /^\d{2}:\d{2}$/.test(timeStr)) {
+              // join as local time
+              const iso = `${dateStr}T${timeStr}:00`;
+              const d = new Date(iso);
+              if (!isNaN(d.getTime())) return d;
+            }
+            // French DD/MM/YYYY
+            const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr);
+            if (fr && /^\d{2}:\d{2}$/.test(timeStr)) {
+              const day = Number(fr[1]);
+              const month = Number(fr[2]) - 1;
+              const year = Number(fr[3]);
+              const [hh, mm] = timeStr.split(':').map(Number);
+              const d = new Date(year, month, day, hh, mm, 0);
+              if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) return d;
+            }
+            // fallback: try Date parse with concatenation
+            try {
+              const d = new Date(`${dateStr} ${timeStr}`);
+              return isNaN(d.getTime()) ? null : d;
+            } catch (e) { return null; }
+          }
           if (statut === 'en_attente') {
             const acceptBtn = document.createElement('button');
             acceptBtn.textContent = 'Accepter';
@@ -196,6 +319,25 @@ if (document.getElementById('logoutBtn')) {
             actions.appendChild(noteBtn);
           }
           list.appendChild(card);
+
+          // If this card is in 'en_cours', append a countdown element showing time remaining until pickup
+          if (statut === 'en_cours') {
+            const metaDiv = card.querySelector('.meta');
+            if (metaDiv) {
+              const countdownDiv = document.createElement('div');
+              countdownDiv.className = 'countdown-row';
+              const pickupDateObj = parseDateTime(cmd.date_retrait, cmd.creneau);
+              if (pickupDateObj) {
+                const ts = pickupDateObj.getTime();
+                countdownDiv.innerHTML = `<b>Temps restant:</b> <span class="countdown" data-target="${ts}">--:--:--</span>`;
+              } else {
+                countdownDiv.innerHTML = `<b>Temps restant:</b> -`;
+              }
+              metaDiv.appendChild(countdownDiv);
+              // initialize immediately so the user doesn't wait 1s
+              try { if (typeof updateCountdowns === 'function') updateCountdowns(); } catch (e) {}
+            }
+          }
         });
         // After rendering, adjust max-height to show exactly 3 cards (then scroll)
         adjustListMaxHeight(containerId);
@@ -209,6 +351,330 @@ if (document.getElementById('logoutBtn')) {
       list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur serveur.</div>';
     }
   }
+  // Stock management
+  async function loadStock() {
+    const container = document.querySelector('#tab-stockage');
+    if (!container) return;
+    const tableBody = document.querySelector('#stock-table tbody');
+    const loader = document.getElementById('stock-refresh');
+    try {
+      const res = await fetch(apiBase.replace('/admin','') + '/stock');
+      if (!res.ok) throw new Error('Failed');
+      const items = await res.json();
+      // store items for client-side filtering/sorting
+      window._adminStockItems = items;
+      renderStockTable(items);
+    } catch (e) {
+      tableBody.innerHTML = '<tr><td colspan="6" style="color:#f33; text-align:center;">Erreur de chargement du stock.</td></tr>';
+    }
+  }
+
+  function renderStockTable(items) {
+    const tbody = document.querySelector('#stock-table tbody');
+    tbody.innerHTML = '';
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:#aaa; text-align:center;">Aucun produit.</td></tr>';
+      return;
+    }
+    items.forEach(it => {
+      const tr = document.createElement('tr');
+      // expose id for delegation and mark cells with field names for dblclick editing
+      tr.dataset.id = it.id;
+      tr.innerHTML = `
+        <td data-field="name">${escapeHtml(it.name)}</td>
+        <td data-field="reference">${escapeHtml(it.reference || '')}</td>
+        <td data-field="quantity">${Number(it.quantity || 0)}</td>
+        <td data-field="available">${it.available ? 'Oui' : 'Non'}</td>
+        <td class="col-modified" data-field="modified"></td>
+        <td>
+          <button class="btn small" data-action="toggle" data-id="${it.id}">${it.available ? '🚫' : '✔'}</button>
+          <button class="btn small" data-action="delete" data-id="${it.id}">❌</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // helpers
+  function escapeHtml(s){ if (s==null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  // wire stock form
+  (function wireStockUI(){
+  const form = document.getElementById('stock-form');
+  const search = document.getElementById('stock-search');
+  const refresh = document.getElementById('stock-refresh');
+
+  // Pending sends per cell (key = `${id}:${field}`)
+  const PENDING = new Map();
+  const DEBOUNCE_MS = 2500; // wait before sending so user can undo
+  const SUCCESS_MS = 1200; // show success check for this long
+
+  function rowPendingCount(id) {
+    let c = 0;
+    for (const key of PENDING.keys()) {
+      if (key.startsWith(String(id) + ':')) c++;
+    }
+    return c;
+  }
+
+  function setRowModified(tr, flag) {
+    try {
+      const modCell = tr.querySelector('td[data-field="modified"]');
+      if (modCell) {
+        modCell.innerHTML = flag ? '<span class="row-modified-badge">En attente</span>' : '';
+      }
+    } catch (e) {}
+  }
+
+    if (form) {
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+  const name = document.getElementById('stock-name').value.trim();
+  const reference = document.getElementById('stock-ref').value.trim();
+  let quantity = Number(document.getElementById('stock-qty').value);
+  const available = !!document.getElementById('stock-available').checked;
+  if (!name) return alert('Nom requis');
+  if (name.length > 255) return alert('Le nom est trop long (max 255 caractères).');
+  if (reference.length > 100) return alert('La référence est trop longue (max 100 caractères).');
+  if (isNaN(quantity) || quantity < 0) { alert('La quantité doit être un nombre >= 0.'); document.getElementById('stock-qty').focus(); return; }
+  quantity = Math.floor(quantity || 0);
+        try {
+              // Always create a new product from the form (editing is done inline now)
+              const res = await fetch('/api/stock', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, reference, quantity, available }) , credentials:'include'});
+              if (!res.ok) throw new Error('err');
+              form.reset();
+          await loadStock();
+        } catch (err) { alert('Erreur lors de la sauvegarde'); }
+      });
+    }
+
+    if (refresh) refresh.addEventListener('click', ()=> loadStock());
+
+    if (search) {
+      search.addEventListener('input', ()=>{
+        const q = search.value.trim().toLowerCase();
+        const items = (window._adminStockItems || []).filter(it => (it.name||'').toLowerCase().includes(q) || (it.reference||'').toLowerCase().includes(q));
+        renderStockTable(items);
+      });
+    }
+
+    // delegate actions from table
+    document.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      // old edit-via-form action removed; editing now happens inline by double-clicking cells
+      if (action === 'delete') {
+        if (!confirm('Supprimer ce produit ?')) return;
+        try {
+          const res = await fetch('/api/stock/' + id, { method: 'DELETE', credentials:'include' });
+          if (!res.ok) throw new Error('err');
+          await loadStock();
+        } catch (e) { alert('Erreur suppression'); }
+      }
+      if (action === 'toggle') {
+        const item = (window._adminStockItems||[]).find(x=>String(x.id)===String(id));
+        if (!item) return;
+        try {
+          const res = await fetch('/api/stock/' + id, { method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ available: !item.available }), credentials:'include' });
+          if (!res.ok) throw new Error('err');
+          await loadStock();
+        } catch (e) { alert('Erreur'); }
+      }
+    });
+
+  // old cancelEdit button removed — no-op
+
+    // Inline editing: double-click a cell to edit in-place. Commit on Enter/blur, cancel on Escape.
+    document.addEventListener('dblclick', (e) => {
+      const td = e.target.closest && e.target.closest('td[data-field]');
+      if (!td) return;
+      const tr = td.closest && td.closest('tr');
+      if (!tr || !tr.dataset.id) return;
+      const id = tr.dataset.id;
+      const item = (window._adminStockItems||[]).find(x=>String(x.id)===String(id));
+      if (!item) return;
+      const field = td.dataset.field;
+      // prevent starting another editor on the same cell
+      if (td.dataset.editing === '1') return;
+      td.dataset.editing = '1';
+      const original = td.textContent;
+
+      // create appropriate input
+      let input;
+      if (field === 'available') {
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = !!item.available;
+      } else if (field === 'quantity') {
+        input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.value = Number(item.quantity || 0);
+      } else {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.value = item[field] || '';
+      }
+      input.style.width = '100%';
+      input.style.boxSizing = 'border-box';
+      // replace cell content with input
+      td.innerHTML = '';
+      td.appendChild(input);
+      // helper to cancel
+      const cancel = () => {
+        td.removeAttribute('data-editing');
+        td.textContent = original;
+      };
+      // commit changes with debounce + undo + optimistic UI and rollback on failure
+      const commit = () => {
+        if (td.dataset.editing !== '1') return;
+        if (td.dataset.scheduled === '1') return; // already scheduled
+        let newVal;
+        if (field === 'available') newVal = !!input.checked;
+        else if (field === 'quantity') newVal = Number(input.value);
+        else newVal = String(input.value || '').trim();
+
+        // Client-side validation
+        if (field === 'name') {
+          if (!newVal) { alert('Le nom ne peut pas être vide.'); input.focus(); return; }
+          if (newVal.length > 255) { alert('Le nom est trop long (max 255 caractères).'); input.focus(); return; }
+        }
+        if (field === 'reference') {
+          if (newVal.length > 100) { alert('La référence est trop longue (max 100 caractères).'); input.focus(); return; }
+        }
+        if (field === 'quantity') {
+          if (isNaN(newVal) || newVal < 0) { alert('La quantité doit être un nombre >= 0.'); input.focus(); return; }
+          newVal = Math.floor(newVal);
+        }
+
+        // if unchanged, just cancel editor
+        if (String(newVal) === String(item[field] ?? '')) {
+          cancel();
+          return;
+        }
+
+        const key = `${id}:${field}`;
+        const origValue = item[field];
+        const origText = original;
+
+        // optimistic update locally
+        item[field] = newVal;
+        window._adminStockItems = (window._adminStockItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
+        td.removeAttribute('data-editing');
+        td.textContent = (field === 'available') ? (newVal ? 'Oui' : 'Non') : String(newVal);
+
+        // create badge with spinner + undo link
+        const badge = document.createElement('span');
+        badge.className = 'cell-badge pending';
+        badge.innerHTML = '<span class="cell-spinner"></span><span class="cell-undo">Annuler</span>';
+        td.appendChild(badge);
+        td.dataset.scheduled = '1';
+        // mark row as modified
+        const tr = td.closest('tr');
+        if (tr) { tr.dataset.modified = '1'; setRowModified(tr, true); }
+
+        // undo handler
+        const doUndo = () => {
+          const p = PENDING.get(key);
+          if (p) {
+            if (p.timer) clearTimeout(p.timer);
+            if (p.controller) try { p.controller.abort(); } catch (e) {}
+            PENDING.delete(key);
+          }
+          // rollback visually
+          item[field] = origValue;
+          window._adminStockItems = (window._adminStockItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
+          if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+          td.textContent = origText;
+          td.removeAttribute('data-editing');
+          td.removeAttribute('data-scheduled');
+          if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
+        };
+        const undoEl = badge.querySelector('.cell-undo');
+        if (undoEl) undoEl.addEventListener('click', (ev)=>{ ev.stopPropagation(); doUndo(); });
+
+        // schedule network send after debounce to allow undo
+        const timer = setTimeout(async () => {
+          // replace timer entry with one including controller
+          const controller = new AbortController();
+          PENDING.set(key, { timer: null, controller, badge, td, origValue, origText });
+          try {
+            const body = {}; body[field] = newVal;
+            const res = await fetch('/api/stock/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body), signal: controller.signal });
+            if (!res.ok) throw new Error('save-failed');
+            // success: show checkmark briefly
+            if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+            const success = document.createElement('span');
+            success.className = 'cell-success';
+            success.textContent = '✔';
+            td.appendChild(success);
+            delete td.dataset.scheduled;
+            PENDING.delete(key);
+            // update row modified state
+            if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
+            setTimeout(()=>{ if (success && success.parentNode) success.parentNode.removeChild(success); }, SUCCESS_MS);
+          } catch (err) {
+            // if aborted by undo, do nothing (undo already cleaned up)
+            const p = PENDING.get(key);
+            if (p && p.controller && p.controller.signal && p.controller.signal.aborted) {
+              // already handled by undo
+              return;
+            }
+            // rollback
+            item[field] = origValue;
+            window._adminStockItems = (window._adminStockItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
+            if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+            delete td.dataset.scheduled;
+            td.textContent = origText;
+            // visual rollback animation
+            td.classList.add('cell-rollback');
+            setTimeout(()=> td.classList.remove('cell-rollback'), 700);
+            PENDING.delete(key);
+            if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
+            alert('Erreur lors de la sauvegarde — modification annulée.');
+          }
+        }, DEBOUNCE_MS);
+
+        // store pending info
+        PENDING.set(key, { timer, controller: null, badge, td, origValue, origText });
+      };
+
+      // keyboard handlers
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+      });
+      // commit on blur (gives time for click events on checkboxes)
+      input.addEventListener('blur', () => { setTimeout(commit, 150); });
+      // focus the input
+      try { input.focus(); if (input.select) input.select(); } catch (e) {}
+    });
+    // simple column sort by clicking headers
+    document.querySelectorAll('#stock-table thead th[data-sort]').forEach(th=>{
+      th.style.cursor='pointer';
+      th.addEventListener('click', ()=>{
+        const key = th.dataset.sort;
+        const items = (window._adminStockItems||[]).slice();
+        const dir = th.dataset.dir === 'asc' ? 'desc' : 'asc';
+        th.dataset.dir = dir;
+        items.sort((a,b)=>{
+          const A = String(a[key] ?? '').toLowerCase();
+          const B = String(b[key] ?? '').toLowerCase();
+          if (!isNaN(Number(a[key])) && !isNaN(Number(b[key]))) {
+            return dir === 'asc' ? Number(a[key]) - Number(b[key]) : Number(b[key]) - Number(a[key]);
+          }
+          if (A < B) return dir === 'asc' ? -1 : 1;
+          if (A > B) return dir === 'asc' ? 1 : -1;
+          return 0;
+        });
+        renderStockTable(items);
+      });
+    });
+
+  })();
   // helper: measure card and set max-height so exactly 3 cards are visible
   function adjustListMaxHeight(containerId) {
     const list = document.getElementById(containerId);
@@ -263,6 +729,89 @@ if (document.getElementById('logoutBtn')) {
   window.addEventListener('resize', function () {
     adjustListMaxHeight('attente-list');
     adjustListMaxHeight('encours-list');
+  });
+
+  // Countdown updater: refresh all .countdown elements every second
+  function formatRemaining(ms) {
+    if (ms <= 0) return 'Heure dépassée';
+    const total = Math.floor(ms / 1000);
+    const days = Math.floor(total / 86400);
+    const hours = Math.floor((total % 86400) / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = total % 60;
+    if (days > 0) return `${days}j ${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m`;
+    return `${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m ${String(seconds).padStart(2,'0')}s`;
+  }
+
+  function updateCountdowns() {
+    const nodes = Array.from(document.querySelectorAll('.countdown'));
+    const now = Date.now();
+    nodes.forEach(n => {
+      const target = Number(n.dataset.target) || 0;
+      if (!target) {
+        n.textContent = '-';
+        n.classList.remove('countdown--expired', 'countdown--warning');
+        const next = n.nextElementSibling;
+        if (next && next.classList.contains('countdown-badge')) next.textContent = '';
+        return;
+      }
+      const diff = target - now;
+      n.textContent = formatRemaining(diff);
+      // manage classes and badge
+      n.classList.remove('countdown--expired', 'countdown--warning');
+      let badge = n.nextElementSibling;
+      if (!badge || !badge.classList.contains('countdown-badge')) {
+        badge = document.createElement('span');
+        badge.className = 'countdown-badge';
+        n.parentNode.insertBefore(badge, n.nextSibling);
+      }
+      if (diff <= 0) {
+        n.classList.add('countdown--expired');
+        badge.classList.remove('warn');
+        badge.classList.add('expired');
+        badge.textContent = 'Expirée';
+      } else if (diff <= 15 * 60 * 1000) {
+        n.classList.add('countdown--warning');
+        badge.classList.remove('expired');
+        badge.classList.add('warn');
+        badge.textContent = '< 15 min';
+      } else {
+        badge.classList.remove('warn', 'expired');
+        badge.textContent = '';
+      }
+    });
+    return nodes.length;
+  }
+
+  // Adaptive scheduler: reduce update frequency when many countdowns exist
+  let countdownTimer = null;
+  function scheduleUpdate() {
+    if (countdownTimer) clearTimeout(countdownTimer);
+    const count = updateCountdowns();
+    let delay = 1000;
+    if (count > 30) delay = 5000;
+    else if (count > 10) delay = 2000;
+    // Debug: log chosen frequency and number of countdowns (filterable)
+    try { adminDebug(`[countdown] timers=${count} nextUpdate=${delay}ms`); } catch (e) {}
+    countdownTimer = setTimeout(scheduleUpdate, delay);
+  }
+  // start the adaptive updater
+  scheduleUpdate();
+
+  // Pause updates when the page is hidden to save CPU; resume when visible again
+  document.addEventListener('visibilitychange', () => {
+    try {
+      if (document.hidden) {
+        if (countdownTimer) {
+          clearTimeout(countdownTimer);
+          countdownTimer = null;
+        }
+      } else {
+        // when tab becomes visible again, refresh immediately and restart scheduler
+        updateCountdowns();
+        scheduleUpdate();
+      }
+    } catch (e) { /* ignore */ }
   });
 
   // Change password UI handling
