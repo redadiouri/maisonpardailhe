@@ -13,7 +13,7 @@
         <div class="admin-tabs-vertical">
           <button class="tab-btn tab-btn-vertical active" data-tab="attente">Commandes en attente <span id="badge-attente" class="badge"></span></button>
           <button class="tab-btn tab-btn-vertical" data-tab="encours">Commandes en cours <span id="badge-encours" class="badge"></span></button>
-          <button class="tab-btn tab-btn-vertical" data-tab="stockage">Stockage</button>
+          <button class="tab-btn tab-btn-vertical" data-tab="menus">Menus</button>
         </div>
         <button id="logoutBtn" class="logout-btn">Déconnexion</button>
 
@@ -49,34 +49,37 @@
           <div id="encours-loader" class="loader" style="display:none;"></div>
           <div id="encours-list"></div>
         </div>
-        <div id="tab-stockage" class="tab-content">
-          <h2>Stockage</h2>
+        <div id="tab-menus" class="tab-content">
+          <h2>Menus</h2>
           <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
-            <form id="stock-form" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-              <input id="stock-name" placeholder="Nom du produit" required>
-              <input id="stock-ref" placeholder="Référence">
-              <input id="stock-qty" type="number" min="0" placeholder="Quantité" value="0">
+            <form id="menu-form" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+              <input id="menu-name" placeholder="Nom" required>
+              <input id="menu-price" type="number" min="0" placeholder="Prix (€)" step="0.01">
+              <input id="menu-stock" type="number" min="0" placeholder="Stock" value="0">
               <label style="display:flex;align-items:center;gap:0.25rem;">
-                <input id="stock-available" type="checkbox" checked>
-                <span style="font-size:0.9rem;">Disponible</span>
+                <input id="menu-is-quote" type="checkbox">
+                <span style="font-size:0.9rem;">Sur devis</span>
               </label>
-              <!-- Image field removed per request -->
+              <label style="display:flex;align-items:center;gap:0.25rem;">
+                <input id="menu-visible" type="checkbox" checked>
+                <span style="font-size:0.9rem;">Visible</span>
+              </label>
               <button type="submit" class="btn primary">➕ Ajouter</button>
             </form>
             <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-              <input id="stock-search" placeholder="Rechercher...">
-              <button id="stock-refresh" class="btn">⟳</button>
+              <input id="menu-search" placeholder="Rechercher...">
+              <button id="menu-refresh" class="btn">⟳</button>
             </div>
           </div>
-          <div id="stock-table-container">
-            <table id="stock-table" class="admin-table" style="width:100%; border-collapse:collapse;">
+          <div id="menu-table-container">
+            <table id="menu-table" class="admin-table" style="width:100%; border-collapse:collapse;">
               <thead>
                 <tr>
-                  <th data-sort="name">Nom</th>
-                  <th data-sort="ref">Réf.</th>
-                  <th data-sort="qty">Quantité</th>
-                  <th data-sort="available">Disponible</th>
-              <th class="col-modified">Modif.</th>
+                  <th>Nom</th>
+                  <th>Prix</th>
+                  <th>Stock</th>
+                  <th>Sur devis</th>
+                  <th>Visible</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -84,6 +87,7 @@
             </table>
           </div>
         </div>
+        <!-- Stockage removed: functionality merged into Menus -->
       </main>
     </div>
   </div>
