@@ -1,5 +1,7 @@
 // Simple JS pour login et dashboard admin
-const apiBase = 'http://localhost:3001/api/admin';
+// Use a relative API base so the admin UI works behind proxies / in production
+// (was hardcoded to http://localhost:3001 previously which breaks non-local deployments)
+const apiBase = '/api/admin';
 
 // Login
 if (document.getElementById('loginForm')) {
@@ -122,9 +124,10 @@ if (document.getElementById('logoutBtn')) {
           animateCards(listId);
         }, 80);
         try { localStorage.setItem('admin.activeTab', name); } catch (e) {}
-        // If the stockage tab is activated, load the stock list so seeded items appear
+        // If the stockage or menus tab is activated, load the corresponding list so seeded items appear
         try {
           if (name === 'stockage' && typeof loadStock === 'function') loadStock();
+          if (name === 'menus' && typeof loadMenus === 'function') loadMenus();
         } catch (e) { /* ignore */ }
       };
       activate(tabName);
@@ -146,6 +149,127 @@ if (document.getElementById('logoutBtn')) {
     // fallback: ensure default first tab is active
     const first = document.querySelector('.tab-btn');
     if (first) first.click();
+  })();
+
+  // Menus management (admin)
+  async function loadMenus() {
+    const container = document.querySelector('#tab-menus');
+    if (!container) return;
+    const tbody = document.querySelector('#menu-table tbody');
+    try {
+      const res = await fetch(apiBase + '/menus', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed');
+      const items = await res.json();
+      window._adminMenuItems = items;
+      renderMenusTable(items);
+    } catch (e) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="color:#f33; text-align:center;">Erreur de chargement des menus.</td></tr>';
+    }
+  }
+
+  function renderMenusTable(items) {
+    const tbody = document.querySelector('#menu-table tbody');
+    tbody.innerHTML = '';
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:#aaa; text-align:center;">Aucun menu.</td></tr>';
+      return;
+    }
+    items.forEach(it => {
+      const tr = document.createElement('tr');
+      tr.dataset.id = it.id;
+      tr.innerHTML = `
+        <td>${escapeHtml(it.name)}</td>
+        <td>${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</td>
+        <td>${Number(it.stock||0)}</td>
+        <td>${it.is_quote ? 'Oui' : 'Non'}</td>
+        <td>${it.visible_on_menu ? 'Oui' : 'Non'}</td>
+        <td>
+          <button class="btn small" data-action="edit" data-id="${it.id}">✏️</button>
+          <button class="btn small" data-action="delete-menu" data-id="${it.id}">❌</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // wire menu form and actions
+  (function wireMenuUI(){
+    const form = document.getElementById('menu-form');
+    const search = document.getElementById('menu-search');
+    const refresh = document.getElementById('menu-refresh');
+
+    if (form) {
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const name = document.getElementById('menu-name').value.trim();
+        const price = parseFloat(document.getElementById('menu-price').value || '0');
+        const stock = Math.max(0, Math.floor(Number(document.getElementById('menu-stock').value || 0)));
+        const is_quote = !!document.getElementById('menu-is-quote').checked;
+        const visible_on_menu = !!document.getElementById('menu-visible').checked;
+        if (!name) return alert('Nom requis');
+        if (price < 0) return alert('Prix invalide');
+        try {
+          const body = { name, description: '', price_cents: Math.round(price*100), is_quote, stock, visible_on_menu };
+          const res = await fetch(apiBase + '/menus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials:'include' });
+          if (!res.ok) throw new Error('err');
+          form.reset();
+          await loadMenus();
+        } catch (err) { alert('Erreur lors de la sauvegarde'); }
+      });
+    }
+
+    if (refresh) refresh.addEventListener('click', ()=> loadMenus());
+    if (search) search.addEventListener('input', ()=>{
+      const q = search.value.trim().toLowerCase();
+      const items = (window._adminMenuItems || []).filter(it => (it.name||'').toLowerCase().includes(q) || (it.description||'').toLowerCase().includes(q));
+      renderMenusTable(items);
+    });
+
+    document.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === 'delete-menu') {
+        if (!confirm('Supprimer ce menu ?')) return;
+        try {
+          const res = await fetch(apiBase + '/menus/' + id, { method: 'DELETE', credentials: 'include' });
+          if (!res.ok) throw new Error('err');
+          await loadMenus();
+        } catch (e) { alert('Erreur suppression'); }
+      }
+      if (action === 'edit') {
+        // simple inline edit: load item values into the form for editing -> on submit we'll perform create; editing not fully implemented here (could open modal)
+        const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
+        if (!item) return;
+        document.getElementById('menu-name').value = item.name || '';
+        document.getElementById('menu-price').value = (Number(item.price_cents||0)/100).toFixed(2);
+        document.getElementById('menu-stock').value = Number(item.stock||0);
+        document.getElementById('menu-is-quote').checked = !!item.is_quote;
+        document.getElementById('menu-visible').checked = !!item.visible_on_menu;
+        // change form submit to perform update
+        form.dataset.editingId = id;
+        // replace submit handler to call PUT when editing
+        const submitHandler = async (ev) => {
+          ev.preventDefault();
+          const name = document.getElementById('menu-name').value.trim();
+          const price = parseFloat(document.getElementById('menu-price').value || '0');
+          const stock = Math.max(0, Math.floor(Number(document.getElementById('menu-stock').value || 0)));
+          const is_quote = !!document.getElementById('menu-is-quote').checked;
+          const visible_on_menu = !!document.getElementById('menu-visible').checked;
+          try {
+            const body = { name, description: '', price_cents: Math.round(price*100), is_quote, stock, visible_on_menu };
+            const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials:'include' });
+            if (!res.ok) throw new Error('err');
+            delete form.dataset.editingId;
+            form.removeEventListener('submit', submitHandler);
+            form.reset();
+            await loadMenus();
+          } catch (err) { alert('Erreur lors de la mise à jour'); }
+        };
+        form.addEventListener('submit', submitHandler);
+      }
+    });
   })();
 
   // Load commandes
