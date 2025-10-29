@@ -38,10 +38,10 @@ body.admin-bg{
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .admin-dashboard-wrapper{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
-.admin-dashboard-card{width:100%;max-width:1100px;display:flex;gap:24px;background:linear-gradient(180deg,var(--panel),#0f1112);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden}
+.admin-dashboard-card{width:100%;max-width:1400px;display:flex;gap:24px;background:linear-gradient(180deg,var(--panel),#0f1112);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden}
 
 /* Sidebar */
-.admin-sidebar{width:260px;min-width:200px;background:linear-gradient(180deg,var(--accent-dark),var(--accent));padding:28px 18px;display:flex;flex-direction:column;gap:16px}
+.admin-sidebar{width:280px;min-width:200px;background:linear-gradient(180deg,var(--accent-dark),var(--accent));padding:28px 18px;display:flex;flex-direction:column;gap:16px}
 .admin-sidebar h1{margin:0;color:#fff;font-size:1.6rem;font-weight:700}
 .admin-sidebar .logo-sub{color:rgba(255,255,255,0.9);font-size:0.9rem}
 .admin-tabs-vertical{display:flex;flex-direction:column;gap:12px}
