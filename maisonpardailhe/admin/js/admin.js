@@ -180,15 +180,15 @@ if (document.getElementById('logoutBtn')) {
       const desc = (it.description || '').toString().trim();
       const shortDesc = desc.length > 60 ? escapeHtml(desc.slice(0, 57)) + '...' : escapeHtml(desc);
       tr.innerHTML = `
-        <td>${escapeHtml(it.name)}</td>
-        <td>${escapeHtml(it.slug || '')}</td>
-        <td title="${escapeAttr(desc)}">${shortDesc}</td>
-        <td>${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</td>
-        <td>${Number(it.stock||0)}</td>
-        <td>${it.is_quote ? 'Oui' : 'Non'}</td>
-        <td>${it.available ? 'Oui' : 'Non'}</td>
-        <td>${it.visible_on_menu ? 'Oui' : 'Non'}</td>
-        <td>
+        <td data-label="Nom"><span class="value">${escapeHtml(it.name)}</span></td>
+        <td data-label="Slug"><span class="value">${escapeHtml(it.slug || '')}</span></td>
+        <td data-label="Description" title="${escapeAttr(desc)}"><span class="value">${shortDesc}</span></td>
+        <td data-label="Prix"><span class="value">${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</span></td>
+        <td data-label="Stock"><span class="value">${Number(it.stock||0)}</span></td>
+        <td data-label="Sur devis"><span class="value">${it.is_quote ? 'Oui' : 'Non'}</span></td>
+        <td data-label="Disponible"><span class="value">${it.available ? 'Oui' : 'Non'}</span></td>
+        <td data-label="Visible"><span class="value">${it.visible_on_menu ? 'Oui' : 'Non'}</span></td>
+        <td data-label="Actions">
           <button class="btn small" data-action="edit" data-id="${it.id}">✏️</button>
           <button class="btn small" data-action="delete-menu" data-id="${it.id}">❌</button>
         </td>

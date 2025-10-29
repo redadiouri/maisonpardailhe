@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Commande = require('../models/commande');
+const db = require('../models/db');
+const Menu = require('../models/menu');
 
 // Validation simple améliorée
 function parseDateString(s) {
@@ -99,6 +101,60 @@ function validateCommande(data) {
 
 router.post('/', async (req, res) => {
   const data = req.body;
+  // If items are provided as [{menu_id, qty}], perform transactional stock checks and decrement
+  if (Array.isArray(data.items) && data.items.length > 0) {
+    // validate basic customer fields
+    const v = validateCommande(data);
+    if (!v.ok) return res.status(400).json({ message: v.error || 'Données invalides.' });
+
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
+      // lock each menu row and check stock
+      for (const it of data.items) {
+        const menuId = Number(it.menu_id);
+        const qty = Math.floor(Number(it.qty) || 0);
+        if (!menuId || qty <= 0) {
+          await conn.rollback();
+          return res.status(400).json({ message: 'Item invalide.' });
+        }
+        const [rows] = await conn.execute('SELECT stock FROM menus WHERE id = ? FOR UPDATE', [menuId]);
+        const row = rows[0];
+        if (!row) {
+          await conn.rollback();
+          return res.status(404).json({ message: 'Menu introuvable', menu_id: menuId });
+        }
+        if (row.stock < qty) {
+          await conn.rollback();
+          return res.status(409).json({ message: 'Stock insuffisant', menu_id: menuId, available: row.stock });
+        }
+        // decrement
+        const newStock = row.stock - qty;
+        await conn.execute('UPDATE menus SET stock = ? WHERE id = ?', [newStock, menuId]);
+      }
+
+      // All stock decremented successfully — create a commande record. Store produit as JSON string for traceability
+      const produit = JSON.stringify(data.items);
+      const id = await (async () => {
+        const [result] = await conn.execute(
+          `INSERT INTO commandes (nom_complet, telephone, email, produit, date_retrait, creneau, location, precisions, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
+          [data.nom_complet, data.telephone, data.email || '', produit, data.date_retrait, data.creneau, data.location || 'roquettes', data.precisions]
+        );
+        return result.insertId;
+      })();
+
+      await conn.commit();
+      res.status(201).json({ id });
+    } catch (err) {
+      try { await conn.rollback(); } catch (e) {}
+      res.status(500).json({ message: 'Erreur serveur.' });
+    } finally {
+      conn.release();
+    }
+    return;
+  }
+
+  // Backwards-compatible single-product behaviour
   const v = validateCommande(data);
   if (!v.ok) return res.status(400).json({ message: v.error || 'Données invalides.' });
   try {

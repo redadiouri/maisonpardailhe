@@ -154,13 +154,16 @@ function initClickCollectForm() {
         const produitInputs = document.querySelectorAll('#cc-selection-panel .selection-item__controls input[type="number"]');
         const produits = [];
         produitInputs.forEach((inp) => {
-            const qty = Number(inp.value) || 0;
+            const qty = Math.max(0, Math.floor(Number(inp.value) || 0));
             if (qty > 0) {
-                const item = inp.closest('.selection-item')?.dataset.item || (inp.name || 'item');
-                produits.push({ item, qty });
+                const container = inp.closest('.selection-item');
+                const menuId = container?.dataset?.menuId ? Number(container.dataset.menuId) : null;
+                const title = container?.querySelector('h4')?.textContent?.trim() || (inp.name || 'item');
+                // push structured item (menu_id if available) so server can decrement stock
+                produits.push({ menu_id: menuId, title, qty });
             }
         });
-        const produit = produits.map(p => `${p.item}×${p.qty}`).join('; ');
+        const produit = produits.map(p => `${p.title}×${p.qty}`).join('; ');
 
         // Validation simple
         if (!nom_complet || !telephone || !date_retrait || !creneau || !location) {
@@ -226,10 +229,15 @@ function initClickCollectForm() {
         }
 
         try {
+            const payload = { nom_complet, telephone, email, produit, date_retrait, creneau, precisions, location };
+            // include structured items so server can atomically decrement stock
+            if (produits.length > 0 && produits.every(p => p.menu_id)) {
+                payload.items = produits.map(p => ({ menu_id: p.menu_id, qty: p.qty }));
+            }
             const res = await fetch('/api/commandes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nom_complet, telephone, email, produit, date_retrait, creneau, precisions, location })
+                body: JSON.stringify(payload)
             });
             if (res.ok) {
                 form.reset();
@@ -311,8 +319,49 @@ function initSelectionPanel() {
     const selectionGroup = toggle.closest('.selection-group');
     const summary = toggle.querySelector('.selection-display__summary');
     const closeButton = panel.querySelector('.selection-panel__close');
-    const quantityButtons = panel.querySelectorAll('.quantity-btn');
-    const quantityInputs = panel.querySelectorAll('.selection-item__controls input[type="number"]');
+
+    // Attach handlers to quantity controls. We call this once and also when menus are loaded dynamically.
+    let quantityButtons = [];
+    let quantityInputs = [];
+    const attachControls = () => {
+        quantityButtons = Array.from(panel.querySelectorAll('.quantity-btn'));
+        quantityInputs = Array.from(panel.querySelectorAll('.selection-item__controls input[type="number"]'));
+
+        // remove previous listeners by replacing nodes (simple approach) is avoided; instead we attach handlers idempotently
+        quantityButtons.forEach((button) => {
+            // prevent duplicate handlers by checking a marker
+            if (button._menuBound) return;
+            button._menuBound = true;
+            button.addEventListener('click', () => {
+                const controls = button.closest('.selection-item__controls');
+                const input = controls?.querySelector('input[type="number"]');
+                if (!input) {
+                    return;
+                }
+
+                const current = normaliseInputValue(input);
+                const action = button.dataset.action;
+
+                if (action === 'increment') {
+                    input.value = String(current + 1);
+                }
+
+                if (action === 'decrement') {
+                    input.value = String(Math.max(current - 1, 0));
+                }
+
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                updateDisplay();
+            });
+        });
+
+        quantityInputs.forEach((input) => {
+            if (input._menuBound) return;
+            input._menuBound = true;
+            input.addEventListener('input', updateDisplay);
+            input.addEventListener('blur', updateDisplay);
+        });
+    };
 
     const normaliseInputValue = (input) => {
         const value = Math.max(Number(input.value) || 0, 0);
@@ -414,33 +463,11 @@ function initSelectionPanel() {
         });
     }
 
-    quantityButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            const controls = button.closest('.selection-item__controls');
-            const input = controls?.querySelector('input[type="number"]');
-            if (!input) {
-                return;
-            }
-
-            const current = normaliseInputValue(input);
-            const action = button.dataset.action;
-
-            if (action === 'increment') {
-                input.value = String(current + 1);
-            }
-
-            if (action === 'decrement') {
-                input.value = String(Math.max(current - 1, 0));
-            }
-
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            updateDisplay();
-        });
-    });
-
-    quantityInputs.forEach((input) => {
-        input.addEventListener('input', updateDisplay);
-        input.addEventListener('blur', updateDisplay);
+    // Attach controls now (in case selection items already present) and whenever menus are loaded dynamically
+    attachControls();
+    document.addEventListener('menus:loaded', () => {
+        attachControls();
+        updateDisplay();
     });
 
     updateDisplay();

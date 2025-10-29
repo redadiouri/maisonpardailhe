@@ -131,150 +131,8 @@
                         </button>
                         <div id="cc-selection-panel" class="selection-panel" hidden tabindex="-1">
                             <p class="selection-panel__hint">Sélectionnez les pièces et ajustez les quantités pour préparer votre commande Click &amp; Collect.</p>
-                            <div class="selection-grid">
-                                <div class="selection-item" data-item="pate">
-                                    <div class="selection-item__info">
-                                        <h4>Pâté en croûte Maison</h4>
-                                        <p>Pâte briochée croustillante, farce de porc fermier, foie gras et pistaches. Jus réduit servi séparément.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer une part de pâté en croûte">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[pate]" aria-label="Quantité de pâté en croûte">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter une part de pâté en croûte">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="jambon">
-                                    <div class="selection-item__info">
-                                        <h4>Jambon blanc médaillé</h4>
-                                        <p>Cuit au torchon, relevé d’un bouillon de légumes et herbes fraîches, texture fondante.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer une portion de jambon blanc">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[jambon]" aria-label="Quantité de jambon blanc">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter une portion de jambon blanc">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="saucisse">
-                                    <div class="selection-item__info">
-                                        <h4>Saucisse de Toulouse</h4>
-                                        <p>Porc fermier d’Occitanie, boyau naturel, hachage gros. Disponible crue ou rôtie.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer une portion de saucisse de Toulouse">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[saucisse]" aria-label="Quantité de saucisse de Toulouse">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter une portion de saucisse de Toulouse">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="terrine">
-                                    <div class="selection-item__info">
-                                        <h4>Terrine aux cèpes</h4>
-                                        <p>Chair de porc, cèpes sautés, vin rouge corsé. Idéale pour vos plateaux dégustation.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer une terrine aux cèpes">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[terrine]" aria-label="Quantité de terrine aux cèpes">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter une terrine aux cèpes">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="rillettes">
-                                    <div class="selection-item__info">
-                                        <h4>Rillettes de canard</h4>
-                                        <p>Canard confit lentement, assaisonnement signature rouge &amp; noir, texture filante.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer des rillettes de canard">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[rillettes]" aria-label="Quantité de rillettes de canard">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter des rillettes de canard">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="coppa">
-                                    <div class="selection-item__info">
-                                        <h4>Coppa affinée</h4>
-                                        <p>Affinage 6 mois, fumage léger, mélange de poivres rouges et noirs.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer de la coppa affinée">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[coppa]" aria-label="Quantité de coppa affinée">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter de la coppa affinée">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="poulet">
-                                    <div class="selection-item__info">
-                                        <h4>Poulet fermier Label Rouge</h4>
-                                        <p>Marinade paprika fumé et herbes du jardin, cuisson lente à la rôtissoire.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer un poulet Label Rouge">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[poulet]" aria-label="Quantité de poulet Label Rouge">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter un poulet Label Rouge">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="travers">
-                                    <div class="selection-item__info">
-                                        <h4>Travers caramélisés</h4>
-                                        <p>Glaçage miel poivre noir, cuisson au jus réduit. Servi avec pommes de terre confites.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer des travers caramélisés">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[travers]" aria-label="Quantité de travers caramélisés">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter des travers caramélisés">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="cassoulet">
-                                    <div class="selection-item__info">
-                                        <h4>Cassoulet toulousain</h4>
-                                        <p>Lingots du Lauragais, confit de canard, saucisse de Toulouse et couenne fondante, gratiné au four.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer une portion de cassoulet toulousain">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[cassoulet]" aria-label="Quantité de cassoulet toulousain">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter une portion de cassoulet toulousain">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="porcelet">
-                                    <div class="selection-item__info">
-                                        <h4>Porcelet de fête</h4>
-                                        <p>Disponible sur commande (48 h). Farce aux châtaignes, jus relevé.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer un porcelet de fête">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[porcelet]" aria-label="Quantité de porcelet de fête">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter un porcelet de fête">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="pickles">
-                                    <div class="selection-item__info">
-                                        <h4>Pickles de légumes</h4>
-                                        <p>Légumes de saison, vinaigre au poivre de Sichuan, couleur rubis.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer un bocal de pickles">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[pickles]" aria-label="Quantité de pickles de légumes">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter un bocal de pickles">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="gelee">
-                                    <div class="selection-item__info">
-                                        <h4>Gelée de piment d'Espelette</h4>
-                                        <p>Gelée brillante, équilibre sucre/épices pour sublimer vos charcuteries.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer une gelée d’Espelette">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[gelee]" aria-label="Quantité de gelée de piment d’Espelette">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter une gelée d’Espelette">+</button>
-                                    </div>
-                                </div>
-                                <div class="selection-item" data-item="moutarde">
-                                    <div class="selection-item__info">
-                                        <h4>Moutarde noire maison</h4>
-                                        <p>Graines torréfiées, vinaigre rouge, notes fumées. Idéal pour nos jambons.</p>
-                                    </div>
-                                    <div class="selection-item__controls">
-                                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Retirer une moutarde noire">−</button>
-                                        <input type="number" min="0" value="0" name="cc-items[moutarde]" aria-label="Quantité de moutarde noire maison">
-                                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Ajouter une moutarde noire">+</button>
-                                    </div>
-                                </div>
+                            <div id="selection-grid" class="selection-grid">
+                                <!-- Selection items will be injected here by js/menus.js -->
                             </div>
                             <button type="button" class="selection-panel__close">Valider la sélection</button>
                         </div>
@@ -329,6 +187,7 @@
         <!-- flatpickr + locale -->
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
-        <script src="js/app.js"></script>
+    <script src="js/menus.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
