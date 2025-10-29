@@ -171,17 +171,22 @@ if (document.getElementById('logoutBtn')) {
     const tbody = document.querySelector('#menu-table tbody');
     tbody.innerHTML = '';
     if (!items || items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="color:#aaa; text-align:center;">Aucun menu.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="color:#aaa; text-align:center;">Aucun menu.</td></tr>';
       return;
     }
     items.forEach(it => {
       const tr = document.createElement('tr');
       tr.dataset.id = it.id;
+      const desc = (it.description || '').toString().trim();
+      const shortDesc = desc.length > 60 ? escapeHtml(desc.slice(0, 57)) + '...' : escapeHtml(desc);
       tr.innerHTML = `
         <td>${escapeHtml(it.name)}</td>
+        <td>${escapeHtml(it.slug || '')}</td>
+        <td title="${escapeAttr(desc)}">${shortDesc}</td>
         <td>${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</td>
         <td>${Number(it.stock||0)}</td>
         <td>${it.is_quote ? 'Oui' : 'Non'}</td>
+        <td>${it.available ? 'Oui' : 'Non'}</td>
         <td>${it.visible_on_menu ? 'Oui' : 'Non'}</td>
         <td>
           <button class="btn small" data-action="edit" data-id="${it.id}">✏️</button>
@@ -202,14 +207,17 @@ if (document.getElementById('logoutBtn')) {
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const name = document.getElementById('menu-name').value.trim();
+        const slug = (document.getElementById('menu-slug') && document.getElementById('menu-slug').value.trim()) || undefined;
+        const description = (document.getElementById('menu-description') && document.getElementById('menu-description').value.trim()) || '';
         const price = parseFloat(document.getElementById('menu-price').value || '0');
         const stock = Math.max(0, Math.floor(Number(document.getElementById('menu-stock').value || 0)));
         const is_quote = !!document.getElementById('menu-is-quote').checked;
         const visible_on_menu = !!document.getElementById('menu-visible').checked;
+        const available = !!document.getElementById('menu-available').checked;
         if (!name) return alert('Nom requis');
         if (price < 0) return alert('Prix invalide');
         try {
-          const body = { name, description: '', price_cents: Math.round(price*100), is_quote, stock, visible_on_menu };
+          const body = { name, slug, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
           const res = await fetch(apiBase + '/menus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials:'include' });
           if (!res.ok) throw new Error('err');
           form.reset();
@@ -242,23 +250,29 @@ if (document.getElementById('logoutBtn')) {
         // simple inline edit: load item values into the form for editing -> on submit we'll perform create; editing not fully implemented here (could open modal)
         const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
         if (!item) return;
-        document.getElementById('menu-name').value = item.name || '';
-        document.getElementById('menu-price').value = (Number(item.price_cents||0)/100).toFixed(2);
-        document.getElementById('menu-stock').value = Number(item.stock||0);
-        document.getElementById('menu-is-quote').checked = !!item.is_quote;
-        document.getElementById('menu-visible').checked = !!item.visible_on_menu;
+  document.getElementById('menu-name').value = item.name || '';
+  if (document.getElementById('menu-slug')) document.getElementById('menu-slug').value = item.slug || '';
+  if (document.getElementById('menu-description')) document.getElementById('menu-description').value = item.description || '';
+  document.getElementById('menu-price').value = (Number(item.price_cents||0)/100).toFixed(2);
+  document.getElementById('menu-stock').value = Number(item.stock||0);
+  document.getElementById('menu-is-quote').checked = !!item.is_quote;
+  if (document.getElementById('menu-available')) document.getElementById('menu-available').checked = !!item.available;
+  document.getElementById('menu-visible').checked = !!item.visible_on_menu;
         // change form submit to perform update
         form.dataset.editingId = id;
         // replace submit handler to call PUT when editing
         const submitHandler = async (ev) => {
           ev.preventDefault();
           const name = document.getElementById('menu-name').value.trim();
+          const slug = (document.getElementById('menu-slug') && document.getElementById('menu-slug').value.trim()) || undefined;
+          const description = (document.getElementById('menu-description') && document.getElementById('menu-description').value.trim()) || '';
           const price = parseFloat(document.getElementById('menu-price').value || '0');
           const stock = Math.max(0, Math.floor(Number(document.getElementById('menu-stock').value || 0)));
           const is_quote = !!document.getElementById('menu-is-quote').checked;
           const visible_on_menu = !!document.getElementById('menu-visible').checked;
+          const available = !!document.getElementById('menu-available').checked;
           try {
-            const body = { name, description: '', price_cents: Math.round(price*100), is_quote, stock, visible_on_menu };
+            const body = { name, slug, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
             const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials:'include' });
             if (!res.ok) throw new Error('err');
             delete form.dataset.editingId;
