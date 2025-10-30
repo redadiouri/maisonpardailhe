@@ -54,11 +54,15 @@
 
     const controls = document.createElement('div'); controls.className = 'selection-item__controls';
     const dec = document.createElement('button'); dec.type='button'; dec.className='quantity-btn'; dec.dataset.action='decrement'; dec.setAttribute('aria-label','Retirer'); dec.textContent='−';
-    const input = document.createElement('input'); input.type='number'; input.min='0'; input.value='0'; input.name = `cc-items[${m.id}]`;
+  const input = document.createElement('input'); input.type='number'; input.min='0'; input.value='0'; input.name = `cc-items[${m.id}]`;
+  // set maximum allowed quantity to the available stock
+  input.max = String(Math.max(0, Number(m.stock || 0)));
+  input.dataset.max = String(Math.max(0, Number(m.stock || 0)));
     const inc = document.createElement('button'); inc.type='button'; inc.className='quantity-btn'; inc.dataset.action='increment'; inc.setAttribute('aria-label','Ajouter'); inc.textContent='+';
     const stockSpan = document.createElement('div'); stockSpan.style.fontSize='0.85rem'; stockSpan.style.color='rgba(247,247,247,0.7)'; stockSpan.style.marginLeft='0.5rem'; stockSpan.textContent = `Stock: ${m.stock}`;
     if (m.stock <= 0) {
       inc.disabled = true;
+      input.disabled = true;
       div.classList.add('selection-item--disabled');
     }
     controls.appendChild(dec); controls.appendChild(input); controls.appendChild(inc); controls.appendChild(stockSpan);
@@ -83,7 +87,8 @@
     if (grid) {
       grid.innerHTML = '';
       menus.forEach(m => {
-        // skip items not visible_on_menu? still include
+        // do not include items that are 'sur devis' in the Click & Collect selection
+        if (m.is_quote) return;
         const item = renderSelectionItem(m);
         grid.appendChild(item);
       });

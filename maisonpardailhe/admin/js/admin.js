@@ -99,6 +99,113 @@ function adminDebug(...args) {
   } catch (e) { /* ignore */ }
 }
 
+// Simple confirm modal helper. Returns a Promise<boolean>.
+function showConfirmModal(title, message) {
+  return new Promise((resolve) => {
+    // create overlay
+    let overlay = document.getElementById('confirm-modal-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'confirm-modal-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.left = '0';
+      overlay.style.top = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.background = 'rgba(0,0,0,0.6)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '9999';
+      const box = document.createElement('div');
+      box.id = 'confirm-modal-box';
+      box.style.background = 'var(--card)';
+      box.style.color = '#fff';
+      box.style.padding = '18px';
+      box.style.borderRadius = '10px';
+      box.style.maxWidth = '540px';
+      box.style.width = '90%';
+      box.style.boxShadow = '0 12px 40px rgba(0,0,0,0.6)';
+      const h = document.createElement('h3'); h.textContent = title || 'Confirmer'; h.style.margin = '0 0 8px 0';
+      const p = document.createElement('p'); p.textContent = message || ''; p.style.margin = '0 0 16px 0'; p.style.color = 'var(--muted)';
+      const actions = document.createElement('div'); actions.style.display = 'flex'; actions.style.justifyContent = 'flex-end'; actions.style.gap = '8px';
+      const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn ghost'; cancelBtn.textContent = 'Annuler';
+      const okBtn = document.createElement('button'); okBtn.className = 'btn primary'; okBtn.textContent = 'Confirmer';
+      actions.appendChild(cancelBtn); actions.appendChild(okBtn);
+      box.appendChild(h); box.appendChild(p); box.appendChild(actions);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      cancelBtn.addEventListener('click', () => { overlay.remove(); resolve(false); });
+      okBtn.addEventListener('click', () => { overlay.remove(); resolve(true); });
+      // close on overlay click outside box
+      overlay.addEventListener('click', (ev) => { if (ev.target === overlay) { overlay.remove(); resolve(false); } });
+    } else {
+      // overlay exists: reuse
+      const ok = overlay.querySelector('.btn.primary');
+      const cancel = overlay.querySelector('.btn.ghost');
+      overlay.querySelector('h3').textContent = title || 'Confirmer';
+      overlay.querySelector('p').textContent = message || '';
+      overlay.style.display = 'flex';
+      const cleanup = () => { overlay.style.display = 'none'; };
+      cancel.onclick = () => { cleanup(); resolve(false); };
+      ok.onclick = () => { cleanup(); resolve(true); };
+    }
+  });
+}
+
+// Small toast helper
+function showToast(message, options = {}) {
+  try {
+    const duration = options.duration || 3000;
+    const type = options.type || 'success'; // 'success' | 'error' | 'info'
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      container.style.position = 'fixed';
+      container.style.right = '20px';
+      container.style.bottom = '20px';
+      container.style.zIndex = 10000;
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.gap = '8px';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-message toast--' + type;
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(8px)';
+    toast.style.transition = 'opacity 240ms ease, transform 240ms ease';
+
+    // choose icon
+    let icon = '';
+    if (type === 'success') {
+      icon = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    } else if (type === 'error') {
+      icon = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    } else {
+      icon = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>';
+    }
+
+    toast.innerHTML = icon + '<div class="toast-text">' + String(message) + '</div>';
+    container.appendChild(toast);
+
+    // show
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      setTimeout(() => { try { toast.remove(); } catch (e) {} }, 260);
+    }, duration);
+  } catch (e) { /* ignore */ }
+}
+
 // Dashboard
 if (document.getElementById('logoutBtn')) {
   document.getElementById('logoutBtn').onclick = async () => {
@@ -151,6 +258,131 @@ if (document.getElementById('logoutBtn')) {
     if (first) first.click();
   })();
 
+  // Inline editing for menus: double-click to edit cells in-place, commit on Enter/blur, cancel on Escape.
+  (function wireMenusInline(){
+    const PENDING = new Map();
+    const DEBOUNCE_MS = 1200;
+    const SUCCESS_MS = 1000;
+
+    function rowPendingCount(id) {
+      let c = 0;
+      for (const key of PENDING.keys()) if (key.startsWith(String(id) + ':')) c++;
+      return c;
+    }
+
+    function setRowModified(tr, flag) {
+      try {
+        const modCell = tr.querySelector('td[data-field="modified"]');
+        if (modCell) modCell.innerHTML = flag ? '<span class="row-modified-badge">En attente</span>' : '';
+      } catch (e) {}
+    }
+
+    document.addEventListener('dblclick', (e) => {
+      const td = e.target.closest && e.target.closest('#menu-table td[data-field]');
+      if (!td) return;
+      const tr = td.closest && td.closest('tr');
+      if (!tr || !tr.dataset.id) return;
+      const id = tr.dataset.id;
+      const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
+      if (!item) return;
+      const field = td.dataset.field;
+      if (td.dataset.editing === '1') return;
+      td.dataset.editing = '1';
+      const original = td.textContent;
+
+      let input;
+      if (field === 'available' || field === 'visible_on_menu' || field === 'is_quote') {
+        input = document.createElement('input'); input.type = 'checkbox';
+        input.checked = !!item[field];
+      } else if (field === 'stock' || field === 'price_cents') {
+        input = document.createElement('input'); input.type = 'number'; input.min = '0';
+        if (field === 'price_cents') input.value = Number(item.price_cents||0)/100;
+        else input.value = Number(item.stock||0);
+        if (field === 'stock') input.step = '1'; else input.step = '0.01';
+      } else {
+        input = document.createElement('input'); input.type = 'text'; input.value = item[field] || '';
+      }
+      input.style.width = '100%'; input.style.boxSizing = 'border-box';
+      td.innerHTML = ''; td.appendChild(input);
+
+      const cancel = () => { td.removeAttribute('data-editing'); td.textContent = original; };
+
+      const commit = () => {
+        if (td.dataset.editing !== '1') return;
+        let newVal;
+        if (field === 'available' || field === 'visible_on_menu' || field === 'is_quote') newVal = !!input.checked;
+        else if (field === 'stock') newVal = Math.max(0, Math.floor(Number(input.value) || 0));
+        else if (field === 'price_cents') newVal = Math.round((Number(input.value) || 0) * 100);
+        else newVal = String(input.value || '').trim();
+
+        // simple validation
+        if (field === 'name' && !newVal) { alert('Le nom ne peut pas être vide.'); input.focus(); return; }
+        if (field === 'price_cents' && newVal < 0) { alert('Prix invalide'); input.focus(); return; }
+
+        // unchanged
+        if (String(newVal) === String(item[field] ?? '')) { cancel(); return; }
+
+        const key = `${id}:${field}`;
+        const origValue = item[field];
+        const origText = original;
+
+        // optimistic update
+        item[field] = newVal;
+        window._adminMenuItems = (window._adminMenuItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
+        td.removeAttribute('data-editing');
+        // display value (format price)
+        if (field === 'price_cents') td.textContent = (item.is_quote ? 'Sur devis' : ((Number(item.price_cents||0)/100).toFixed(2)+'€'));
+        else if (field === 'available' || field === 'visible_on_menu' || field === 'is_quote') td.textContent = item[field] ? 'Oui' : 'Non';
+        else td.textContent = String(item[field]);
+
+        const badge = document.createElement('span'); badge.className = 'cell-badge pending'; badge.innerHTML = '<span class="cell-spinner"></span><span class="cell-undo">Annuler</span>';
+        td.appendChild(badge); td.dataset.scheduled = '1';
+        if (tr) { tr.dataset.modified = '1'; setRowModified(tr, true); }
+
+        const doUndo = () => {
+          const p = PENDING.get(key);
+          if (p) { if (p.timer) clearTimeout(p.timer); PENDING.delete(key); }
+          item[field] = origValue; window._adminMenuItems = (window._adminMenuItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
+          if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+          td.textContent = origText; td.removeAttribute('data-editing'); td.removeAttribute('data-scheduled');
+          if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
+        };
+        const undoEl = badge.querySelector('.cell-undo'); if (undoEl) undoEl.addEventListener('click', (ev)=>{ ev.stopPropagation(); doUndo(); });
+
+        const timer = setTimeout(async () => {
+          PENDING.set(key, { timer:null, badge, td, origValue, origText });
+          try {
+            const body = {};
+            if (field === 'price_cents') body.price_cents = Number(item.price_cents || 0);
+            else body[field] = item[field];
+            const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(body) });
+            if (!res.ok) throw new Error('save-failed');
+            // success
+            if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+            const success = document.createElement('span'); success.className = 'cell-success'; success.textContent = '✔'; td.appendChild(success);
+            delete td.dataset.scheduled; PENDING.delete(key);
+            if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
+            setTimeout(()=>{ if (success && success.parentNode) success.parentNode.removeChild(success); }, SUCCESS_MS);
+          } catch (err) {
+            // rollback
+            item[field] = origValue; window._adminMenuItems = (window._adminMenuItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
+            if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+            delete td.dataset.scheduled; td.textContent = origText; td.classList.add('cell-rollback'); setTimeout(()=> td.classList.remove('cell-rollback'), 700);
+            PENDING.delete(key);
+            if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
+            alert('Erreur lors de la sauvegarde — modification annulée.');
+          }
+        }, DEBOUNCE_MS);
+
+        PENDING.set(key, { timer, badge, td, origValue, origText });
+      };
+
+      input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); commit(); } else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); } });
+      input.addEventListener('blur', () => { setTimeout(commit, 120); });
+      try { input.focus(); if (input.select) input.select(); } catch (e) {}
+    });
+  })();
+
   // Menus management (admin)
   async function loadMenus() {
     const container = document.querySelector('#tab-menus');
@@ -180,17 +412,19 @@ if (document.getElementById('logoutBtn')) {
       const desc = (it.description || '').toString().trim();
       const shortDesc = desc.length > 60 ? escapeHtml(desc.slice(0, 57)) + '...' : escapeHtml(desc);
       tr.innerHTML = `
-        <td data-label="Nom"><span class="value">${escapeHtml(it.name)}</span></td>
-        <td data-label="Slug"><span class="value">${escapeHtml(it.slug || '')}</span></td>
-        <td data-label="Description" title="${escapeAttr(desc)}"><span class="value">${shortDesc}</span></td>
-        <td data-label="Prix"><span class="value">${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</span></td>
-        <td data-label="Stock"><span class="value">${Number(it.stock||0)}</span></td>
-        <td data-label="Sur devis"><span class="value">${it.is_quote ? 'Oui' : 'Non'}</span></td>
-        <td data-label="Disponible"><span class="value">${it.available ? 'Oui' : 'Non'}</span></td>
-        <td data-label="Visible"><span class="value">${it.visible_on_menu ? 'Oui' : 'Non'}</span></td>
+  <td data-label="Nom" data-field="name"><span class="value">${escapeHtml(it.name)}</span></td>
+  <td data-label="Slug" data-field="slug"><span class="value">${escapeHtml(it.slug || '')}</span></td>
+  <td data-label="Description" data-field="description" title="${escapeAttr(desc)}"><span class="value">${shortDesc}</span></td>
+  <td data-label="Prix" data-field="price_cents"><span class="value">${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</span></td>
+  <td data-label="Stock" data-field="stock"><span class="value">${Number(it.stock||0)}</span></td>
+  <td data-label="Sur devis" data-field="is_quote"><span class="value">${it.is_quote ? 'Oui' : 'Non'}</span></td>
+  <td data-label="Disponible" data-field="available"><span class="value">${it.available ? 'Oui' : 'Non'}</span></td>
+  <td data-label="Visible" data-field="visible_on_menu"><span class="value">${it.visible_on_menu ? 'Oui' : 'Non'}</span></td>
         <td data-label="Actions">
-          <button class="btn small" data-action="edit" data-id="${it.id}">✏️</button>
-          <button class="btn small" data-action="delete-menu" data-id="${it.id}">❌</button>
+          <!-- Edit removed: inline editing available via double-click. Delete is icon-only for compactness -->
+          <button class="btn small icon-only danger" data-action="delete-menu" data-id="${it.id}" title="Supprimer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11v6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -239,11 +473,14 @@ if (document.getElementById('logoutBtn')) {
       const action = btn.dataset.action;
       const id = btn.dataset.id;
       if (action === 'delete-menu') {
-        if (!confirm('Supprimer ce menu ?')) return;
+        // show a nicer confirmation modal
+        const confirmed = await showConfirmModal('Supprimer ce menu ?', 'Cette action supprimera définitivement ce menu. Voulez-vous continuer ?');
+        if (!confirmed) return;
         try {
           const res = await fetch(apiBase + '/menus/' + id, { method: 'DELETE', credentials: 'include' });
           if (!res.ok) throw new Error('err');
           await loadMenus();
+          showToast('Menu supprimé', { duration: 3000 });
         } catch (e) { alert('Erreur suppression'); }
       }
       if (action === 'edit') {

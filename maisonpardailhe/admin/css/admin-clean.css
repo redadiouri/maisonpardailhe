@@ -185,9 +185,9 @@ body.admin-bg{
 .admin-table td[data-label="Actions"]{/* actions */
   width:86px;text-align:center}
 
-/* Make header sticky on large screens for easier scanning */
+/* Make header sticky on large screens for easier scanning (stick inside scroll containers) */
 @media(min-width:768px){
-  .admin-table thead th{position:sticky;top:20px;background:transparent;z-index:2}
+  .admin-table thead th{position:sticky;top:0;background:var(--card);z-index:3}
 }
 
 /* Responsive: convert table to vertical list/cards on small screens */
@@ -196,7 +196,9 @@ body.admin-bg{
   .admin-table thead{display:none}
   .admin-table tbody{display:block}
   .admin-table tbody tr{display:block;margin:0 0 12px;background:rgba(0,0,0,0.06);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
-  .admin-table tbody td{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-top:none;border-left:none;border-right:none}
+  /* tighter card spacing and alignment */
+  .admin-table tbody tr{margin:0 0 8px;padding:8px}
+  .admin-table tbody td{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-top:none;border-left:none;border-right:none}
   .admin-table tbody td + td{margin-top:6px}
   .admin-table tbody td:first-child{margin-top:0}
   /* Label before each cell using column position (no HTML changes needed) */
@@ -210,6 +212,29 @@ body.admin-bg{
   .admin-table tbody td[data-label="Disponible"]::before{content:"Disponible"}
   .admin-table tbody td[data-label="Visible"]::before{content:"Visible"}
   .admin-table tbody td[data-label="Actions"]::before{content:"Actions"}
+
+  /* Buttons/icons tweaks inside cards */
+  .admin-table .btn.small{padding:6px 8px;font-size:0.9rem;min-height:36px;border-radius:8px}
+  .admin-table .btn.small svg{display:inline-block;vertical-align:middle;margin-right:6px}
+  .admin-table .btn.small.danger{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#fff}
+  .admin-table tbody td img{max-width:56px;height:auto;border-radius:6px}
+
+  /* Icon-only button style (circular) for delete actions */
+  .admin-table .btn.icon-only{padding:0;width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
+  .admin-table .btn.icon-only svg{width:18px;height:18px;margin:0}
+    /* outline, more discreet delete button */
+    .admin-table .btn.icon-only.danger{background:transparent;color:var(--muted);border:1px solid rgba(255,80,80,0.12);box-shadow:none}
+    .admin-table .btn.icon-only.danger svg{stroke: #ff8a8a}
+
+  /* Toast messages */
+  .toast-message{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5);font-weight:700;color:#fff}
+  .toast-message .toast-icon{width:18px;height:18px;flex:0 0 18px}
+  .toast-message .toast-text{line-height:1}
+  /* variants */
+  .toast--success{background:linear-gradient(90deg,#1db954,#20c06b);color:#04220f}
+  .toast--error{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#330800}
+  .toast--info{background:linear-gradient(90deg,#5b9cff,#2b6cff);color:#071233}
+  .admin-table .btn.icon-only:focus-visible{outline:3px solid rgba(255,100,100,0.16);outline-offset:2px}
   /* Style the right-hand value (actual cell content) */
   .admin-table tbody td span.value{display:inline-block;width:56%;text-align:right;color:var(--muted)}
   .admin-table tbody td img{max-width:64px;height:auto;border-radius:4px}
@@ -227,3 +252,34 @@ body.admin-bg{
   pointer-events: none;
   position: absolute;
 }
+
+/* Menu table container: show only 5 rows then scroll
+   - Uses a CSS variable --admin-row-height to control one-row height
+   - Falls back to reasonable defaults for desktop/mobile
+*/
+#menu-table-container{
+  --admin-row-height: 56px; /* approximate single row height on desktop */
+  max-height: calc(var(--admin-row-height) * 5);
+  overflow-y: auto;
+  padding-right: 6px; /* space for scrollbar */
+  border-radius: 8px;
+}
+
+/* Ensure rows have a minimum height so the '5 rows' calculation is usable */
+.admin-table tbody tr{
+  min-height: var(--admin-row-height);
+}
+
+/* On small screens cards are taller: increase the base row height used for calc */
+@media (max-width: 768px) {
+  #menu-table-container{ --admin-row-height: 110px; }
+}
+
+/* Scrollbar styling for the menu table container */
+#menu-table-container::-webkit-scrollbar{ width:10px }
+#menu-table-container::-webkit-scrollbar-track{ background:transparent }
+#menu-table-container::-webkit-scrollbar-thumb{ background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border-radius:10px; border:2px solid rgba(0,0,0,0.15) }
+#menu-table-container::-webkit-scrollbar-thumb:hover{ background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08)); }
+
+/* Firefox scrollbar colors for the menu table container */
+#menu-table-container{ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent }
