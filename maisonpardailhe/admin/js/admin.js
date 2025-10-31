@@ -54,6 +54,11 @@ if (document.getElementById('loginForm')) {
   });
 }
 
+// Stats refresh interval handle (set when stats tab is active)
+let statsIntervalId = null;
+let ordersChart = null;
+let adminLastStats = null;
+
 // Animation shake pour erreur
 const style = document.createElement('style');
 style.innerHTML = `@keyframes shake { 0%{transform:translateX(0);} 25%{transform:translateX(-5px);} 50%{transform:translateX(5px);} 75%{transform:translateX(-5px);} 100%{transform:translateX(0);} }`;
@@ -231,10 +236,20 @@ if (document.getElementById('logoutBtn')) {
           animateCards(listId);
         }, 80);
         try { localStorage.setItem('admin.activeTab', name); } catch (e) {}
-        // If the stockage or menus tab is activated, load the corresponding list so seeded items appear
+        // If the stockage, menus or stats tab is activated, load the corresponding data
         try {
           if (name === 'stockage' && typeof loadStock === 'function') loadStock();
           if (name === 'menus' && typeof loadMenus === 'function') loadMenus();
+          if (name === 'admins' && typeof loadAdmins === 'function') loadAdmins();
+          if (name === 'stats' && typeof loadStats === 'function') {
+            // start immediate load and refresh while stats tab is visible
+            loadStats();
+            if (statsIntervalId) clearInterval(statsIntervalId);
+            statsIntervalId = setInterval(loadStats, 60 * 1000);
+          } else {
+            if (statsIntervalId) { clearInterval(statsIntervalId); statsIntervalId = null; }
+          }
+          // if leaving admins tab, nothing special to stop
         } catch (e) { /* ignore */ }
       };
       activate(tabName);
@@ -398,6 +413,63 @@ if (document.getElementById('logoutBtn')) {
       if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="color:#f33; text-align:center;">Erreur de chargement des menus.</td></tr>';
     }
   }
+
+  // Admins management
+  async function loadAdmins() {
+    const container = document.querySelector('#tab-admins');
+    if (!container) return;
+    const tbody = document.querySelector('#admin-table tbody');
+    try {
+      const res = await fetch(apiBase + '/admins', { credentials: 'include' });
+      if (res.status === 401) { window.location.href = 'login.html'; return; }
+      if (!res.ok) throw new Error('Failed');
+      const admins = await res.json();
+      renderAdminsTable(admins);
+    } catch (e) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="2" style="color:#f33; text-align:center;">Erreur de chargement des administrateurs.</td></tr>';
+    }
+  }
+
+  function renderAdminsTable(admins) {
+    const tbody = document.querySelector('#admin-table tbody');
+    tbody.innerHTML = '';
+    if (!admins || admins.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" style="color:#aaa; text-align:center;">Aucun administrateur.</td></tr>';
+      return;
+    }
+    admins.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${a.id}</td><td>${escapeHtml(a.username)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // wire admin create form
+  (function wireAdminUI(){
+    const form = document.getElementById('admin-create-form');
+    const refresh = document.getElementById('admin-refresh');
+    if (form) {
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const username = document.getElementById('admin-username').value.trim();
+        const password = document.getElementById('admin-password').value || '';
+        const confirm = document.getElementById('admin-password-confirm').value || '';
+        if (!username) return alert('Nom d\'utilisateur requis');
+        if (password.length < 8) return alert('Le mot de passe doit contenir au moins 8 caractères.');
+        if (password !== confirm) return alert('Les mots de passe ne correspondent pas.');
+        try {
+          const res = await fetch(apiBase + '/admins', { method: 'POST', headers: {'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ username, password }) });
+          if (res.status === 401) { window.location.href = 'login.html'; return; }
+          if (res.status === 409) { alert('Nom d\'utilisateur déjà existant.'); return; }
+          if (!res.ok) throw new Error('err');
+          form.reset();
+          await loadAdmins();
+          showToast('Administrateur ajouté', { duration: 3000 });
+        } catch (e) { alert('Erreur lors de la création de l\'administrateur'); }
+      });
+    }
+    if (refresh) refresh.addEventListener('click', ()=> loadAdmins());
+  })();
 
   function renderMenusTable(items) {
     const tbody = document.querySelector('#menu-table tbody');
@@ -726,6 +798,128 @@ if (document.getElementById('logoutBtn')) {
       list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur serveur.</div>';
     }
   }
+  // Admin dashboard statistics - fetch from protected endpoint and render
+  async function loadStats() {
+    const container = document.getElementById('admin-stats');
+    if (!container) return;
+    try {
+      const res = await fetch(apiBase + '/stats', { credentials: 'include' });
+      if (res.status === 401) { window.location.href = 'login.html'; return; }
+      if (!res.ok) throw new Error('Failed to load stats');
+      const d = await res.json();
+      const totalEl = document.getElementById('stat-total-orders');
+      const last30El = document.getElementById('stat-last30');
+      const byStatusEl = document.getElementById('stat-by-status');
+      const revenueEl = document.getElementById('stat-revenue');
+      if (totalEl) totalEl.textContent = String(d.totalOrders || 0);
+      if (last30El) last30El.textContent = String(d.last30 || 0);
+      if (byStatusEl) {
+        byStatusEl.innerHTML = '';
+        if (d.byStatus && Object.keys(d.byStatus).length > 0) {
+          for (const k of Object.keys(d.byStatus)) {
+            const div = document.createElement('div');
+            div.style.marginBottom = '4px';
+            div.textContent = `${k}: ${d.byStatus[k]}`;
+            byStatusEl.appendChild(div);
+          }
+        } else {
+          byStatusEl.textContent = '-';
+        }
+      }
+      if (revenueEl) revenueEl.textContent = d.revenue_cents ? (Number(d.revenue_cents)/100).toFixed(2) + ' €' : '0.00 €';
+      // remember last stats for CSV export
+      adminLastStats = d;
+      // render orders-by-day chart if available
+      try {
+        const ordersSeries = (d.orders_by_day && Array.isArray(d.orders_by_day)) ? d.orders_by_day : [];
+        const revenueSeries = (d.revenue_by_day && Array.isArray(d.revenue_by_day)) ? d.revenue_by_day : [];
+        const labels = ordersSeries.map(s => {
+          try { const dt = new Date(s.date); return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }); } catch(e){ return s.date; }
+        });
+        const ordersData = ordersSeries.map(s => Number(s.count || 0));
+        // align revenue data by date (server returns ordered arrays but align defensively)
+        const revenueData = ordersSeries.map(s => {
+          const r = revenueSeries.find(rr => rr.date === s.date);
+          return r ? Number((r.cents || 0) / 100) : 0;
+        });
+        const ctxEl = document.getElementById('ordersChart');
+        if (ctxEl && typeof Chart !== 'undefined') {
+          const ctx = ctxEl.getContext('2d');
+          if (!ordersChart) {
+            ordersChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels,
+                datasets: [
+                  { label: 'Commandes', data: ordersData, fill: true, borderColor: '#36a2eb', backgroundColor: 'rgba(54,162,235,0.12)', tension: 0.3, yAxisID: 'y' },
+                  { label: 'CA (€)', data: revenueData, fill: false, borderColor: '#ff9f40', backgroundColor: 'rgba(255,159,64,0.08)', tension: 0.3, yAxisID: 'y1' }
+                ]
+              },
+              options: {
+                responsive: true,
+                plugins: { legend: { display: true } },
+                scales: {
+                  x: { grid: { display: false } },
+                  y: { beginAtZero: true, position: 'left', ticks: { precision:0 } },
+                  y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { callback: v => Number(v).toFixed(2) + ' €' } }
+                },
+                interaction: { mode: 'index', intersect: false }
+              }
+            });
+          } else {
+            ordersChart.data.labels = labels;
+            ordersChart.data.datasets[0].data = ordersData;
+            ordersChart.data.datasets[1].data = revenueData;
+            ordersChart.update();
+          }
+        }
+        // render itemsSold list
+        const itemsList = document.getElementById('stat-items-list');
+        if (itemsList) {
+          if (d.itemsSold && d.itemsSold.length > 0) {
+            itemsList.innerHTML = d.itemsSold.map(it => `<div>${it.name || ('#'+it.menu_id)}: ${it.qty} pcs</div>`).join('');
+          } else {
+            itemsList.textContent = 'Aucun item analysable (formats legacy présents)';
+          }
+        }
+      } catch (e) { console.error('chart render error', e); }
+      // wire CSV export button
+      try {
+        const btn = document.getElementById('stat-export-csv');
+        if (btn) {
+          btn.onclick = () => {
+            const s = adminLastStats || d;
+            if (!s) return alert('Aucune donnée disponible pour export.');
+            // build CSV: date,orders,revenue_eur
+            const rows = [['date','orders','revenue_eur']];
+            const ob = s.orders_by_day || [];
+            const rb = s.revenue_by_day || [];
+            for (let i = 0; i < ob.length; i++) {
+              const date = ob[i].date;
+              const ordersVal = ob[i].count || 0;
+              const rObj = rb.find(x => x.date === date);
+              const revenueVal = rObj ? ((rObj.cents || 0) / 100).toFixed(2) : '0.00';
+              rows.push([date, String(ordersVal), String(revenueVal)]);
+            }
+            const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const fname = 'stats-' + (new Date().toISOString().slice(0,10)) + '.csv';
+            a.download = fname;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          };
+        }
+      } catch (e) { console.error('CSV export bind failed', e); }
+    } catch (e) {
+      console.error('Failed to load admin stats', e);
+    }
+  }
+  // initial load is handled when the stats tab is activated (see tab activation code)
   // Stock management
   async function loadStock() {
     const container = document.querySelector('#tab-stockage');

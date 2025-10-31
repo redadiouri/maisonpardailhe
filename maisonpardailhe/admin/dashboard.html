@@ -14,6 +14,8 @@
           <button class="tab-btn tab-btn-vertical active" data-tab="attente">Commandes en attente <span id="badge-attente" class="badge"></span></button>
           <button class="tab-btn tab-btn-vertical" data-tab="encours">Commandes en cours <span id="badge-encours" class="badge"></span></button>
           <button class="tab-btn tab-btn-vertical" data-tab="menus">Menus</button>
+          <button class="tab-btn tab-btn-vertical" data-tab="admins">Administrateurs</button>
+          <button class="tab-btn tab-btn-vertical" data-tab="stats">Statistiques</button>
         </div>
         <button id="logoutBtn" class="logout-btn">Déconnexion</button>
 
@@ -96,10 +98,62 @@
             </table>
           </div>
         </div>
+        <div id="tab-admins" class="tab-content">
+          <h2>Administrateurs</h2>
+          <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+            <form id="admin-create-form" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+              <input id="admin-username" placeholder="Nom d'utilisateur" required>
+              <input id="admin-password" type="password" placeholder="Mot de passe (min 8)" required>
+              <input id="admin-password-confirm" type="password" placeholder="Confirmer mot de passe" required>
+              <button type="submit" class="btn primary">➕ Ajouter</button>
+            </form>
+            <div style="margin-left:auto;">
+              <button id="admin-refresh" class="btn">⟳</button>
+            </div>
+          </div>
+          <div id="admin-list-container">
+            <table id="admin-table" class="admin-table" style="width:100%; border-collapse:collapse;">
+              <thead><tr><th style="width:64px;">ID</th><th>Nom d'utilisateur</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="tab-stats" class="tab-content">
+          <h2>Statistiques</h2>
+          <div style="display:flex; gap:1rem; align-items:flex-start; margin-bottom:1rem;">
+            <div class="stat-card" style="background:var(--card); padding:12px; border-radius:8px; min-width:160px;"> 
+              <div style="font-size:0.85rem; color:var(--muted);">Commandes totales</div>
+              <div id="stat-total-orders" style="font-size:1.25rem; font-weight:700;">—</div>
+              <div style="font-size:0.75rem; color:var(--muted);">Derniers 30 jours: <span id="stat-last30">—</span></div>
+            </div>
+            <div class="stat-card" style="background:var(--card); padding:12px; border-radius:8px; min-width:220px;"> 
+              <div style="font-size:0.85rem; color:var(--muted);">Répartition par statut</div>
+              <div id="stat-by-status" style="margin-top:6px; font-size:0.95rem;">—</div>
+            </div>
+            <div class="stat-card" style="background:var(--card); padding:12px; border-radius:8px; min-width:200px; margin-left:auto; text-align:right;"> 
+              <div style="font-size:0.85rem; color:var(--muted);">CA estimé</div>
+              <div id="stat-revenue" style="font-size:1.25rem; font-weight:700;">—</div>
+              <div style="font-size:0.75rem; color:var(--muted);">(basé sur menus.price_cents)</div>
+            </div>
+          </div>
+          <div id="stat-items" style="margin-top:6px;">
+            <h3>Articles vendus (données analytiques)</h3>
+            <div id="stat-items-list" style="color:var(--muted);">—</div>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:0.5rem; align-items:center;">
+            <h3 style="margin:0;">Commandes: 30 derniers jours</h3>
+            <button id="stat-export-csv" class="btn" style="margin-left:auto;">Export CSV</button>
+          </div>
+          <div style="margin-top:8px;">
+            <canvas id="ordersChart" width="600" height="140" style="max-width:100%; height:auto;"></canvas>
+          </div>
+        </div>
         <!-- Stockage removed: functionality merged into Menus -->
       </main>
     </div>
   </div>
+  <!-- Chart.js from CDN for simple charts in the admin panel -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

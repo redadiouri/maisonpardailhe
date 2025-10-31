@@ -18,7 +18,12 @@ verifyEnv();
 // -----------------------------------------------------------------------------
 const express = require('express');
 const session = require('express-session');
+// Use a persistent MySQL-backed session store instead of the default memory store.
+// express-mysql-session is lighter to run locally when Redis isn't available.
+const MySQLStore = require('express-mysql-session')(session);
 const cors = require('cors');
+const helmet = require('helmet');
+const csurf = require('csurf');
 const bodyParser = require('body-parser');
 const app = express();
 
@@ -31,21 +36,102 @@ const mask = (v) => {
   return v.slice(0, 3) + '…' + v.slice(-3);
 };
 
+// Security headers
+app.use(helmet());
+
+// CORS: in production restrict origins via PROD_ALLOWED_ORIGINS env (comma-separated).
+// In development allow common localhost origins for convenience.
+const allowedOrigins = (process.env.NODE_ENV === 'production' && process.env.PROD_ALLOWED_ORIGINS)
+  ? process.env.PROD_ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:5500', 'http://127.0.0.1:5500'];
+
 app.use(cors({
-  origin: ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:5500', 'http://127.0.0.1:5500'],
+  origin: function(origin, callback) {
+    // allow requests with no origin (e.g., curl, mobile apps)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    return callback(new Error('Origin not allowed by CORS'));
+  },
   credentials: true
 }));
+
 app.use(bodyParser.json());
 // Ensure a session secret exists; use a development fallback if not set.
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-this';
 if (!process.env.SESSION_SECRET) {
   logger.warn('Warning: SESSION_SECRET not set in .env — using fallback. Set SESSION_SECRET for production.');
 }
+// When running behind a proxy (Heroku / any reverse proxy) and using secure cookies,
+// enable trust proxy so Express knows the connection is secure.
+if (process.env.NODE_ENV === 'production') {
+  // trust first proxy
+  app.set('trust proxy', 1);
+}
+
+// Configure MySQL-backed session store (express-mysql-session)
+const sessionStoreOptions = {
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  // Optional: automatically create sessions table if missing
+  createDatabaseTable: true
+};
+// Create a mysql2 callback-style pool for the session store and assign the store
+// inline so options are colocated with the session middleware.
+const mysql2 = require('mysql2/promise');
+const sessionConnection = mysql2.createPool({
+  host: sessionStoreOptions.host,
+  port: sessionStoreOptions.port,
+  user: sessionStoreOptions.user,
+  password: sessionStoreOptions.password,
+  database: sessionStoreOptions.database,
+  connectionLimit: 5
+});
+
+// express-mysql-session expects an object whose `query` method returns a Promise.
+// The mysql2 promise pool exposes `query` that returns a Promise, but to be explicit
+// create a small adapter exposing the required `query` function.
+const sessionPoolForStore = {
+  query: (...args) => sessionConnection.query(...args)
+};
+
 app.use(session({
+  key: 'mp.sid',
   secret: SESSION_SECRET,
+  store: new MySQLStore(sessionStoreOptions, sessionPoolForStore),
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  // Refresh session expiration on every response to keep active sessions alive
+  // and mitigate risk from stolen cookies by limiting the window of validity.
+  rolling: true,
+  cookie: {
+    secure: (process.env.NODE_ENV === 'production'), // only send cookie over HTTPS in prod
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 // 1 hour
+  }
 }));
+
+// CSRF protection: use csurf with sessions (not cookie mode here).
+// We mount CSRF protection on /api routes so state-changing requests require a valid token.
+const csrfProtection = csurf();
+// Expose an endpoint to fetch CSRF token for client-side apps that use fetch + credentials
+app.get('/api/csrf-token', (req, res) => {
+  try {
+    res.json({ csrfToken: req.csrfToken() });
+  } catch (e) {
+    res.status(500).json({ message: 'CSRF token unavailable' });
+  }
+});
+// apply csrfProtection to all /api routes except GET/HEAD/OPTIONS and the csrf-token endpoint itself
+app.use('/api', (req, res, next) => {
+  const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+  if (req.path === '/csrf-token') return next();
+  if (safeMethods.includes(req.method)) return next();
+  return csrfProtection(req, res, next);
+});
 
 
 // Sert le site principal en statique sur la racine
@@ -76,6 +162,11 @@ app.use('/api/admin/menus', adminMenusRoutes);
 
 // Global error handler to avoid crashing on DB errors and to return 500
 app.use((err, req, res, next) => {
+  // Handle CSRF errors specifically
+  if (err && err.code === 'EBADCSRFTOKEN') {
+    logger.warn('CSRF token validation failed: %o', err && (err.message || err));
+    if (!res.headersSent) return res.status(403).json({ message: 'Invalid CSRF token' });
+  }
   logger.error('Unhandled error: %o', err && (err.stack || err));
   if (!res.headersSent) res.status(500).json({ message: 'Internal server error' });
 });

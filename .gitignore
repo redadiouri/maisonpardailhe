@@ -52,3 +52,4 @@ coverage/
 # Keep example files
 !.env.example
 server/.env
+.github/copilot-instructions.md
