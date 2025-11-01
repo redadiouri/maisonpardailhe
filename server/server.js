@@ -171,19 +171,8 @@ app.use(express.static(path.join(__dirname, '../maisonpardailhe')));
 // Sert le dossier admin en statique
 app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin')));
 
-const commandesRoutes = require('./routes/commandes');
-const adminRoutes = require('./routes/admin');
-const menusRoutes = require('./routes/menus');
-const adminMenusRoutes = require('./routes/admin_menus');
-const unsubscribeRoutes = require('./routes/unsubscribe');
-const schedulesRoutes = require('./routes/schedules');
-
-app.use('/api/commandes', commandesRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/menus', menusRoutes);
-app.use('/api/admin/menus', adminMenusRoutes);
-app.use('/unsubscribe', unsubscribeRoutes);
-app.use('/api/schedules', schedulesRoutes);
+// Route handlers are required lazily when running the server to avoid heavy
+// module initialization during tests (which may otherwise import DB-heavy code).
 
 // Global error handler to avoid crashing on DB errors and to return 500
 app.use((err, req, res, next) => {
@@ -238,9 +227,30 @@ const checkDatabase = async () => {
   }
 };
 
-logStartupInfo();
-checkDatabase().catch((e) => logger.error('DB check unexpected error: %o', e && (e.stack || e)));
+if (require.main === module) {
+  // Only wire heavy routes and perform DB checks when running as the main process.
+  const commandesRoutes = require('./routes/commandes');
+  const adminRoutes = require('./routes/admin');
+  const menusRoutes = require('./routes/menus');
+  const adminMenusRoutes = require('./routes/admin_menus');
+  const unsubscribeRoutes = require('./routes/unsubscribe');
+  const schedulesRoutes = require('./routes/schedules');
 
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-});
+  app.use('/api/commandes', commandesRoutes);
+  app.use('/api/admin', adminRoutes);
+  app.use('/api/menus', menusRoutes);
+  app.use('/api/admin/menus', adminMenusRoutes);
+  app.use('/unsubscribe', unsubscribeRoutes);
+  app.use('/api/schedules', schedulesRoutes);
+
+  logStartupInfo();
+  checkDatabase().catch((e) => logger.error('DB check unexpected error: %o', e && (e.stack || e)));
+
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+  });
+} else {
+  // when required as a module in tests or by other scripts, export the app without
+  // initializing routes that may have heavy side-effects (DB connections, etc.).
+  module.exports = app;
+}

@@ -1,15 +1,3 @@
-🧪 Prompt 9 — Tests / CI
-
-Mets en place une base de tests et CI :
-
-Ajoute quelques tests unitaires (pour commande.js, routes, etc.).
-
-Configure une CI (GitHub Actions) pour lancer les tests automatiquement.
-
-Intègre ESLint + Prettier + scripts npm (npm run lint, npm run format).
-
-Objectif : code plus propre et stable.
-
 🗃️ Prompt 10 — Migration & backup DB
 
 Ajoute un système de migration de base de données :

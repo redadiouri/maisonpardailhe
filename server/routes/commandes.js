@@ -225,4 +225,6 @@ router.post('/', validateCommandeFields, async (req, res) => {
   }
 });
 
+// expose validate helper for tests
+router.validateCommande = validateCommande;
 module.exports = router;

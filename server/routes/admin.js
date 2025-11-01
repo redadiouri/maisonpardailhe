@@ -4,7 +4,6 @@ const router = express.Router();
 const Commande = require('../models/commande');
 const Admin = require('../models/admin');
 const auth = require('../middleware/auth');
-const { sendCommandeEmail } = require('../utils/email');
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
