@@ -2,6 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const logger = require('../logger');
+const Menu = require('../models/menu');
 let nodemailer;
 try { nodemailer = require('nodemailer'); } catch (e) { nodemailer = null; }
 
@@ -194,14 +195,99 @@ async function sendCommandeEmail(type, commande, extra = {}) {
   const unsubscribeUrl = `${process.env.APP_URL || 'http://localhost:3001'}/unsubscribe?token=${encodeURIComponent(token)}`;
 
   let subject, html, text;
-  if (type === 'acceptation') {
-    subject = 'Votre commande Maison Pardailhé est acceptée';
-    html = `<p>Bonjour ${commande.nom_complet},<br>Votre commande du ${commande.date_retrait} a été acceptée.<br>Merci !</p><p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
-    text = `Bonjour ${commande.nom_complet},\nVotre commande du ${commande.date_retrait} a été acceptée.\nSe désabonner: ${unsubscribeUrl}`;
+  // helper: format cents to euros
+  const fmt = (cents) => {
+    if (cents === undefined || cents === null) return '';
+    return (Number(cents) / 100).toFixed(2).replace('.', ',') + ' €';
+  };
+
+  // Try to parse produit (may be JSON array or legacy string)
+  let items = [];
+  try {
+    const parsed = JSON.parse(commande.produit || '[]');
+    if (Array.isArray(parsed)) items = parsed;
+  } catch (e) {
+    items = [];
+  }
+
+  // Bulk preload menu info to avoid one SELECT per item
+  let itemsHtml = '';
+  let computedTotal = null;
+  if (items.length > 0) {
+    const ids = items.map(it => Number(it.menu_id)).filter(n => !Number.isNaN(n) && n > 0);
+    const menuMap = await Menu.getByIds(ids);
+    itemsHtml = '<table style="border-collapse:collapse;width:100%"><thead><tr><th align="left">Produit</th><th align="right">Qté</th><th align="right">Prix</th></tr></thead><tbody>';
+    let total = 0;
+    for (const it of items) {
+      const menuId = Number(it.menu_id);
+      const qty = Number(it.qty || 0);
+      const m = menuMap[menuId] || null;
+      const name = it.name || (m ? m.name : ('#' + menuId));
+      const priceCents = (it.price_cents !== undefined && it.price_cents !== null) ? Number(it.price_cents) : (m ? Number(m.price_cents || 0) : null);
+      const priceDisplay = priceCents ? fmt(priceCents) : '';
+      itemsHtml += `<tr><td>${escapeHtml(String(name))}</td><td align="right">${qty}</td><td align="right">${priceDisplay}</td></tr>`;
+      if (priceCents) total += Number(priceCents || 0) * qty;
+    }
+    itemsHtml += `</tbody></table>`;
+    computedTotal = total;
+  }
+
+  // Build a tracking/summary link for the customer
+  const orderUrl = `${process.env.APP_URL || 'http://localhost:3001'}/commande/${commande.id || ''}`;
+
+  if (type === 'creation') {
+    // try to load HTML template
+    subject = 'Confirmation de votre commande — Maison Pardailhé';
+    try {
+      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'creation.html'), 'utf8');
+      html = tpl.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+                .replace(/{{date_retrait}}/g, escapeHtml(commande.date_retrait || ''))
+                .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
+                .replace(/{{location}}/g, escapeHtml(commande.location || ''))
+                .replace(/{{orderUrl}}/g, orderUrl)
+                .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl)
+                .replace(/{{itemsHtml}}/g, itemsHtml || '')
+                .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+    } catch (e) {
+      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Nous avons bien reçu votre commande pour le ${escapeHtml(commande.date_retrait || '')} à ${escapeHtml(commande.creneau || '')} (${escapeHtml(commande.location || '')}).</p>`;
+      if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
+      if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
+      html += `<p>Vous pouvez consulter votre commande ici: <a href="${orderUrl}">${orderUrl}</a></p>`;
+      html += `<p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
+    }
+    text = `Bonjour ${commande.nom_complet || ''}\nNous avons reçu votre commande pour le ${commande.date_retrait || ''} à ${commande.creneau || ''} (${commande.location || ''}).\nConsulter: ${orderUrl}\nSe désabonner: ${unsubscribeUrl}`;
+  } else if (type === 'acceptation') {
+    subject = 'Votre commande Maison Pardailhé est en traitement';
+    try {
+      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'acceptation.html'), 'utf8');
+      html = tpl.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+                .replace(/{{date_retrait}}/g, escapeHtml(commande.date_retrait || ''))
+                .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
+                .replace(/{{orderUrl}}/g, orderUrl)
+                .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl)
+                .replace(/{{itemsHtml}}/g, itemsHtml || '')
+                .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+    } catch (e) {
+      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Bonne nouvelle — votre commande prévue le ${escapeHtml(commande.date_retrait || '')} à ${escapeHtml(commande.creneau || '')} est maintenant en traitement.</p>`;
+      if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
+      if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
+      html += `<p>Suivre votre commande: <a href="${orderUrl}">${orderUrl}</a></p>`;
+      html += `<p>Merci pour votre commande — à bientôt !</p><p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
+    }
+    text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${commande.date_retrait || ''} est en traitement. Consulter: ${orderUrl}\nSe désabonner: ${unsubscribeUrl}`;
   } else if (type === 'refus') {
     subject = 'Votre commande Maison Pardailhé a été refusée';
-    html = `<p>Bonjour ${commande.nom_complet},<br>Votre commande du ${commande.date_retrait} a été refusée.<br>Raison : ${extra.raison || ''}</p><p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
-    text = `Bonjour ${commande.nom_complet},\nVotre commande du ${commande.date_retrait} a été refusée.\nRaison: ${extra.raison || ''}\nSe désabonner: ${unsubscribeUrl}`;
+    try {
+      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'refus.html'), 'utf8');
+      html = tpl.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+                .replace(/{{date_retrait}}/g, escapeHtml(commande.date_retrait || ''))
+                .replace(/{{reason}}/g, escapeHtml(extra.raison || ''))
+                .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl);
+    } catch (e) {
+      subject = 'Votre commande Maison Pardailhé a été refusée';
+      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Malheureusement, votre commande prévue le ${escapeHtml(commande.date_retrait || '')} a été refusée.</p><p>Raison : ${escapeHtml(extra.raison || '')}</p><p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
+    }
+    text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${commande.date_retrait || ''} a été refusée.\nRaison: ${extra.raison || ''}\nSe désabonner: ${unsubscribeUrl}`;
   }
 
   // Do not include the recipient email in logs except masked/hash
@@ -209,3 +295,14 @@ async function sendCommandeEmail(type, commande, extra = {}) {
 }
 
 module.exports = { sendMail, sendCommandeEmail, signToken, verifyToken, addUnsubscribe, isUnsubscribed };
+
+// small helper to escape HTML content used in templates
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

@@ -87,6 +87,18 @@ const Menu = {
     const [rows] = await db.execute(`SELECT * FROM menus WHERE id = ?`, [id]);
     return rows[0];
   },
+  // Bulk lookup for multiple ids. Returns an object map id -> row (id, name, price_cents)
+  getByIds: async (ids) => {
+    if (!Array.isArray(ids) || ids.length === 0) return {};
+    // sanitize ids to integers and unique
+    const uniq = Array.from(new Set(ids.map(i => Number(i)).filter(n => !Number.isNaN(n) && n > 0)));
+    if (uniq.length === 0) return {};
+    const placeholders = uniq.map(() => '?').join(',');
+    const [rows] = await db.execute(`SELECT id, name, price_cents FROM menus WHERE id IN (${placeholders})`, uniq);
+    const map = {};
+    for (const r of rows) map[Number(r.id)] = r;
+    return map;
+  },
   getByReference: async (ref) => {
     if (!ref) return null;
     const [rows] = await db.execute(`SELECT * FROM menus WHERE reference = ? LIMIT 1`, [ref]);

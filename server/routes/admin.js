@@ -129,14 +129,6 @@ router.post('/commandes/:id/accepter', auth, wrap(async (req, res) => {
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
   await Commande.updateStatut(id, 'en_cours');
-  // Send acceptance email (use new helper). Fire-and-forget but await to surface errors to the logger.
-  try {
-    await sendCommandeEmail('acceptation', commande);
-  } catch (e) {
-    // log but don't fail the request
-    const logger = require('../logger');
-    logger.error('Failed to send acceptance email for commande %s: %o', id, e && (e.stack || e));
-  }
   res.json({ success: true });
 }));
 
@@ -147,12 +139,6 @@ router.post('/commandes/:id/refuser', auth, wrap(async (req, res) => {
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
   await Commande.updateStatut(id, 'refusée', raison);
-  try {
-    await sendCommandeEmail('refus', commande, { raison });
-  } catch (e) {
-    const logger = require('../logger');
-    logger.error('Failed to send refusal email for commande %s: %o', id, e && (e.stack || e));
-  }
   res.json({ success: true });
 }));
 

@@ -1,0 +1,15 @@
+<html>
+  <body>
+    <p>Bonjour {{customerName}},</p>
+    <p>Nous avons bien reçu votre commande pour le <strong>{{date_retrait}}</strong> à <strong>{{creneau}}</strong> ({{location}}).</p>
+    {{#if itemsHtml}}
+      <h4>Détails de la commande</h4>
+      {{{itemsHtml}}}
+    {{/if}}
+    {{#if total}}
+      <p><strong>Total: {{total}}</strong></p>
+    {{/if}}
+    <p>Vous pouvez consulter votre commande ici: <a href="{{orderUrl}}">{{orderUrl}}</a></p>
+    <p><small>Pour ne plus recevoir d'emails: <a href="{{unsubscribeUrl}}">se désabonner</a></small></p>
+  </body>
+</html>

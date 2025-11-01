@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Commande = require('../models/commande');
+const { sendCommandeEmail } = require('../utils/email');
 const db = require('../models/db');
 const Menu = require('../models/menu');
 
@@ -166,6 +167,16 @@ router.post('/', validateCommandeFields, async (req, res) => {
       })();
 
       await conn.commit();
+      // Fire-and-forget: notify customer that the order was received (en_attente)
+      (async () => {
+        try {
+          const commande = await Commande.getById(id);
+          if (commande) await sendCommandeEmail('creation', commande);
+        } catch (e) {
+          const logger = require('../logger');
+          logger.error('Failed to send creation email for commande %s: %o', id, e && (e.stack || e));
+        }
+      })();
       res.status(201).json({ id, total_cents: totalCents });
     } catch (err) {
       try { await conn.rollback(); } catch (e) {}
@@ -181,6 +192,16 @@ router.post('/', validateCommandeFields, async (req, res) => {
   if (!v.ok) return res.status(400).json({ message: v.error || 'Données invalides.' });
   try {
     const id = await Commande.create(data);
+    // Send creation confirmation email (non-blocking)
+    (async () => {
+      try {
+        const commande = await Commande.getById(id);
+        if (commande) await sendCommandeEmail('creation', commande);
+      } catch (e) {
+        const logger = require('../logger');
+        logger.error('Failed to send creation email for commande %s: %o', id, e && (e.stack || e));
+      }
+    })();
     res.status(201).json({ id });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur.' });

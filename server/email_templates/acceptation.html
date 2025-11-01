@@ -1,0 +1,16 @@
+<html>
+  <body>
+    <p>Bonjour {{customerName}},</p>
+    <p>Bonne nouvelle — votre commande prévue le <strong>{{date_retrait}}</strong> à <strong>{{creneau}}</strong> est maintenant en traitement.</p>
+    {{#if itemsHtml}}
+      <h4>Détails de la commande</h4>
+      {{{itemsHtml}}}
+    {{/if}}
+    {{#if total}}
+      <p><strong>Total: {{total}}</strong></p>
+    {{/if}}
+    <p>Suivre votre commande: <a href="{{orderUrl}}">{{orderUrl}}</a></p>
+    <p>Merci pour votre commande — à bientôt !</p>
+    <p><small>Pour ne plus recevoir d'emails: <a href="{{unsubscribeUrl}}">se désabonner</a></small></p>
+  </body>
+</html>
