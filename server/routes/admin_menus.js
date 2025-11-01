@@ -13,11 +13,10 @@ router.get('/', auth, wrap(async (req, res) => {
 
 // Create
 router.post('/', auth, wrap(async (req, res) => {
-  const { name, description, price_cents, is_quote, stock, visible_on_menu, slug, available } = req.body || {};
+  const { name, description, price_cents, is_quote, stock, visible_on_menu, available } = req.body || {};
   if (!name || String(name).trim() === '') return res.status(400).json({ message: 'Name required.' });
   if (!Number.isInteger(Number(price_cents)) || Number(price_cents) < 0) return res.status(400).json({ message: 'price_cents must be integer >= 0' });
   if (!Number.isInteger(Number(stock)) || Number(stock) < 0) return res.status(400).json({ message: 'stock must be integer >= 0' });
-  if (slug && String(slug).length > 255) return res.status(400).json({ message: 'slug too long' });
   const id = await Menu.create({
     name: String(name).trim(),
     description: description || '',
@@ -25,7 +24,6 @@ router.post('/', auth, wrap(async (req, res) => {
     is_quote: Boolean(is_quote),
     stock: Number(stock),
     visible_on_menu: visible_on_menu === undefined ? 1 : (visible_on_menu ? 1 : 0),
-    slug,
     available: available === undefined ? 1 : (available ? 1 : 0)
   });
   res.status(201).json({ id });
@@ -38,7 +36,7 @@ router.put('/:id', auth, wrap(async (req, res) => {
   const body = req.body || {};
   if (body.price_cents !== undefined && (!Number.isInteger(Number(body.price_cents)) || Number(body.price_cents) < 0)) return res.status(400).json({ message: 'price_cents must be integer >=0' });
   if (body.stock !== undefined && (!Number.isInteger(Number(body.stock)) || Number(body.stock) < 0)) return res.status(400).json({ message: 'stock must be integer >=0' });
-  if (body.slug !== undefined && String(body.slug).length > 255) return res.status(400).json({ message: 'slug too long' });
+  // Do not accept slug from client. Slug will be regenerated server-side when name changes.
   if (body.available !== undefined && typeof body.available !== 'boolean' && body.available !== 0 && body.available !== 1) return res.status(400).json({ message: 'available must be boolean/0/1' });
   const affected = await Menu.update(id, body);
   res.json({ affected });

@@ -47,7 +47,8 @@ app.use(helmet({
       scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'"],
+  // Allow connecting to the CDN used by the admin dashboard (Chart.js source maps)
+  connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"]

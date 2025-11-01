@@ -431,7 +431,8 @@ if (document.getElementById('logoutBtn')) {
             const body = {};
             if (field === 'price_cents') body.price_cents = Number(item.price_cents || 0);
             else body[field] = item[field];
-            const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(body) });
+            const _csrf = await getCsrfToken();
+            const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, credentials:'include', body: JSON.stringify(body) });
             if (!res.ok) throw new Error('save-failed');
             // success
             if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
@@ -574,8 +575,7 @@ if (document.getElementById('logoutBtn')) {
     if (form) {
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
-        const name = document.getElementById('menu-name').value.trim();
-        const slug = (document.getElementById('menu-slug') && document.getElementById('menu-slug').value.trim()) || undefined;
+  const name = document.getElementById('menu-name').value.trim();
         const description = (document.getElementById('menu-description') && document.getElementById('menu-description').value.trim()) || '';
         const price = parseFloat(document.getElementById('menu-price').value || '0');
         const stock = Math.max(0, Math.floor(Number(document.getElementById('menu-stock').value || 0)));
@@ -585,7 +585,8 @@ if (document.getElementById('logoutBtn')) {
         if (!name) return alert('Nom requis');
         if (price < 0) return alert('Prix invalide');
         try {
-          const body = { name, slug, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
+          // Do not send `slug` — server generates it automatically from `name`.
+          const body = { name, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
           const _csrf = await getCsrfToken();
           const res = await fetch(apiBase + '/menus', { method: 'POST', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify(body), credentials:'include' });
           if (!res.ok) throw new Error('err');
@@ -612,7 +613,8 @@ if (document.getElementById('logoutBtn')) {
         const confirmed = await showConfirmModal('Supprimer ce menu ?', 'Cette action supprimera définitivement ce menu. Voulez-vous continuer ?');
         if (!confirmed) return;
         try {
-          const res = await fetch(apiBase + '/menus/' + id, { method: 'DELETE', credentials: 'include' });
+          const _csrf = await getCsrfToken();
+          const res = await fetch(apiBase + '/menus/' + id, { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
           if (!res.ok) throw new Error('err');
           await loadMenus();
           showToast('Menu supprimé', { duration: 3000 });
@@ -623,7 +625,6 @@ if (document.getElementById('logoutBtn')) {
         const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
         if (!item) return;
   document.getElementById('menu-name').value = item.name || '';
-  if (document.getElementById('menu-slug')) document.getElementById('menu-slug').value = item.slug || '';
   if (document.getElementById('menu-description')) document.getElementById('menu-description').value = item.description || '';
   document.getElementById('menu-price').value = (Number(item.price_cents||0)/100).toFixed(2);
   document.getElementById('menu-stock').value = Number(item.stock||0);
@@ -636,7 +637,6 @@ if (document.getElementById('logoutBtn')) {
         const submitHandler = async (ev) => {
           ev.preventDefault();
           const name = document.getElementById('menu-name').value.trim();
-          const slug = (document.getElementById('menu-slug') && document.getElementById('menu-slug').value.trim()) || undefined;
           const description = (document.getElementById('menu-description') && document.getElementById('menu-description').value.trim()) || '';
           const price = parseFloat(document.getElementById('menu-price').value || '0');
           const stock = Math.max(0, Math.floor(Number(document.getElementById('menu-stock').value || 0)));
@@ -644,8 +644,10 @@ if (document.getElementById('logoutBtn')) {
           const visible_on_menu = !!document.getElementById('menu-visible').checked;
           const available = !!document.getElementById('menu-available').checked;
           try {
-            const body = { name, slug, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
-            const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials:'include' });
+            // Do not include slug: server regenerates slug from name on update.
+            const body = { name, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
+            const _csrf = await getCsrfToken();
+            const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify(body), credentials:'include' });
             if (!res.ok) throw new Error('err');
             delete form.dataset.editingId;
             form.removeEventListener('submit', submitHandler);
@@ -1113,7 +1115,8 @@ if (document.getElementById('logoutBtn')) {
       if (action === 'delete') {
         if (!confirm('Supprimer ce produit ?')) return;
         try {
-          const res = await fetch('/api/stock/' + id, { method: 'DELETE', credentials:'include' });
+          const _csrf = await getCsrfToken();
+          const res = await fetch('/api/stock/' + id, { method: 'DELETE', credentials:'include', headers: { 'X-CSRF-Token': _csrf || '' } });
           if (!res.ok) throw new Error('err');
           await loadStock();
         } catch (e) { alert('Erreur suppression'); }
@@ -1122,7 +1125,8 @@ if (document.getElementById('logoutBtn')) {
         const item = (window._adminStockItems||[]).find(x=>String(x.id)===String(id));
         if (!item) return;
         try {
-          const res = await fetch('/api/stock/' + id, { method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ available: !item.available }), credentials:'include' });
+          const _csrf = await getCsrfToken();
+          const res = await fetch('/api/stock/' + id, { method: 'PUT', headers:{'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify({ available: !item.available }), credentials:'include' });
           if (!res.ok) throw new Error('err');
           await loadStock();
         } catch (e) { alert('Erreur'); }
@@ -1247,7 +1251,8 @@ if (document.getElementById('logoutBtn')) {
           PENDING.set(key, { timer: null, controller, badge, td, origValue, origText });
           try {
             const body = {}; body[field] = newVal;
-            const res = await fetch('/api/stock/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body), signal: controller.signal });
+            const _csrf = await getCsrfToken();
+            const res = await fetch('/api/stock/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' }, credentials: 'include', body: JSON.stringify(body), signal: controller.signal });
             if (!res.ok) throw new Error('save-failed');
             // success: show checkmark briefly
             if (badge && badge.parentNode) badge.parentNode.removeChild(badge);

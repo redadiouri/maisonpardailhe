@@ -6,7 +6,8 @@ const Menu = {
       `INSERT INTO menus (name, slug, description, price_cents, is_quote, stock, reference, image_url, available, visible_on_menu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.name,
-        data.slug || slugify(data.name),
+        // slug is generated server-side from the name to avoid trusting client input
+        slugify(data.name),
         data.description || '',
         data.price_cents || 0,
         data.is_quote ? 1 : 0,
@@ -23,7 +24,9 @@ const Menu = {
     const fields = [];
     const values = [];
     if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
-    if (data.slug !== undefined) { fields.push('slug = ?'); values.push(data.slug); }
+    // When the name is updated, regenerate the slug automatically from the new name.
+    // Do NOT accept an externally-provided `slug` value.
+    if (data.name !== undefined) { fields.push('slug = ?'); values.push(slugify(data.name)); }
     if (data.description !== undefined) { fields.push('description = ?'); values.push(data.description); }
     if (data.price_cents !== undefined) { fields.push('price_cents = ?'); values.push(data.price_cents); }
     if (data.is_quote !== undefined) { fields.push('is_quote = ?'); values.push(data.is_quote ? 1 : 0); }
