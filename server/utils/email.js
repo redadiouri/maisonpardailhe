@@ -1,4 +1,6 @@
 // Placeholder pour l’envoi d’email
+const logger = require('../logger');
+
 function sendEmail(to, type, commande, raison = '') {
   let subject, html;
   if (type === 'acceptation') {
@@ -9,7 +11,10 @@ function sendEmail(to, type, commande, raison = '') {
     html = `<p>Bonjour ${commande.nom_complet},<br>Votre commande du ${commande.date_retrait} (${commande.produit}) a été refusée.<br>Raison : ${raison}</p>`;
   }
   // Ici, on utiliserait nodemailer plus tard
-  console.log(`[EMAIL] To: ${to} | Subject: ${subject} | HTML: ${html}`);
+  // Log only non-sensitive metadata; avoid dumping the full HTML body at info level.
+  logger.info({ to, subject, orderId: commande && commande.id }, '[EMAIL] queued');
+  // HTML body can be logged at debug level for troubleshooting (not in production)
+  logger.debug({ html }, '[EMAIL] body (debug)');
 }
 
 module.exports = { sendEmail };
