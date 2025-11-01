@@ -538,7 +538,7 @@ if (document.getElementById('logoutBtn')) {
     const tbody = document.querySelector('#menu-table tbody');
     tbody.innerHTML = '';
     if (!items || items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="color:#aaa; text-align:center;">Aucun menu.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="color:#aaa; text-align:center;">Aucun menu.</td></tr>';
       return;
     }
     items.forEach(it => {
@@ -548,7 +548,6 @@ if (document.getElementById('logoutBtn')) {
       const shortDesc = desc.length > 60 ? escapeHtml(desc.slice(0, 57)) + '...' : escapeHtml(desc);
       tr.innerHTML = `
   <td data-label="Nom" data-field="name"><span class="value">${escapeHtml(it.name)}</span></td>
-  <td data-label="Slug" data-field="slug"><span class="value">${escapeHtml(it.slug || '')}</span></td>
   <td data-label="Description" data-field="description" title="${escapeAttr(desc)}"><span class="value">${shortDesc}</span></td>
   <td data-label="Prix" data-field="price_cents"><span class="value">${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</span></td>
   <td data-label="Stock" data-field="stock"><span class="value">${Number(it.stock||0)}</span></td>
