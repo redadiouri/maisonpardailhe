@@ -3,6 +3,65 @@
 // (was hardcoded to http://localhost:3001 previously which breaks non-local deployments)
 const apiBase = '/api/admin';
 
+// CSRF token helper: fetches and caches token from server (session-based csurf)
+async function getCsrfToken() {
+  try {
+    if (window._csrfToken) return window._csrfToken;
+    const res = await fetch('/api/csrf-token', { credentials: 'include' });
+    if (!res.ok) return null;
+    const d = await res.json();
+    window._csrfToken = d && d.csrfToken;
+    return window._csrfToken;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Preload menus into a cache for name lookup when rendering commandes
+async function preloadMenus() {
+  try {
+    if (window._menusCache) return window._menusCache;
+      // For the admin UI, request the admin endpoint so we receive all menus
+      // (visible and hidden). The public `/api/menus` only returns visible items
+      // which breaks name lookup for commands referencing hidden items.
+      const res = await fetch('/api/admin/menus', { credentials: 'include' });
+    if (!res.ok) return window._menusCache = new Map();
+    const menus = await res.json();
+    const map = new Map();
+    menus.forEach(m => map.set(Number(m.id), { name: m.name, price_cents: Number(m.price_cents || 0) }));
+    window._menusCache = map;
+    return map;
+  } catch (e) { window._menusCache = new Map(); return window._menusCache; }
+}
+
+function getMenuName(id) {
+  try {
+    if (!window._menusCache) return null;
+    const m = window._menusCache.get(Number(id));
+    return m ? m.name : null;
+  } catch (e) { return null; }
+}
+
+function renderProduitHtml(rawProduit) {
+  if (!rawProduit) return '-';
+  try {
+    const parsed = JSON.parse(rawProduit);
+    if (Array.isArray(parsed)) {
+      const parts = parsed.map(it => {
+        const id = Number(it.menu_id);
+        const qty = Number(it.qty) || 0;
+        const name = getMenuName(id) || (`#${id}`);
+        return `${qty} × ${name}`;
+      });
+      return `<div class="product-list">${parts.join('<br>')}</div>`;
+    }
+  } catch (e) {
+    // not JSON – fall through
+  }
+  // fallback: return raw string escaped simply
+  return `<div class="product-list">${String(rawProduit)}</div>`;
+}
+
 // Login
 if (document.getElementById('loginForm')) {
   // Afficher/masquer le mot de passe (avec icônes SVG)
@@ -31,9 +90,10 @@ if (document.getElementById('loginForm')) {
     loader.style.display = 'block';
     document.getElementById('loginBtn').disabled = true;
     try {
+      const _csrf = await getCsrfToken();
       const res = await fetch(apiBase + '/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
         body: JSON.stringify({ username, password }),
         credentials: 'include'
       });
@@ -214,7 +274,8 @@ function showToast(message, options = {}) {
 // Dashboard
 if (document.getElementById('logoutBtn')) {
   document.getElementById('logoutBtn').onclick = async () => {
-  await fetch(apiBase + '/logout', { method: 'POST', credentials: 'include' });
+    const _csrf = await getCsrfToken();
+    await fetch(apiBase + '/logout', { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
     window.location.href = 'login.html';
   };
 
@@ -458,7 +519,8 @@ if (document.getElementById('logoutBtn')) {
         if (password.length < 8) return alert('Le mot de passe doit contenir au moins 8 caractères.');
         if (password !== confirm) return alert('Les mots de passe ne correspondent pas.');
         try {
-          const res = await fetch(apiBase + '/admins', { method: 'POST', headers: {'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ username, password }) });
+          const _csrf = await getCsrfToken();
+          const res = await fetch(apiBase + '/admins', { method: 'POST', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, credentials:'include', body: JSON.stringify({ username, password }) });
           if (res.status === 401) { window.location.href = 'login.html'; return; }
           if (res.status === 409) { alert('Nom d\'utilisateur déjà existant.'); return; }
           if (!res.ok) throw new Error('err');
@@ -524,7 +586,8 @@ if (document.getElementById('logoutBtn')) {
         if (price < 0) return alert('Prix invalide');
         try {
           const body = { name, slug, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
-          const res = await fetch(apiBase + '/menus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body), credentials:'include' });
+          const _csrf = await getCsrfToken();
+          const res = await fetch(apiBase + '/menus', { method: 'POST', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify(body), credentials:'include' });
           if (!res.ok) throw new Error('err');
           form.reset();
           await loadMenus();
@@ -652,12 +715,17 @@ if (document.getElementById('logoutBtn')) {
           return d;
         }
 
-        commandes.forEach(cmd => {
+  // ensure menus cache is populated so produit names can be rendered
+  try { await preloadMenus().catch(()=>{}); } catch(e) {}
+
+  commandes.forEach(cmd => {
           // create card element for this commande with structured layout and labels
           const card = document.createElement('div');
           card.className = 'commande-card';
           const dateRetrait = formatDateISO(cmd.date_retrait);
           const created = cmd.date_creation ? new Date(cmd.date_creation).toLocaleString('fr-FR') : '';
+          // Format total price (convert cents to euros)
+          const totalDisplay = cmd.total_cents ? `<div style="margin-top:8px;"><b>Total:</b> <span style="color:#0a0;font-weight:700;">${(Number(cmd.total_cents)/100).toFixed(2)} €</span></div>` : '';
           card.innerHTML = `
             <div class="left">
               <div class="header">
@@ -668,7 +736,8 @@ if (document.getElementById('logoutBtn')) {
                 </div>
                 <div class="status" style="font-size:0.9rem;color:var(--muted);text-transform:capitalize">${cmd.statut.replace('_',' ')}</div>
               </div>
-              <div class="product">${cmd.produit}</div>
+              <div class="product">${renderProduitHtml(cmd.produit)}</div>
+              ${totalDisplay}
               <div class="meta">
                 <div><b>Date retrait:</b> ${dateRetrait} &nbsp;|&nbsp; <b>Créneau:</b> ${cmd.creneau} &nbsp;|&nbsp; <b>Lieu:</b> ${cmd.location || '-'} </div>
                 <div><b>Commandé le:</b> ${created}</div>
@@ -725,7 +794,8 @@ if (document.getElementById('logoutBtn')) {
             acceptBtn.onclick = async () => {
               acceptBtn.disabled = true;
               acceptBtn.style.opacity = '0.8';
-              await fetch(apiBase + `/commandes/${cmd.id}/accepter`, { method: 'POST', credentials: 'include' });
+              const _csrf = await getCsrfToken();
+              await fetch(apiBase + `/commandes/${cmd.id}/accepter`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
               loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
               loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
             };
@@ -736,12 +806,15 @@ if (document.getElementById('logoutBtn')) {
               const raison = prompt('Raison du refus ?');
               if (raison) {
                 refuseBtn.disabled = true;
-                fetch(apiBase + `/commandes/${cmd.id}/refuser`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ raison }),
-                  credentials: 'include'
-                }).then(() => {
+                (async () => {
+                  const _csrf = await getCsrfToken();
+                  await fetch(apiBase + `/commandes/${cmd.id}/refuser`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
+                    body: JSON.stringify({ raison }),
+                    credentials: 'include'
+                  });
+                })().then(() => {
                   loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
                 });
               }
@@ -755,7 +828,8 @@ if (document.getElementById('logoutBtn')) {
             finishBtn.className = 'btn primary';
             finishBtn.onclick = async () => {
               finishBtn.disabled = true;
-              await fetch(apiBase + `/commandes/${cmd.id}/terminer`, { method: 'POST', credentials: 'include' });
+              const _csrf = await getCsrfToken();
+              await fetch(apiBase + `/commandes/${cmd.id}/terminer`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
               loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
             };
             const noteBtn = document.createElement('button');
@@ -826,7 +900,7 @@ if (document.getElementById('logoutBtn')) {
           byStatusEl.textContent = '-';
         }
       }
-      if (revenueEl) revenueEl.textContent = d.revenue_cents ? (Number(d.revenue_cents)/100).toFixed(2) + ' €' : '0.00 €';
+      if (revenueEl) revenueEl.textContent = d.total_revenue_cents ? (Number(d.total_revenue_cents)/100).toFixed(2) + ' €' : '0.00 €';
       // remember last stats for CSV export
       adminLastStats = d;
       // render orders-by-day chart if available
@@ -1010,7 +1084,8 @@ if (document.getElementById('logoutBtn')) {
   quantity = Math.floor(quantity || 0);
         try {
               // Always create a new product from the form (editing is done inline now)
-              const res = await fetch('/api/stock', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, reference, quantity, available }) , credentials:'include'});
+              const _csrf = await getCsrfToken();
+              const res = await fetch('/api/stock', { method: 'POST', headers:{'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify({ name, reference, quantity, available }) , credentials:'include'});
               if (!res.ok) throw new Error('err');
               form.reset();
           await loadStock();
@@ -1423,9 +1498,10 @@ if (document.getElementById('logoutBtn')) {
       const submitBtn = document.getElementById('changePwdBtn');
       submitBtn.disabled = true;
       try {
+        const _csrf = await getCsrfToken();
         const res = await fetch(apiBase + '/change-password', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
           credentials: 'include',
           body: JSON.stringify({ currentPassword, newPassword })
         });

@@ -37,7 +37,23 @@ const mask = (v) => {
 };
 
 // Security headers
-app.use(helmet());
+// Configure a strict Content Security Policy but allow the CDN used for
+// admin dashboard assets (Chart.js). The public site remains restricted to
+// self-hosted scripts by default.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"]
+    }
+  }
+}));
 
 // CORS: in production restrict origins via PROD_ALLOWED_ORIGINS env (comma-separated).
 // In development allow common localhost origins for convenience.
@@ -117,6 +133,11 @@ app.use(session({
 // CSRF protection: use csurf with sessions (not cookie mode here).
 // We mount CSRF protection on /api routes so state-changing requests require a valid token.
 const csrfProtection = csurf();
+// Mount csurf for the /api subtree so req.csrfToken() is available for GET and
+// non-safe methods are automatically validated. This ensures the csrf-token
+// endpoint can generate a token for client-side apps.
+app.use('/api', csrfProtection);
+
 // Expose an endpoint to fetch CSRF token for client-side apps that use fetch + credentials
 app.get('/api/csrf-token', (req, res) => {
   try {
@@ -124,13 +145,6 @@ app.get('/api/csrf-token', (req, res) => {
   } catch (e) {
     res.status(500).json({ message: 'CSRF token unavailable' });
   }
-});
-// apply csrfProtection to all /api routes except GET/HEAD/OPTIONS and the csrf-token endpoint itself
-app.use('/api', (req, res, next) => {
-  const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
-  if (req.path === '/csrf-token') return next();
-  if (safeMethods.includes(req.method)) return next();
-  return csrfProtection(req, res, next);
 });
 
 

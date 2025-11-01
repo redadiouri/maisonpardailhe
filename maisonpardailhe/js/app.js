@@ -234,15 +234,26 @@ function initClickCollectForm() {
             if (produits.length > 0 && produits.every(p => p.menu_id)) {
                 payload.items = produits.map(p => ({ menu_id: p.menu_id, qty: p.qty }));
             }
+            // fetch CSRF token (session-based) and include it in the request
+            let csrfToken = null;
+            try {
+                const tRes = await fetch('/api/csrf-token', { credentials: 'include' });
+                if (tRes.ok) {
+                    const td = await tRes.json();
+                    csrfToken = td && td.csrfToken;
+                }
+            } catch (e) { /* ignore - we'll still attempt the request */ }
+
             const res = await fetch('/api/commandes', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken || '' },
+                credentials: 'include',
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
                 form.reset();
-                // show selection summary in the confirmation
-                const selectionSummary = produits.map(p => `${p.qty} × ${p.item}`).join(', ');
+                // show selection summary in the confirmation (use `title` set when building the list)
+                const selectionSummary = produits.map(p => `${p.qty} × ${p.title}`).join(', ');
                 showCCMessage(`Votre commande a bien été enregistrée : ${selectionSummary}. Nous vous confirmerons sous 2h ouvrées.`, false);
             } else {
                 // try to extract error details

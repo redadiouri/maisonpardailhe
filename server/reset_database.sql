@@ -46,6 +46,7 @@ CREATE TABLE commandes (
   precisions TEXT,
   statut ENUM('en_attente', 'en_cours', 'refusée', 'terminée') NOT NULL DEFAULT 'en_attente',
   raison_refus TEXT,
+  total_cents INT NOT NULL DEFAULT 0,
   date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

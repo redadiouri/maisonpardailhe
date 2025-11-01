@@ -11,6 +11,7 @@ const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).cat
 // Rate limiter and slow-down for login attempts to mitigate brute-force
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
+const { body, validationResult } = require('express-validator');
 
 // shared key generator: username + IP to avoid blocking entire IP ranges
 const loginKeyGenerator = (req) => {
@@ -45,8 +46,18 @@ const loginLimiter = rateLimit({
 
 // Login (rate limited)
 // Apply slowDown first (soft delays), then the hard limiter
-router.post('/login', loginSlowDown, loginLimiter, wrap(async (req, res) => {
-  const { username, password } = req.body;
+router.post('/login',
+  // validation + sanitization
+  body('username').isString().trim().isLength({ min: 3 }).escape(),
+  // allow any non-empty password at login (we don't enforce min length here because
+  // older seeded accounts use shorter passwords like 'admin'). Creation/change enforce length.
+  body('password').isString().notEmpty().withMessage('Le mot de passe est requis.'),
+  loginSlowDown, loginLimiter,
+  wrap(async (req, res) => {
+    // check validation
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    const { username, password } = req.body;
   const admin = await Admin.getByUsername(username);
   if (!admin) return res.status(401).json({ message: 'Identifiants invalides.' });
   const match = await bcrypt.compare(password, admin.password_hash);
@@ -148,7 +159,7 @@ router.get('/stats', auth, wrap(async (req, res) => {
   // lightweight aggregation similar to server/scripts/stats.js but returns JSON for the admin UI
   const db = require('../models/db');
   const Menu = require('../models/menu');
-  // load menus into a map for price lookup
+  // load menus into a map for name lookup
   const menus = new Map();
   try {
     const allMenus = await Menu.getAll(false);
@@ -157,7 +168,7 @@ router.get('/stats', auth, wrap(async (req, res) => {
     // continue even if menus can't be loaded
   }
 
-  const [rows] = await db.query('SELECT id, produit, statut, date_creation FROM commandes ORDER BY date_creation DESC');
+  const [rows] = await db.query('SELECT id, produit, statut, date_creation, total_cents FROM commandes ORDER BY date_creation DESC');
   const totalOrders = rows.length;
   const byStatus = {};
   let last30 = 0;
@@ -174,7 +185,7 @@ router.get('/stats', auth, wrap(async (req, res) => {
     revenueByDayMap.set(key, 0);
   }
   const itemsSold = new Map();
-  let revenueCents = 0;
+  let totalRevenueCents = 0;
 
   for (const c of rows) {
     byStatus[c.statut] = (byStatus[c.statut] || 0) + 1;
@@ -185,7 +196,14 @@ router.get('/stats', auth, wrap(async (req, res) => {
       const dayKey = new Date(created.getFullYear(), created.getMonth(), created.getDate()).toISOString().slice(0,10);
       if (ordersByDayMap.has(dayKey)) ordersByDayMap.set(dayKey, ordersByDayMap.get(dayKey) + 1);
     }
-    // try parse produit as JSON array
+    // add total_cents to revenue (use stored value instead of recalculating)
+    const orderTotal = Number(c.total_cents || 0);
+    totalRevenueCents += orderTotal;
+    if (created && orderTotal > 0) {
+      const dayKey = new Date(created.getFullYear(), created.getMonth(), created.getDate()).toISOString().slice(0,10);
+      if (revenueByDayMap.has(dayKey)) revenueByDayMap.set(dayKey, revenueByDayMap.get(dayKey) + orderTotal);
+    }
+    // try parse produit as JSON array for item counts
     if (c.produit) {
       try {
         const parsed = JSON.parse(c.produit);
@@ -195,16 +213,6 @@ router.get('/stats', auth, wrap(async (req, res) => {
             const qty = Math.max(0, Math.floor(Number(it.qty) || 0));
             if (!id || qty <= 0) continue;
             itemsSold.set(id, (itemsSold.get(id) || 0) + qty);
-            const menu = menus.get(id);
-            if (menu) {
-              const lineRevenue = menu.price_cents * qty;
-              revenueCents += lineRevenue;
-              // attribute revenue to the order day when possible
-              if (created) {
-                const dayKey = new Date(created.getFullYear(), created.getMonth(), created.getDate()).toISOString().slice(0,10);
-                if (revenueByDayMap.has(dayKey)) revenueByDayMap.set(dayKey, revenueByDayMap.get(dayKey) + lineRevenue);
-              }
-            }
           }
         }
       } catch (e) {
@@ -224,7 +232,7 @@ router.get('/stats', auth, wrap(async (req, res) => {
   const orders_by_day = Array.from(ordersByDayMap.entries()).map(([date, count]) => ({ date, count }));
   const revenue_by_day = Array.from(revenueByDayMap.entries()).map(([date, cents]) => ({ date, cents }));
 
-  res.json({ totalOrders, byStatus, last30, itemsSold: items, revenue_cents: revenueCents, orders_by_day, revenue_by_day });
+  res.json({ totalOrders, byStatus, last30, itemsSold: items, total_revenue_cents: totalRevenueCents, orders_by_day, revenue_by_day });
 }));
 
 module.exports = router;

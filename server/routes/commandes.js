@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const Commande = require('../models/commande');
 const db = require('../models/db');
 const Menu = require('../models/menu');
@@ -99,7 +100,25 @@ function validateCommande(data) {
   return { ok: true };
 }
 
-router.post('/', async (req, res) => {
+// Validation middleware for commandes (basic + sanitization)
+const validateCommandeFields = [
+  body('nom_complet').isString().trim().isLength({ min: 1 }).escape(),
+  body('telephone').isString().trim().isLength({ min: 6 }).escape(),
+  body('email').optional({ nullable: true }).isEmail().normalizeEmail(),
+  body('date_retrait').isString().trim(),
+  body('creneau').matches(/^\d{2}:\d{2}$/),
+  body('location').isString().trim().escape(),
+  // optional precisions: sanitize text
+  body('precisions').optional({ nullable: true }).trim().escape(),
+  // items array validation (if present)
+  body('items').optional().isArray(),
+  body('items.*.menu_id').optional().isInt({ gt: 0 }),
+  body('items.*.qty').optional().isInt({ gt: 0 })
+];
+
+router.post('/', validateCommandeFields, async (req, res) => {
+  const valErr = validationResult(req);
+  if (!valErr.isEmpty()) return res.status(400).json({ errors: valErr.array() });
   const data = req.body;
   // If items are provided as [{menu_id, qty}], perform transactional stock checks and decrement
   if (Array.isArray(data.items) && data.items.length > 0) {
@@ -111,6 +130,7 @@ router.post('/', async (req, res) => {
     try {
       await conn.beginTransaction();
       // lock each menu row and check stock
+      let totalCents = 0; // accumulate total price
       for (const it of data.items) {
         const menuId = Number(it.menu_id);
         const qty = Math.floor(Number(it.qty) || 0);
@@ -118,7 +138,7 @@ router.post('/', async (req, res) => {
           await conn.rollback();
           return res.status(400).json({ message: 'Item invalide.' });
         }
-        const [rows] = await conn.execute('SELECT stock FROM menus WHERE id = ? FOR UPDATE', [menuId]);
+        const [rows] = await conn.execute('SELECT stock, price_cents FROM menus WHERE id = ? FOR UPDATE', [menuId]);
         const row = rows[0];
         if (!row) {
           await conn.rollback();
@@ -131,20 +151,22 @@ router.post('/', async (req, res) => {
         // decrement
         const newStock = row.stock - qty;
         await conn.execute('UPDATE menus SET stock = ? WHERE id = ?', [newStock, menuId]);
+        // add to total
+        totalCents += row.price_cents * qty;
       }
 
       // All stock decremented successfully — create a commande record. Store produit as JSON string for traceability
       const produit = JSON.stringify(data.items);
       const id = await (async () => {
         const [result] = await conn.execute(
-          `INSERT INTO commandes (nom_complet, telephone, email, produit, date_retrait, creneau, location, precisions, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
-          [data.nom_complet, data.telephone, data.email || '', produit, data.date_retrait, data.creneau, data.location || 'roquettes', data.precisions]
+          `INSERT INTO commandes (nom_complet, telephone, email, produit, date_retrait, creneau, location, precisions, statut, total_cents) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente', ?)`,
+          [data.nom_complet, data.telephone, data.email || '', produit, data.date_retrait, data.creneau, data.location || 'roquettes', data.precisions, totalCents]
         );
         return result.insertId;
       })();
 
       await conn.commit();
-      res.status(201).json({ id });
+      res.status(201).json({ id, total_cents: totalCents });
     } catch (err) {
       try { await conn.rollback(); } catch (e) {}
       res.status(500).json({ message: 'Erreur serveur.' });
