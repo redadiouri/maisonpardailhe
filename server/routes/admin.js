@@ -4,7 +4,7 @@ const router = express.Router();
 const Commande = require('../models/commande');
 const Admin = require('../models/admin');
 const auth = require('../middleware/auth');
-const { sendEmail } = require('../utils/email');
+const { sendCommandeEmail } = require('../utils/email');
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -129,8 +129,14 @@ router.post('/commandes/:id/accepter', auth, wrap(async (req, res) => {
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
   await Commande.updateStatut(id, 'en_cours');
-  // Prefer email if present, otherwise fallback to telephone (stub behaviour)
-  sendEmail(commande.email || commande.telephone, 'acceptation', commande);
+  // Send acceptance email (use new helper). Fire-and-forget but await to surface errors to the logger.
+  try {
+    await sendCommandeEmail('acceptation', commande);
+  } catch (e) {
+    // log but don't fail the request
+    const logger = require('../logger');
+    logger.error('Failed to send acceptance email for commande %s: %o', id, e && (e.stack || e));
+  }
   res.json({ success: true });
 }));
 
@@ -141,7 +147,12 @@ router.post('/commandes/:id/refuser', auth, wrap(async (req, res) => {
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
   await Commande.updateStatut(id, 'refusée', raison);
-  sendEmail(commande.email || commande.telephone, 'refus', commande, raison);
+  try {
+    await sendCommandeEmail('refus', commande, { raison });
+  } catch (e) {
+    const logger = require('../logger');
+    logger.error('Failed to send refusal email for commande %s: %o', id, e && (e.stack || e));
+  }
   res.json({ success: true });
 }));
 

@@ -169,11 +169,13 @@ const commandesRoutes = require('./routes/commandes');
 const adminRoutes = require('./routes/admin');
 const menusRoutes = require('./routes/menus');
 const adminMenusRoutes = require('./routes/admin_menus');
+const unsubscribeRoutes = require('./routes/unsubscribe');
 
 app.use('/api/commandes', commandesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/menus', menusRoutes);
 app.use('/api/admin/menus', adminMenusRoutes);
+app.use('/unsubscribe', unsubscribeRoutes);
 
 // Global error handler to avoid crashing on DB errors and to return 500
 app.use((err, req, res, next) => {
