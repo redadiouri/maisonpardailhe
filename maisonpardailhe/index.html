@@ -152,7 +152,9 @@
                     </select>
 
                     <label for="cc-time">Créneau souhaité</label>
-                    <input id="cc-time" name="cc-time" type="time" min="08:30" max="19:30" step="900" aria-describedby="cc-time-note">
+                    <!-- Visual slot picker: container for buttons + hidden input used for form submission -->
+                    <div id="cc-time-container" class="cc-time-container" aria-describedby="cc-time-note" role="list"></div>
+                    <input id="cc-time" name="cc-time" type="hidden" aria-hidden="true">
                     <p id="cc-time-note" class="form-hint">Indiquez l’heure précise souhaitée.</p>
 
                     <label for="cc-notes">Précisions</label>

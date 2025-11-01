@@ -36,11 +36,31 @@
       const day = document.createElement('button'); day.className='mp-day'; day.type='button'; day.textContent = String(d);
       const dt = new Date(year, month, d);
       const isoStr = iso(dt);
+      // disable days closed for the selected location (read current location select)
+      try {
+        const locSelect = document.getElementById('cc-location');
+        const currentLoc = locSelect ? locSelect.value : null;
+        // read settings from global locationSettings in app.js if present
+        const settings = window.__MP_LOCATION_SETTINGS__ ? window.__MP_LOCATION_SETTINGS__[currentLoc] : null;
+        const weekday = dt.getDay();
+        // if settings present and no ranges for this weekday -> disable
+        if (settings && settings.ranges) {
+            const rangesForDay = settings.ranges[weekday] || [];
+            // rangesForDay should be an array of [start,end] tuples; if it's missing or empty, disable the day
+            if (!Array.isArray(rangesForDay) || rangesForDay.length === 0) {
+              day.classList.add('disabled');
+              day.disabled = true;
+              day.setAttribute('aria-disabled','true');
+            }
+        }
+      } catch (e) {
+        // ignore
+      }
       // apply min/max
       if (opts.min && isoStr < opts.min) { day.classList.add('disabled'); day.disabled=true; }
       if (opts.max && isoStr > opts.max) { day.classList.add('disabled'); day.disabled=true; }
       if (opts.value && isoStr === opts.value) { day.classList.add('selected'); }
-      day.addEventListener('click', function(){ if (day.disabled) return; opts.onSelect(isoStr); });
+  day.addEventListener('click', function(){ if (day.disabled) return; opts.onSelect(isoStr); });
       grid.appendChild(day);
     }
 
@@ -81,7 +101,9 @@
     // set display to formatted value
     display.value = formatDisplayFromISO(hidden.value);
 
-    let popup = null;
+  let popup = null;
+  let lastYear = null;
+  let lastMonth = null;
 
     const open = ()=>{
       if (popup) return;
@@ -89,8 +111,9 @@
       popup.tabIndex = -1;
       document.body.appendChild(popup);
       // show month of current hidden value if present
-      const cur = parseISO(hidden.value) || new Date();
-      const curYear = cur.getFullYear(); const curMonth = cur.getMonth();
+    const cur = parseISO(hidden.value) || new Date();
+    const curYear = cur.getFullYear(); const curMonth = cur.getMonth();
+    lastYear = curYear; lastMonth = curMonth;
       const min = todayIso(); const maxDate = new Date(); maxDate.setDate(maxDate.getDate()+30); const max = iso(maxDate);
       const opts = { min, max, value: hidden.value, onSelect: (isoStr)=>{
           hidden.value = isoStr;
@@ -100,7 +123,7 @@
           hidden.dispatchEvent(new Event('input',{bubbles:true}));
           display.dispatchEvent(new Event('input',{bubbles:true}));
       }};
-      createCalendar(popup, curYear, curMonth, opts);
+    createCalendar(popup, curYear, curMonth, opts);
       positionPopup(popup, display);
       setTimeout(()=> popup.classList.add('visible'), 10);
 
@@ -108,7 +131,43 @@
       const onDocClick = (ev)=>{ if (!popup) return; if (ev.target===display) return; if (!popup.contains(ev.target)) close(); };
       const onKey = (ev)=>{ if (ev.key==='Escape') close(); };
       document.addEventListener('click', onDocClick); document.addEventListener('keydown', onKey);
-      popup._cleanup = ()=>{ document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onKey); };
+      popup._cleanup = ()=>{ 
+        document.removeEventListener('click', onDocClick); 
+        document.removeEventListener('keydown', onKey); 
+        try { const locSelect = document.getElementById('cc-location'); if (locSelect && popup._onLocChange) locSelect.removeEventListener('change', popup._onLocChange); } catch(e){}
+      };
+
+      // If location changes while popup is open, re-render the calendar to reflect closed days
+      const locSelect = document.getElementById('cc-location');
+      const onLocChange = ()=>{
+        try {
+          const curY = lastYear || (new Date()).getFullYear();
+          const curM = lastMonth || (new Date()).getMonth();
+          // recreate calendar for same month
+          createCalendar(popup, curY, curM, opts);
+          // if the currently selected hidden date falls on a closed weekday for the new location, clear it and show a message
+          const hiddenVal = hidden.value;
+          if (hiddenVal) {
+            const dt = parseISO(hiddenVal);
+            const wk = dt.getDay();
+            const settings = window.__MP_LOCATION_SETTINGS__ ? window.__MP_LOCATION_SETTINGS__[locSelect.value] : null;
+            const rangesForDay = settings && settings.ranges ? (settings.ranges[wk] || []) : [];
+            if (!rangesForDay || rangesForDay.length === 0) {
+              // clear selection and notify user
+              hidden.value = '';
+              display.value = '';
+              if (typeof window.showCCMessage === 'function') {
+                window.showCCMessage('Le jour sélectionné est fermé pour le lieu choisi — veuillez choisir une autre date.', true);
+              }
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+      if (locSelect) locSelect.addEventListener('change', onLocChange);
+      // keep a reference so cleanup can remove it
+      popup._onLocChange = onLocChange;
     };
 
     const close = ()=>{ if (!popup) return; popup._cleanup && popup._cleanup(); popup.remove(); popup=null; };

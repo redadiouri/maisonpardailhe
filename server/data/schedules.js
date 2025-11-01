@@ -1,0 +1,35 @@
+// Centralized schedules for pickup locations.
+// Exported so both server routes and the schedules API can read the same source of truth.
+// Weekday numbers: 0 = Sunday .. 6 = Saturday
+module.exports = {
+  roquettes: {
+    ranges: {
+      0: [['08:30','13:00']],
+      1: [],
+      2: [['09:00','13:00'], ['16:00','19:30']],
+      3: [['09:00','13:00'], ['16:00','19:30']],
+      4: [['09:00','13:00'], ['16:00','19:30']],
+      5: [['09:00','13:00'], ['16:00','19:30']],
+      6: [['09:00','13:00'], ['16:00','19:30']]
+    },
+    min: '08:30',
+    max: '19:30',
+    hint: 'Roquettes : mardi–samedi 09h00–13h00 / 16h00–19h30 · dimanche 08h30–13h00 · lundi fermé.',
+    label: '(Mardi – Samedi : 09h00–13h00 / 16h00–19h30 · Dimanche : 08h30–13h00)'
+  },
+  toulouse: {
+    ranges: {
+      0: [['07:00','13:30']],
+      1: [],
+      2: [['08:00','13:15'], ['16:00','19:30']],
+      3: [['08:00','13:15'], ['16:00','19:30']],
+      4: [['08:00','13:15'], ['16:00','19:30']],
+      5: [['08:00','13:15'], ['16:00','19:30']],
+      6: [['07:00','13:30']]
+    },
+    min: '07:00',
+    max: '19:30',
+    hint: 'Marché Victor Hugo : mardi–vendredi 08h00–13h15 / 16h00–19h30 · samedi–dimanche 07h00–13h30 · lundi fermé.',
+    label: '(Marché Victor Hugo : horaires variables selon jour)'
+  }
+};

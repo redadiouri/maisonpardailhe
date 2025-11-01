@@ -192,6 +192,88 @@
     vertical-align: middle;
     animation: spin 0.8s linear infinite;
 }
+/* Slot picker styles */
+.cc-time-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0 0.25rem 0;
+}
+.cc-slot-btn {
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(220,220,220,0.08);
+    background: transparent;
+    color: var(--blanc-opale);
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+.cc-slot-btn:hover, .cc-slot-btn:focus {
+    border-color: rgba(255,31,31,0.38);
+    color: var(--rouge-intense);
+}
+.cc-slot-btn.active {
+    background: linear-gradient(90deg, rgba(255,31,31,0.12), rgba(192,24,24,0.08));
+    border-color: rgba(255,31,31,0.5);
+    color: var(--rouge-intense);
+}
+.cc-time-placeholder {
+    color: rgba(247,247,247,0.54);
+    font-style: italic;
+    padding: 0.45rem 0.75rem;
+}
+
+/* Small hint showing the last offered slot */
+.cc-last-slot {
+    margin-top: 0.5rem;
+    color: rgba(247,247,247,0.72);
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+/* subtle fade-in for updates to the last-slot hint */
+.cc-fade-in {
+    animation: cc-fade-in 360ms cubic-bezier(.2,.9,.2,1);
+}
+@keyframes cc-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Grouped slot UI */
+.cc-slot-group {
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+.cc-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 0.5rem;
+    font-weight: 600;
+    color: rgba(247,247,247,0.9);
+    cursor: pointer;
+}
+.cc-group-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+}
+.cc-group.collapsed .cc-group-body { display: none; }
+
+/* Error state when no slot chosen */
+.cc-time-container.error {
+    outline: 2px solid rgba(255, 31, 31, 0.6);
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+.cc-time-error-msg {
+    color: #f33;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
 :root {

@@ -66,11 +66,8 @@ function validateCommande(data) {
   if (date < today) return { ok: false, error: "La date ne peut pas être antérieure à aujourd'hui." };
   if (date > max) return { ok: false, error: 'La date est trop éloignée (max 30 jours).' };
 
-  // location and allowed time windows
-  const locationSettings = {
-    roquettes: { min: '08:30', max: '19:30' },
-    toulouse: { min: '07:00', max: '13:30' },
-  };
+  // Read schedules from shared data file so front & back use the same source of truth.
+  const locationSettings = require('../data/schedules');
   const location = String(data.location);
   if (!locationSettings[location]) return { ok: false, error: 'Lieu de retrait invalide.' };
   const locMin = locationSettings[location].min;
@@ -83,11 +80,31 @@ function validateCommande(data) {
   // enforce 15-min step
   if (mm % 15 !== 0) return { ok: false, error: 'Le créneau doit être un multiple de 15 minutes.' };
 
-  // ensure within location window
+  // weekday-aware validation: if ranges exist for that weekday, require the time to fall inside one of them;
+  // otherwise fall back to the location min/max window
   const cMinutes = toMinutes(data.creneau);
+  const wk = date.getDay();
+  const rangesForDay = (locationSettings[location].ranges && locationSettings[location].ranges[wk]) ? locationSettings[location].ranges[wk] : [];
+  const isAllowedInRanges = (ranges) => {
+    if (!Array.isArray(ranges) || ranges.length === 0) return false;
+    for (const [s,e] of ranges) {
+      const sM = toMinutes(s);
+      const eM = toMinutes(e);
+      if (sM === null || eM === null) continue;
+      // Make the end boundary exclusive: a slot equal to the closing time is not valid
+      if (cMinutes >= sM && cMinutes < eM) return true;
+    }
+    return false;
+  };
+
+  if (rangesForDay && rangesForDay.length > 0) {
+    if (!isAllowedInRanges(rangesForDay)) return { ok: false, error: 'Le créneau choisi n\'est pas disponible pour le jour et le lieu sélectionnés.' };
+  } else {
   const minM = toMinutes(locMin);
   const maxM = toMinutes(locMax);
-  if (cMinutes === null || cMinutes < minM || cMinutes > maxM) return { ok: false, error: 'Le créneau choisi n\'est pas disponible pour le lieu.' };
+  // Make max exclusive: allowed if cMinutes >= minM && cMinutes < maxM
+  if (cMinutes === null || cMinutes < minM || cMinutes >= maxM) return { ok: false, error: 'Le créneau choisi n\'est pas disponible pour le lieu.' };
+  }
 
   // if date is today, ensure time is not in the past relative to now rounded up
   const now = new Date();
