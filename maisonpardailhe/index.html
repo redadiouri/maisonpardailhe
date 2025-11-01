@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maison Pardailhe – Artisan Charcutier</title>
     <link rel="stylesheet" href="css/style.css">
-        <!-- flatpickr (lightweight datepicker) -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- local datepicker styles -->
+    <link rel="stylesheet" href="css/datepicker.css">
 </head>
 <body>
     <header>
@@ -138,8 +138,12 @@
                         </div>
                     </div>
 
-                    <label for="cc-date">Date de retrait</label>
-                    <input id="cc-date" name="cc-date" type="date">
+                    <label for="cc-date-display">Date de retrait</label>
+                    <!-- Hidden ISO value sent to the server; visible input is for human-friendly display (JJ/MM/AAAA) -->
+              <input id="cc-date" name="cc-date" type="hidden">
+              <!-- Use data-datepicker to auto-attach the local picker; link to hidden ISO input with data-datepicker-target -->
+              <input id="cc-date-display" type="text" inputmode="numeric" placeholder="Lundi 1 Nov 2025" aria-label="Date de retrait"
+                  data-datepicker data-datepicker-target="cc-date">
 
                     <label for="cc-location">Lieu de retrait</label>
                     <select id="cc-location" name="cc-location">
@@ -184,9 +188,8 @@
         <div class="footer-bottom">© 2025 Maison Pardailhe. Tous droits réservés.</div>
     </footer>
 
-        <!-- flatpickr + locale -->
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+    <!-- lightweight local datepicker (no CDN) -->
+    <script src="js/datepicker.js"></script>
     <script src="js/menus.js"></script>
     <script src="js/app.js"></script>
 </body>

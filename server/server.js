@@ -44,8 +44,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+  scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+  // Allow loading styles from the CDN used for flatpickr. Keep 'unsafe-inline'
+  // to support inline styles used by some components (kept from previous config).
+  styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
+  // Some browsers report violations against 'style-src-elem' when it is not
+  // explicitly set; define it as well to include the CDN so <link> elements
+  // can load external stylesheets like flatpickr.min.css.
+  "styleSrcElem": ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:'],
   // Allow connecting to the CDN used by the admin dashboard (Chart.js source maps)
   connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
