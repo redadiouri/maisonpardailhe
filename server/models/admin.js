@@ -24,4 +24,29 @@ const Admin = {
   }
 };
 
+// Additional helpers
+Admin.deleteById = async (id) => {
+  const [result] = await db.execute(`DELETE FROM admins WHERE id = ?`, [id]);
+  return result.affectedRows;
+};
+
+Admin.updatePermissions = async (id, perms) => {
+  // perms: { can_edit_menus: 0|1 }
+  const fields = [];
+  const values = [];
+  if (perms.can_edit_menus !== undefined) {
+    fields.push('can_edit_menus = ?');
+    values.push(perms.can_edit_menus ? 1 : 0);
+  }
+  if (fields.length === 0) return 0;
+  values.push(id);
+  const [result] = await db.execute(`UPDATE admins SET ${fields.join(', ')} WHERE id = ?`, values);
+  return result.affectedRows;
+};
+
+Admin.count = async () => {
+  const [rows] = await db.execute(`SELECT COUNT(*) as c FROM admins`);
+  return Number(rows[0].c || 0);
+};
+
 module.exports = Admin;

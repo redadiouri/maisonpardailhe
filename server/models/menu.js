@@ -110,9 +110,4 @@ const Menu = {
   }
 };
 
-function slugify(s) {
-  if (!s) return '';
-  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
-
 module.exports = Menu;

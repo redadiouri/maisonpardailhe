@@ -103,6 +103,10 @@
               <input id="admin-username" placeholder="Nom d'utilisateur" required>
               <input id="admin-password" type="password" placeholder="Mot de passe (min 8)" required>
               <input id="admin-password-confirm" type="password" placeholder="Confirmer mot de passe" required>
+              <label style="display:flex;align-items:center;gap:0.25rem;">
+                <input id="admin-can-edit-menus" type="checkbox" checked>
+                <span style="font-size:0.9rem;">Peut modifier les menus</span>
+              </label>
               <button type="submit" class="btn primary">➕ Ajouter</button>
             </form>
             <div style="margin-left:auto;">
@@ -111,7 +115,7 @@
           </div>
           <div id="admin-list-container">
             <table id="admin-table" class="admin-table" style="width:100%; border-collapse:collapse;">
-              <thead><tr><th style="width:64px;">ID</th><th>Nom d'utilisateur</th></tr></thead>
+              <thead><tr><th style="width:64px;">ID</th><th>Nom d'utilisateur</th><th>Peut modifier menus</th><th>Actions</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>

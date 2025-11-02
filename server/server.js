@@ -113,6 +113,21 @@ const sessionConnection = mysql2.createPool({
   connectionLimit: 5
 });
 
+// Ensure session pool is closed on process exit to avoid lingering handles in test runners
+try {
+  process.on('beforeExit', async () => {
+    try {
+      if (sessionConnection && typeof sessionConnection.end === 'function') {
+        await sessionConnection.end();
+      }
+    } catch (e) {
+      // ignore
+    }
+  });
+} catch (e) {
+  // no-op
+}
+
 // express-mysql-session expects an object whose `query` method returns a Promise.
 // The mysql2 promise pool exposes `query` that returns a Promise, but to be explicit
 // create a small adapter exposing the required `query` function.
@@ -252,5 +267,29 @@ if (require.main === module) {
 } else {
   // when required as a module in tests or by other scripts, export the app without
   // initializing routes that may have heavy side-effects (DB connections, etc.).
+  // Attach a shutdown helper so tests can gracefully close DB pools created here
+  // (notably the sessionConnection pool) as well as the application's main DB pool.
   module.exports = app;
+  module.exports.shutdown = async () => {
+    // try to end the sessionConnection pool created above
+    try {
+      if (sessionConnection && typeof sessionConnection.end === 'function') {
+        await sessionConnection.end();
+        logger.info('Session connection pool closed.');
+      }
+    } catch (e) {
+      logger.warn('Error closing session connection pool: %o', e && e.message);
+    }
+
+    // try to end the primary DB pool exported by ./models/db
+    try {
+      const pool = require('./models/db');
+      if (pool && typeof pool.end === 'function') {
+        await pool.end();
+        logger.info('Main DB pool closed.');
+      }
+    } catch (e) {
+      logger.warn('Error closing main DB pool: %o', e && e.message);
+    }
+  };
 }

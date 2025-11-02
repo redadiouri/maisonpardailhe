@@ -13,8 +13,10 @@ DROP TABLE IF EXISTS admins;
 CREATE TABLE admins (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(100) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  password_hash VARCHAR(255) NOT NULL,
+  -- allow per-admin permission to edit menus (1 = allowed, 0 = not allowed)
+  can_edit_menus TINYINT(1) NOT NULL DEFAULT 1
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Menus table (contains stock and additional metadata)
 CREATE TABLE menus (
@@ -68,4 +70,4 @@ INSERT INTO menus (name, slug, description, price_cents, is_quote, stock, visibl
 COMMIT;
 
 -- Insert default admin (username: admin, password: admin)
-INSERT INTO admins (username, password_hash) VALUES ('admin', '$2b$10$HPtTCWYOAfNCtvkVbMcqBema6dmykw86Gs6WSpnvhrwEj0FFXDnfC');
+INSERT INTO admins (username, password_hash, can_edit_menus) VALUES ('admin', '$2b$10$HPtTCWYOAfNCtvkVbMcqBema6dmykw86Gs6WSpnvhrwEj0FFXDnfC', 1);

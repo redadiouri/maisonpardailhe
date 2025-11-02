@@ -12,3 +12,18 @@ const pool = mysql.createPool({
 });
 
 module.exports = pool;
+
+// Ensure the pool is closed on process exit to avoid open handles in test runners
+try {
+  process.on('beforeExit', async () => {
+    try {
+      if (pool && typeof pool.end === 'function') {
+        await pool.end();
+      }
+    } catch (e) {
+      // ignore
+    }
+  });
+} catch (e) {
+  // no-op in restricted environments
+}

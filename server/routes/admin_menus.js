@@ -13,6 +13,11 @@ router.get('/', auth, wrap(async (req, res) => {
 
 // Create
 router.post('/', auth, wrap(async (req, res) => {
+  // only admins with can_edit_menus are allowed to create
+  const adminId = req.session?.admin?.id;
+  const Admin = require('../models/admin');
+  const current = await Admin.getById(adminId);
+  if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
   const { name, description, price_cents, is_quote, stock, visible_on_menu, available } = req.body || {};
   if (!name || String(name).trim() === '') return res.status(400).json({ message: 'Name required.' });
   if (!Number.isInteger(Number(price_cents)) || Number(price_cents) < 0) return res.status(400).json({ message: 'price_cents must be integer >= 0' });
@@ -31,6 +36,11 @@ router.post('/', auth, wrap(async (req, res) => {
 
 // Update
 router.put('/:id', auth, wrap(async (req, res) => {
+  // only admins with can_edit_menus are allowed to update
+  const adminId = req.session?.admin?.id;
+  const Admin = require('../models/admin');
+  const current = await Admin.getById(adminId);
+  if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ message: 'Invalid id' });
   const body = req.body || {};
@@ -44,6 +54,11 @@ router.put('/:id', auth, wrap(async (req, res) => {
 
 // Delete
 router.delete('/:id', auth, wrap(async (req, res) => {
+  // only admins with can_edit_menus are allowed to delete
+  const adminId = req.session?.admin?.id;
+  const Admin = require('../models/admin');
+  const current = await Admin.getById(adminId);
+  if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ message: 'Invalid id' });
   const affected = await Menu.delete(id);

@@ -273,6 +273,53 @@ function showToast(message, options = {}) {
 
 // Dashboard
 if (document.getElementById('logoutBtn')) {
+  // fetch current admin info and hide admin-management tab for non-primary users
+  (async function loadCurrentAdmin() {
+    try {
+      const res = await fetch(apiBase + '/me', { credentials: 'include' });
+      if (!res.ok) return;
+      const current = await res.json();
+      window._currentAdmin = current;
+      // hide admin management tab if not primary
+      if (!current || String(current.username).toLowerCase() !== 'admin') {
+        const adminBtn = document.querySelector('.tab-btn[data-tab="admins"]');
+        if (adminBtn) adminBtn.style.display = 'none';
+      }
+      // hide menus tab if current admin cannot edit menus
+      if (!current || !current.can_edit_menus) {
+        const menuBtn = document.querySelector('.tab-btn[data-tab="menus"]');
+        if (menuBtn) menuBtn.style.display = 'none';
+        // add a notice inside the menus tab explaining why it's hidden
+        try {
+          const tabMenus = document.getElementById('tab-menus');
+          if (tabMenus) {
+            const banner = document.createElement('div');
+            banner.className = 'admin-perm-banner';
+            banner.style.padding = '12px';
+            banner.style.marginBottom = '12px';
+            banner.style.borderRadius = '8px';
+            banner.style.background = 'linear-gradient(90deg,#fff7e6,#fffef0)';
+            banner.style.color = '#7a4b00';
+            banner.style.fontWeight = '600';
+            banner.textContent = "Vous n\'avez pas la permission de modifier les menus. Contactez l'administrateur principal pour obtenir l'accès.";
+            tabMenus.insertBefore(banner, tabMenus.firstChild);
+            // also disable the add form if present
+            const form = document.getElementById('menu-form');
+            if (form) {
+              Array.from(form.elements || []).forEach(el => el.disabled = true);
+              const addBtn = form.querySelector('button[type="submit"]');
+              if (addBtn) addBtn.disabled = true;
+            }
+          }
+        } catch (e) {}
+        // if saved active tab is menus or admins, clear it so restoreActiveTab won't reactivate a hidden tab
+        try {
+          const saved = localStorage.getItem('admin.activeTab');
+          if (saved === 'menus' || saved === 'admins') localStorage.removeItem('admin.activeTab');
+        } catch (e) {}
+      }
+    } catch (e) { /* ignore */ }
+  })();
   document.getElementById('logoutBtn').onclick = async () => {
     const _csrf = await getCsrfToken();
     await fetch(apiBase + '/logout', { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
@@ -354,6 +401,11 @@ if (document.getElementById('logoutBtn')) {
     }
 
     document.addEventListener('dblclick', (e) => {
+      // block inline editing when user lacks permission
+      if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) {
+        try { showToast("Permission refusée: vous ne pouvez pas modifier les menus.", { type: 'error', duration: 2500 }); } catch (e) {}
+        return;
+      }
       const td = e.target.closest && e.target.closest('#menu-table td[data-field]');
       if (!td) return;
       const tr = td.closest && td.closest('tr');
@@ -501,7 +553,14 @@ if (document.getElementById('logoutBtn')) {
     }
     admins.forEach(a => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${a.id}</td><td>${escapeHtml(a.username)}</td>`;
+      const canEdit = a.can_edit_menus ? 'checked' : '';
+      const isPrimary = String(a.username).toLowerCase() === 'admin';
+      const checkboxDisabled = isPrimary ? 'disabled' : '';
+      const deleteButton = isPrimary ? `<button class="btn small" disabled title="Compte principal - suppression désactivée">—</button>` : `<button class="btn small danger" data-action="delete-admin" data-id="${a.id}">Supprimer</button>`;
+      tr.innerHTML = `<td>${a.id}</td>
+        <td>${escapeHtml(a.username)}</td>
+        <td style="text-align:center"><input type="checkbox" data-action="toggle-perm" data-id="${a.id}" ${canEdit} ${checkboxDisabled} title="${isPrimary ? 'Compte principal — permission verrouillée' : 'Peut modifier les menus'}"></td>
+        <td style="text-align:center">${deleteButton}</td>`;
       tbody.appendChild(tr);
     });
   }
@@ -516,12 +575,13 @@ if (document.getElementById('logoutBtn')) {
         const username = document.getElementById('admin-username').value.trim();
         const password = document.getElementById('admin-password').value || '';
         const confirm = document.getElementById('admin-password-confirm').value || '';
+        const canEditMenus = !!document.getElementById('admin-can-edit-menus').checked;
         if (!username) return alert('Nom d\'utilisateur requis');
         if (password.length < 8) return alert('Le mot de passe doit contenir au moins 8 caractères.');
         if (password !== confirm) return alert('Les mots de passe ne correspondent pas.');
         try {
           const _csrf = await getCsrfToken();
-          const res = await fetch(apiBase + '/admins', { method: 'POST', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, credentials:'include', body: JSON.stringify({ username, password }) });
+          const res = await fetch(apiBase + '/admins', { method: 'POST', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, credentials:'include', body: JSON.stringify({ username, password, can_edit_menus: canEditMenus }) });
           if (res.status === 401) { window.location.href = 'login.html'; return; }
           if (res.status === 409) { alert('Nom d\'utilisateur déjà existant.'); return; }
           if (!res.ok) throw new Error('err');
@@ -574,6 +634,7 @@ if (document.getElementById('logoutBtn')) {
     if (form) {
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
+        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { alert('Permission refusée'); return; }
   const name = document.getElementById('menu-name').value.trim();
         const description = (document.getElementById('menu-description') && document.getElementById('menu-description').value.trim()) || '';
         const price = parseFloat(document.getElementById('menu-price').value || '0');
@@ -603,11 +664,12 @@ if (document.getElementById('logoutBtn')) {
     });
 
     document.addEventListener('click', async (e)=>{
-      const btn = e.target.closest('button[data-action]');
+      const btn = e.target.closest('[data-action]');
       if (!btn) return;
       const action = btn.dataset.action;
       const id = btn.dataset.id;
       if (action === 'delete-menu') {
+        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { alert('Permission refusée'); return; }
         // show a nicer confirmation modal
         const confirmed = await showConfirmModal('Supprimer ce menu ?', 'Cette action supprimera définitivement ce menu. Voulez-vous continuer ?');
         if (!confirmed) return;
@@ -619,7 +681,41 @@ if (document.getElementById('logoutBtn')) {
           showToast('Menu supprimé', { duration: 3000 });
         } catch (e) { alert('Erreur suppression'); }
       }
+      // toggle admin permission
+      if (action === 'toggle-perm') {
+        const checkbox = btn; // input element
+        const newVal = !!checkbox.checked;
+        try {
+          const _csrf = await getCsrfToken();
+          const res = await fetch(apiBase + '/admins/' + id, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' }, body: JSON.stringify({ can_edit_menus: newVal }) });
+          if (!res.ok) throw new Error('err');
+          showToast('Permission mise à jour', { duration: 2000 });
+        } catch (e) {
+          alert('Erreur lors de la mise à jour des permissions');
+          // revert checkbox
+          checkbox.checked = !newVal;
+        }
+      }
+
+      // delete admin
+      if (action === 'delete-admin') {
+        const confirmed = await showConfirmModal('Supprimer cet administrateur ?', 'Cette action supprimera définitivement le compte administrateur. Voulez-vous continuer ?');
+        if (!confirmed) return;
+        try {
+          const _csrf = await getCsrfToken();
+          const res = await fetch(apiBase + '/admins/' + id, { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
+          if (res.status === 400) {
+            const data = await res.json().catch(()=>null);
+            alert(data && data.message ? data.message : 'Impossible de supprimer cet administrateur');
+            return;
+          }
+          if (!res.ok) throw new Error('err');
+          await loadAdmins();
+          showToast('Administrateur supprimé', { duration: 2500 });
+        } catch (e) { alert('Erreur suppression'); }
+      }
       if (action === 'edit') {
+        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { alert('Permission refusée'); return; }
         // simple inline edit: load item values into the form for editing -> on submit we'll perform create; editing not fully implemented here (could open modal)
         const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
         if (!item) return;

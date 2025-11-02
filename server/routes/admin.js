@@ -102,24 +102,82 @@ router.get('/commandes', auth, wrap(async (req, res) => {
 
 // List admins (id, username) - protected
 router.get('/admins', auth, wrap(async (req, res) => {
+  // only primary admin may list admins
+  const adminId = req.session?.admin?.id;
+  const AdminModel = require('../models/admin');
+  const current = await AdminModel.getById(adminId);
+  if (!current || String(current.username).toLowerCase() !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   const db = require('../models/db');
-  const [rows] = await db.query('SELECT id, username FROM admins ORDER BY id ASC');
-  res.json(rows.map(r => ({ id: r.id, username: r.username })));
+  const [rows] = await db.query('SELECT id, username, can_edit_menus FROM admins ORDER BY id ASC');
+  res.json(rows.map(r => ({ id: r.id, username: r.username, can_edit_menus: r.can_edit_menus ? 1 : 0 })));
 }));
 
 // Create a new admin (protected) - body: { username, password }
 router.post('/admins', auth, wrap(async (req, res) => {
-  const { username, password } = req.body || {};
+  const { username, password, can_edit_menus } = req.body || {};
   if (!username || !password) return res.status(400).json({ message: 'username and password required' });
   if (typeof username !== 'string' || username.length < 3) return res.status(400).json({ message: 'username invalid (min 3 chars)' });
   if (typeof password !== 'string' || password.length < 8) return res.status(400).json({ message: 'password invalid (min 8 chars)' });
   const db = require('../models/db');
+  // only primary admin may create other admins
+  const adminId = req.session?.admin?.id;
+  const AdminModel = require('../models/admin');
+  const current = await AdminModel.getById(adminId);
+  if (!current || String(current.username).toLowerCase() !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   // check existing
   const [existing] = await db.query('SELECT id FROM admins WHERE username = ? LIMIT 1', [username]);
   if (existing && existing.length > 0) return res.status(409).json({ message: 'username already exists' });
   const hash = await bcrypt.hash(password, 10);
-  await db.execute('INSERT INTO admins (username, password_hash) VALUES (?, ?)', [username, hash]);
+  const canEdit = (can_edit_menus === undefined) ? 0 : (can_edit_menus ? 1 : 0);
+  await db.execute('INSERT INTO admins (username, password_hash, can_edit_menus) VALUES (?, ?, ?)', [username, hash, canEdit]);
   res.status(201).json({ success: true });
+}));
+
+// Update admin permissions (protected)
+router.put('/admins/:id', auth, wrap(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ message: 'Invalid id' });
+  const adminId = req.session?.admin?.id;
+  if (!adminId) return res.status(401).json({ message: 'Non autorisé.' });
+
+  const { can_edit_menus } = req.body || {};
+  if (can_edit_menus === undefined) return res.status(400).json({ message: 'No permissions provided' });
+
+  const AdminModel = require('../models/admin');
+  // only primary admin may change admin permissions
+  const current = await AdminModel.getById(adminId);
+  if (!current || String(current.username).toLowerCase() !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+  // prevent changing permissions of the primary admin account
+  const target = await AdminModel.getById(id);
+  if (target && String(target.username).toLowerCase() === 'admin' && !can_edit_menus) {
+    return res.status(400).json({ message: 'Impossible de retirer la permission de modification des menus pour l\'administrateur principal.' });
+  }
+  const affected = await AdminModel.updatePermissions(id, { can_edit_menus: can_edit_menus ? 1 : 0 });
+  res.json({ affected });
+}));
+
+// Delete admin (protected)
+router.delete('/admins/:id', auth, wrap(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ message: 'Invalid id' });
+  const adminId = req.session?.admin?.id;
+  if (!adminId) return res.status(401).json({ message: 'Non autorisé.' });
+  if (adminId === id) return res.status(400).json({ message: 'Vous ne pouvez pas supprimer votre propre compte.' });
+
+  const AdminModel = require('../models/admin');
+  // only primary admin may delete admins
+  const current = await AdminModel.getById(adminId);
+  if (!current || String(current.username).toLowerCase() !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+  // prevent deletion of the primary admin account
+  const target = await AdminModel.getById(id);
+  if (target && String(target.username).toLowerCase() === 'admin') {
+    return res.status(400).json({ message: "Impossible de supprimer l'administrateur principal." });
+  }
+  const total = await AdminModel.count();
+  if (total <= 1) return res.status(400).json({ message: "Impossible de supprimer le dernier administrateur." });
+
+  const affected = await AdminModel.deleteById(id);
+  res.json({ affected });
 }));
 
 // Accepter commande
@@ -231,5 +289,16 @@ router.get('/stats', auth, wrap(async (req, res) => {
   res.json({ totalOrders, byStatus, last30, itemsSold: items, total_revenue_cents: totalRevenueCents, orders_by_day, revenue_by_day });
 }));
 
+// Current logged-in admin info
+router.get('/me', auth, wrap(async (req, res) => {
+  const adminId = req.session?.admin?.id;
+  if (!adminId) return res.status(401).json({ message: 'Non autorisé.' });
+  const AdminModel = require('../models/admin');
+  const admin = await AdminModel.getById(adminId);
+  if (!admin) return res.status(404).json({ message: 'Administrateur introuvable.' });
+  res.json({ id: admin.id, username: admin.username, can_edit_menus: !!admin.can_edit_menus });
+}));
+
 module.exports = router;
+
 
