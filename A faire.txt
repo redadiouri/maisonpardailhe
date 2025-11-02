@@ -1,27 +1,3 @@
-🗃️ Prompt 10 — Migration & backup DB
-
-Ajoute un système de migration de base de données :
-
-Utilise knex/migrate ou umzug (si t’es sur Sequelize).
-
-Évite les scripts SQL manuels.
-
-Prévois des backups réguliers.
-
-But : gérer les changements de schéma proprement et éviter la perte de données.
-
-⚡ Prompt 11 — Performance frontend
-
-Optimise les performances du frontend :
-
-Compresse les images (WebP, compression).
-
-Ajoute width / height sur les balises <img> et active le lazy-loading.
-
-Côté serveur, ajoute des headers Cache-Control pour les fichiers statiques.
-
-Objectif : chargement plus rapide et score Lighthouse boosté.
-
 ♿ Prompt 12 — Accessibilité
 
 Vérifie l’accessibilité :

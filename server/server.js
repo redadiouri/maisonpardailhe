@@ -181,10 +181,28 @@ app.get(['/admin', '/admin/'], (req, res) => {
   }
   return res.redirect(302, '/admin/login.html');
 });
-// Sert le site principal en statique sur la racine
-app.use(express.static(path.join(__dirname, '../maisonpardailhe')));
-// Sert le dossier admin en statique
-app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin')));
+// Serve static files with conservative caching headers to improve frontend performance.
+// HTML files are served with no-cache to allow immediate updates; assets (CSS/JS/img) get a longer max-age.
+const oneHour = 1000 * 60 * 60;
+const sevenDays = 1000 * 60 * 60 * 24 * 7;
+const staticMaxAge = (process.env.NODE_ENV === 'production') ? sevenDays : oneHour;
+
+function setStaticHeaders(res, filePath) {
+  if (filePath.endsWith('.html')) {
+    // prefer clients to revalidate HTML on each request so edits propagate quickly
+    res.setHeader('Cache-Control', 'no-cache');
+  } else if (filePath.endsWith('.json')) {
+    res.setHeader('Cache-Control', 'no-cache');
+  } else {
+    // static assets: images, scripts, styles — allow caching
+    res.setHeader('Cache-Control', `public, max-age=${Math.floor(staticMaxAge/1000)}`);
+  }
+}
+
+// Serve the main site with caching middleware
+app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
+// Serve the admin static folder (the admin UI is static HTML/JS too)
+app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
 
 // Route handlers are required lazily when running the server to avoid heavy
 // module initialization during tests (which may otherwise import DB-heavy code).
