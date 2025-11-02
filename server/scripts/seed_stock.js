@@ -3,7 +3,7 @@
 // Usage: node server/scripts/seed_stock.js
 
 const Stock = require('../models/stock');
-const db = require('../models/db');
+// db not required here; Stock model manages DB interactions
 
 const ITEMS = [
   { name: "Pâté en croûte Maison", reference: 'PATE-CROUTE', quantity: 20, image_url: '', available: true },

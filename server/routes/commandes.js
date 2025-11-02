@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const Commande = require('../models/commande');
 const { sendCommandeEmail } = require('../utils/email');
 const db = require('../models/db');
-const Menu = require('../models/menu');
+// Menu model not used directly here; require only where needed in other scripts
 
 // Validation simple améliorée
 function parseDateString(s) {
@@ -196,7 +196,7 @@ router.post('/', validateCommandeFields, async (req, res) => {
       })();
       res.status(201).json({ id, total_cents: totalCents });
     } catch (err) {
-      try { await conn.rollback(); } catch (e) {}
+      try { await conn.rollback(); } catch (e) { /* ignore rollback errors */ }
       res.status(500).json({ message: 'Erreur serveur.' });
     } finally {
       conn.release();

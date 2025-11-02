@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 
-const ROOT = path.join(__dirname, '..');
+const _ROOT = path.join(__dirname, '..');
 const DEFAULT_IMG_DIR = path.join(__dirname, '..', '..', 'maisonpardailhe', 'img');
 const IMG_DIR = process.env.TARGET_DIR ? path.resolve(process.env.TARGET_DIR) : DEFAULT_IMG_DIR;
 const OUT_DIR = path.join(IMG_DIR, 'optimized');

@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
 const Menu = require('../models/menu');
-const db = require('../models/db');
+// db not needed directly in this script; models use their own DB pool
 
 async function main() {
   const htmlPath = path.join(__dirname, '..', '..', 'maisonpardailhe', 'menu.html');

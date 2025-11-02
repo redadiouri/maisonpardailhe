@@ -74,11 +74,15 @@ describe('admin permission integration', () => {
     expect([403,401]).toContain(res.status);
 
     // attempt to delete menu -> forbidden (if createdMenuId exists)
+    let deletionStatus = null;
     if (createdMenuId) {
       const csrf3 = await getCsrf(userAgent);
       const resDel = await userAgent.delete('/api/admin/menus/' + createdMenuId).set('X-CSRF-Token', csrf3);
-      expect([403,401]).toContain(resDel.status);
+      deletionStatus = resDel.status;
     }
+    // Either the delete was attempted and forbidden (403/401) or it was not attempted (deletionStatus === null)
+    const deleteOk = (createdMenuId && [403,401].includes(deletionStatus)) || (!createdMenuId && deletionStatus === null);
+    expect(deleteOk).toBeTruthy();
   });
 
   it('prevents demoting or deleting the primary admin and prevents self-delete', async () => {
@@ -100,11 +104,11 @@ describe('admin permission integration', () => {
     const delRes = await adminAgent.delete('/api/admin/admins/' + primaryId).set('X-CSRF-Token', csrf2);
     expect([400,200]).toContain(delRes.status);
     // Accept either the 'cannot delete your own account' message or the 'cannot delete primary admin' message
-    if (delRes.status === 400) {
-      expect(delRes.body && delRes.body.message).toMatch(/supprimer votre propre compte|Impossible de supprimer l'administrateur principal/i);
-    } else if (delRes.status === 200) {
-      // if 200 then deletion did not occur (affected may be 0)
-      expect(delRes.body && (delRes.body.affected === 0 || delRes.body.success === false || true)).toBeTruthy();
+    {
+      const msg = delRes.body && delRes.body.message;
+      const deletedOk = (delRes.status === 400 && /supprimer votre propre compte|Impossible de supprimer l'administrateur principal/i.test(msg))
+        || (delRes.status === 200 && Boolean(delRes.body && (delRes.body.affected === 0 || delRes.body.success === false || true)));
+      expect(deletedOk).toBeTruthy();
     }
   });
 
@@ -132,10 +136,11 @@ describe('admin permission integration', () => {
     const tryDel = await adminAgent.delete('/api/admin/admins/' + tempId).set('X-CSRF-Token', c2);
     // The server may either return 400 (last-admin prevention) or 200 with affected=0 for a second delete.
     expect([200,400]).toContain(tryDel.status);
-    if (tryDel.status === 400) {
-      expect(tryDel.body && tryDel.body.message).toMatch(/Impossible de supprimer le dernier administrateur/i);
-    } else {
-      expect(tryDel.body && (tryDel.body.affected === 0 || tryDel.body.success === false || true)).toBeTruthy();
+    {
+      const msg = tryDel.body && tryDel.body.message;
+      const ok = (tryDel.status === 400 && /Impossible de supprimer le dernier administrateur/i.test(msg))
+        || (tryDel.status === 200 && Boolean(tryDel.body && (tryDel.body.affected === 0 || tryDel.body.success === false || true)));
+      expect(ok).toBeTruthy();
     }
   });
 
@@ -176,8 +181,8 @@ describe('admin permission integration', () => {
     }
     const reList = await adminAgent.get('/api/admin/admins');
     // find primary id (should exist)
-    const primary = reList.body && reList.body.find && reList.body.find(a => String(a.username).toLowerCase() === 'admin');
-    const primaryId = primary ? primary.id : null;
+  const primary = reList.body && reList.body.find && reList.body.find(a => String(a.username).toLowerCase() === 'admin');
+  let primaryId = primary ? primary.id : null;
 
     if (!primaryId) {
       // fallback: fetch by DB directly
@@ -191,8 +196,10 @@ describe('admin permission integration', () => {
     const del = await adminAgent.delete('/api/admin/admins/' + primaryId).set('X-CSRF-Token', csrf3);
     // allow 400 or 403 depending on checks; ensure deletion did not occur
     expect([400,403,200]).toContain(del.status);
-    if (del.status === 200) {
-      expect(del.body && (del.body.affected === 0 || del.body.success === false || true)).toBeTruthy();
+    {
+      const ok = (del.status === 200 && Boolean(del.body && (del.body.affected === 0 || del.body.success === false || true)))
+        || del.status === 400 || del.status === 403;
+      expect(ok).toBeTruthy();
     }
   });
 
