@@ -133,6 +133,42 @@
     color: var(--blanc-opale);
 }
 
+/* Remove native number input spinner (platform/browser-specific) so the input matches dark theme */
+.selection-item__controls input[type="number"]::-webkit-outer-spin-button,
+.selection-item__controls input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.selection-item__controls input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+    appearance: textfield;
+}
+
+/* Price displayed next to quantity controls in selection panel */
+.selection-item__price {
+    margin-left: 0.6rem;
+    font-weight: 700;
+    color: var(--rouge-intense);
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.selection-item__stock {
+    margin-left: 0.6rem;
+    font-size: 0.85rem;
+    color: rgba(247,247,247,0.7);
+}
+
+/* animation when total changes in the selection summary */
+@keyframes total-pop {
+    0% { transform: scale(1); color: inherit; }
+    30% { transform: scale(1.06); color: var(--rouge-intense); }
+    100% { transform: scale(1); color: inherit; }
+}
+.selection-display__summary.total-updated {
+    animation: total-pop 420ms ease;
+}
+
 .quantity-btn {
     width: 38px;
     height: 38px;
@@ -275,6 +311,34 @@
     margin-top: 0.5rem;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Mini toast (order recap quick link) */
+.mp-toast {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    background: linear-gradient(180deg, rgba(18,18,18,0.98), rgba(12,12,12,0.98));
+    color: var(--blanc-opale);
+    border-radius: 10px;
+    border: 1px solid rgba(255,31,31,0.12);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.6);
+    font-size: 0.95rem;
+    min-width: 220px;
+}
+.mp-toast .mp-toast-text { flex: 1; color: rgba(247,247,247,0.92); }
+.mp-toast .mp-toast-link { color: var(--rouge-intense); font-weight:700; margin-left:0.5rem; text-decoration:underline; }
+.mp-toast .mp-toast-close { background: transparent; border: none; color: rgba(255,255,255,0.6); font-size: 1rem; cursor: pointer; padding: 0 0.25rem; }
+@keyframes mp-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.mp-toast { animation: mp-toast-in 220ms ease; }
+
+@media (max-width: 560px) {
+    .mp-toast { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; min-width: auto; }
+}
 
 :root {
     --noir-profond: #070707;

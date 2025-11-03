@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // init selection panel first so it can set time min/max
         initSelectionPanel();
         initClickCollectForm();
+        initContactForm();
     })();
 });
 
@@ -513,10 +514,35 @@ function initClickCollectForm() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
+                // reset the form fields that belong to the click & collect form
                 form.reset();
-                // show selection summary in the confirmation (use `title` set when building the list)
+                // Also reset the selection panel quantities and visual state (these inputs may live outside the form)
+                try {
+                    const qtyInputs = document.querySelectorAll('#cc-selection-panel .selection-item__controls input[type="number"]');
+                    qtyInputs.forEach((inp) => {
+                        inp.value = '0';
+                        // ensure any bound listeners react
+                        inp.dispatchEvent(new Event('input', { bubbles: true }));
+                    });
+                    // clear any active classes
+                    document.querySelectorAll('#cc-selection-panel .selection-item.selection-item--active').forEach(el => el.classList.remove('selection-item--active'));
+                    // clear selected time slot
+                    const hiddenTime = document.getElementById('cc-time'); if (hiddenTime) { hiddenTime.value = ''; hiddenTime.dispatchEvent(new Event('input', { bubbles: true })); }
+                    // update display (recompute totals, re-disable submit)
+                    if (typeof updateDisplay === 'function') updateDisplay();
+                    // optionally close selection panel if open
+                    const panel = document.getElementById('cc-selection-panel'); if (panel && !panel.hidden) { panel.setAttribute('hidden', ''); panel.hidden = true; }
+                } catch (e) { /* ignore reset errors */ }
+                // try to read response payload (contains id when created)
+                let respJson = null;
+                try { respJson = await res.json(); } catch (e) { /* ignore */ }
                 const selectionSummary = produits.map(p => `${p.qty} × ${p.title}`).join(', ');
                 showCCMessage(`Votre commande a bien été enregistrée : ${selectionSummary}. Nous vous confirmerons sous 2h ouvrées.`, false);
+                // show a small toast allowing user to view the order recap
+                try {
+                    const orderId = respJson && (respJson.id || respJson.insertId);
+                    if (orderId) showMiniToast(orderId);
+                } catch (e) { /* ignore toast errors */ }
             } else {
                 // try to extract error details
                 let errMsg = 'Une erreur est survenue. Merci de réessayer ou de nous contacter.';
@@ -541,6 +567,65 @@ function initClickCollectForm() {
     });
 }
 
+// Contact form (public site) - POST to /api/notifications
+function initContactForm() {
+    const form = document.querySelector('form#contactForm') || document.querySelector('main form');
+    if (!form) return;
+    // if this isn't the contact page (inputs not present) bail
+    const fullname = form.querySelector('#fullname');
+    const email = form.querySelector('#email');
+    const subject = form.querySelector('#subject');
+    const message = form.querySelector('#message');
+    if (!fullname || !email || !message) return;
+
+    const infoId = 'contact-info-msg';
+    function showContactMessage(msg, isError) {
+        let el = document.getElementById(infoId);
+        if (!el) {
+            el = document.createElement('div'); el.id = infoId; el.style.marginTop = '0.75rem';
+            form.appendChild(el);
+        }
+        el.textContent = msg;
+        el.style.color = isError ? '#c00' : '#080';
+    }
+
+    form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const f = (fullname.value || '').trim();
+        const e = (email.value || '').trim();
+        const s = (subject.value || '').trim();
+        const m = (message.value || '').trim();
+        if (!f || !e || !m) { showContactMessage('Merci de remplir tous les champs requis.', true); return; }
+
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+        try {
+            // CSRF token fetch (session-based). If server rejects, email still stored server-side.
+            let csrf = null;
+            try {
+                const t = await fetch('/api/csrf-token', { credentials: 'include' }); if (t.ok) { const td = await t.json(); csrf = td && td.csrfToken; }
+            } catch (e) {}
+
+            const res = await fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf || '' },
+                credentials: 'include',
+                body: JSON.stringify({ fullname: f, email: e, subject: s, message: m })
+            });
+            if (res.ok) {
+                form.reset();
+                showContactMessage('Merci, votre message a bien été envoyé. Nous vous répondrons sous 24h.', false);
+            } else {
+                let msg = 'Erreur lors de l\'envoi. Merci de réessayer.';
+                try { const d = await res.json(); if (d && d.message) msg = d.message; } catch (e) {}
+                showContactMessage(msg, true);
+            }
+        } catch (err) {
+            showContactMessage('Impossible d\'envoyer le message. Merci de réessayer plus tard.', true);
+        } finally { if (btn) btn.disabled = false; }
+    });
+}
+
 function showCCMessage(msg, isError) {
     let info = document.getElementById('cc-info-msg');
     if (!info) {
@@ -555,6 +640,54 @@ function showCCMessage(msg, isError) {
     }
     info.textContent = msg;
     info.style.color = isError ? '#f33' : '#090';
+}
+
+// Small mini-toast that offers a link to view the created order recap
+function showMiniToast(orderId) {
+    if (!orderId) return;
+    // ensure only one toast at a time
+    const EXIST = document.getElementById('mp-mini-toast');
+    if (EXIST) {
+        try { EXIST.remove(); } catch (e) {}
+    }
+    const toast = document.createElement('div');
+    toast.id = 'mp-mini-toast';
+    toast.className = 'mp-toast';
+    toast.setAttribute('role','status');
+    toast.setAttribute('aria-live','polite');
+
+    const text = document.createElement('div');
+    text.className = 'mp-toast-text';
+    text.textContent = 'Commande enregistrée.';
+
+    const link = document.createElement('a');
+    link.className = 'mp-toast-link';
+    // public recap route: /commande/:id
+    // link to the static SPA recap page and open in a new tab
+    link.href = `/commande.html?id=${orderId}`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Voir la commande';
+    // open in same tab so user stays on site; remove target if undesired
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'mp-toast-close';
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label','Fermer la notification');
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => {
+        try { toast.remove(); } catch (e) {}
+    });
+
+    toast.appendChild(text);
+    toast.appendChild(link);
+    toast.appendChild(closeBtn);
+    document.body.appendChild(toast);
+
+    // Auto-dismiss after 8s
+    setTimeout(() => {
+        try { toast.remove(); } catch (e) {}
+    }, 8000);
 }
 
 function initSmoothAnchors() {
@@ -596,6 +729,7 @@ function initSelectionPanel() {
     // Attach handlers to quantity controls. We call this once and also when menus are loaded dynamically.
     let quantityButtons = [];
     let quantityInputs = [];
+    let lastTotalCents = null;
     const attachControls = () => {
         quantityButtons = Array.from(panel.querySelectorAll('.quantity-btn'));
         quantityInputs = Array.from(panel.querySelectorAll('.selection-item__controls input[type="number"]'));
@@ -644,6 +778,8 @@ function initSelectionPanel() {
 
     const updateDisplay = () => {
         const parts = [];
+        let totalCents = 0;
+        let hasZeroPriceSelected = false;
 
         quantityInputs.forEach((input) => {
             const container = input.closest('.selection-item');
@@ -655,13 +791,61 @@ function initSelectionPanel() {
 
                 if (value > 0) {
                     parts.push(`${title} × ${value}`);
+                    // compute total using data-price-cents if available
+                    const priceCents = Number(container.dataset.priceCents || 0);
+                    if (Number.isFinite(priceCents) && priceCents > 0) {
+                        totalCents += priceCents * Number(value || 0);
+                    } else if (priceCents === 0) {
+                        // item requires "sur devis" / no price available
+                        hasZeroPriceSelected = true;
+                    }
                 }
             }
         });
 
         if (summary) {
-            summary.textContent = parts.length ? parts.join(', ') : 'Aucune sélection';
+            // append formatted total if any products selected
+            const summaryText = parts.length ? parts.join(', ') : 'Aucune sélection';
+            const fmt = (cents) => (Number(cents)/100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '€';
+            if (parts.length && totalCents > 0) {
+                summary.textContent = `${summaryText} — Total: ${fmt(totalCents)}`;
+            } else if (parts.length && hasZeroPriceSelected) {
+                // show summary but without numeric total when one or more items need quote
+                summary.textContent = `${summaryText} — Total: Sur devis`;
+            } else {
+                summary.textContent = summaryText;
+            }
+
+            // animate total when it changes
+            try {
+                const summaryEl = summary;
+                if (summaryEl) {
+                    // compare last total (null for first run)
+                    if (lastTotalCents === null || lastTotalCents !== totalCents) {
+                        summaryEl.classList.remove('total-updated');
+                        // force reflow to restart animation
+                        void summaryEl.offsetWidth;
+                        summaryEl.classList.add('total-updated');
+                        // remove class after animation (in case animationend isn't supported)
+                        setTimeout(() => { try { summaryEl.classList.remove('total-updated'); } catch(e){} }, 480);
+                    }
+                    lastTotalCents = totalCents;
+                }
+            } catch (e) {}
         }
+        // disable submit if total is zero or any selected item requires "sur devis" (price 0)
+        try {
+            const formSubmit = document.querySelector('#click-collect form button[type="submit"]');
+            if (formSubmit) {
+                const disable = (parts.length === 0) || (totalCents === 0 && !hasZeroPriceSelected) || hasZeroPriceSelected;
+                formSubmit.disabled = !!disable;
+                if (disable) {
+                    formSubmit.setAttribute('title', hasZeroPriceSelected ? 'Un ou plusieurs articles nécessitent un devis — contactez-nous' : 'Sélectionnez au moins un produit avec prix');
+                } else {
+                    formSubmit.removeAttribute('title');
+                }
+            }
+        } catch (e) {}
     };
 
     const focusPanel = () => {

@@ -4,9 +4,13 @@ const { sendCommandeEmail } = require('../utils/email');
 
 const Commande = {
   create: async (data) => {
+    // Ensure date_retrait is normalized to YYYY-MM-DD when possible
+    const date_retrait = (data && data.date_retrait) ? String(data.date_retrait) : null;
+    const { normalizeToYMD } = require('../utils/dates');
+    const dateYMD = normalizeToYMD(date_retrait) || date_retrait;
     const [result] = await db.execute(
       `INSERT INTO commandes (nom_complet, telephone, email, produit, date_retrait, creneau, location, precisions, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
-    [data.nom_complet, data.telephone, data.email || '', data.produit, data.date_retrait, data.creneau, data.location || 'roquettes', data.precisions]
+    [data.nom_complet, data.telephone, data.email || '', data.produit, dateYMD, data.creneau, data.location || 'roquettes', data.precisions]
     );
     return result.insertId;
   },

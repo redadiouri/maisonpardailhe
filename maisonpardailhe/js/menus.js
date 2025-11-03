@@ -45,8 +45,10 @@
 
   function renderSelectionItem(m) {
     const div = document.createElement('div');
-    div.className = 'selection-item';
-    div.dataset.menuId = String(m.id);
+  div.className = 'selection-item';
+  div.dataset.menuId = String(m.id);
+  // expose price in cents on the DOM so other scripts can compute totals without parsing text
+  div.dataset.priceCents = String(Number(m.price_cents || 0));
     const info = document.createElement('div'); info.className = 'selection-item__info';
     const h4 = document.createElement('h4'); h4.textContent = m.name;
     const p = document.createElement('p'); p.textContent = m.description || '';
@@ -59,13 +61,16 @@
   input.max = String(Math.max(0, Number(m.stock || 0)));
   input.dataset.max = String(Math.max(0, Number(m.stock || 0)));
     const inc = document.createElement('button'); inc.type='button'; inc.className='quantity-btn'; inc.dataset.action='increment'; inc.setAttribute('aria-label','Ajouter'); inc.textContent='+';
-    const stockSpan = document.createElement('div'); stockSpan.style.fontSize='0.85rem'; stockSpan.style.color='rgba(247,247,247,0.7)'; stockSpan.style.marginLeft='0.5rem'; stockSpan.textContent = `Stock: ${m.stock}`;
+  const stockSpan = document.createElement('div'); stockSpan.className = 'selection-item__stock'; stockSpan.textContent = `Stock: ${m.stock}`;
+  // price element placed next to quantity controls for a compact, readable layout
+  const priceDiv = document.createElement('div'); priceDiv.className = 'selection-item__price';
+  priceDiv.textContent = m.is_quote ? 'Sur devis' : formatPrice(m.price_cents);
     if (m.stock <= 0) {
       inc.disabled = true;
       input.disabled = true;
       div.classList.add('selection-item--disabled');
     }
-    controls.appendChild(dec); controls.appendChild(input); controls.appendChild(inc); controls.appendChild(stockSpan);
+  controls.appendChild(dec); controls.appendChild(input); controls.appendChild(inc); controls.appendChild(priceDiv); controls.appendChild(stockSpan);
 
     div.appendChild(info); div.appendChild(controls);
     return div;

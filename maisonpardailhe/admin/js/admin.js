@@ -480,6 +480,7 @@ if (document.getElementById('logoutBtn')) {
           if (name === 'stockage' && typeof loadStock === 'function') loadStock();
           if (name === 'menus' && typeof loadMenus === 'function') loadMenus();
           if (name === 'admins' && typeof loadAdmins === 'function') loadAdmins();
+          if (name === 'notifications' && typeof loadNotifications === 'function') loadNotifications();
           if (name === 'stats' && typeof loadStats === 'function') {
             // start immediate load and refresh while stats tab is visible
             loadStats();
@@ -674,6 +675,79 @@ if (document.getElementById('logoutBtn')) {
       if (tbody) tbody.innerHTML = '<tr><td colspan="2" style="color:#f33; text-align:center;">Erreur de chargement des administrateurs.</td></tr>';
     }
   }
+
+  // Notifications (admin)
+  async function loadNotifications() {
+    const container = document.querySelector('#tab-notifications');
+    if (!container) return;
+    const listEl = document.getElementById('notifications-list');
+    const loader = document.getElementById('notifications-loader');
+    if (loader) loader.style.display = 'block';
+    try {
+      const res = await fetch('/api/admin/notifications', { credentials: 'include' });
+      if (res.status === 401) { window.location.href = 'login.html'; return; }
+      if (!res.ok) throw new Error('Failed');
+      const items = await res.json();
+      renderNotificationsList(items);
+      // update badge count for unread
+      const unread = (items || []).filter(i => !i.read).length;
+      const badge = document.getElementById('badge-notifs');
+      if (badge) badge.textContent = unread ? String(unread) : '';
+    } catch (e) {
+      if (listEl) listEl.innerHTML = '<div style="color:#f33; text-align:center;">Erreur de chargement des notifications.</div>';
+    } finally {
+      if (loader) loader.style.display = 'none';
+    }
+  }
+
+  function renderNotificationsList(items) {
+    const listEl = document.getElementById('notifications-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    if (!items || items.length === 0) {
+      listEl.innerHTML = '<div style="color:#aaa; text-align:center;">Aucune notification.</div>';
+      return;
+    }
+    const ul = document.createElement('div'); ul.className = 'admin-notifs-list';
+    items.forEach(it => {
+      const el = document.createElement('div'); el.className = 'admin-notif';
+      el.style.border = '1px solid rgba(255,255,255,0.04)';
+      el.style.padding = '10px'; el.style.marginBottom = '8px'; el.style.borderRadius = '8px';
+      const meta = document.createElement('div'); meta.style.display = 'flex'; meta.style.gap = '8px'; meta.style.alignItems = 'center';
+      const title = document.createElement('div'); title.style.fontWeight = '700'; title.textContent = it.subject || 'Message de contact';
+      const when = document.createElement('div'); when.style.marginLeft = 'auto'; when.style.color = 'var(--muted)'; when.style.fontSize = '0.85rem';
+      const d = new Date(it.created_at); when.textContent = isNaN(d.getTime()) ? (it.created_at || '') : d.toLocaleString();
+      meta.appendChild(title); meta.appendChild(when);
+      const body = document.createElement('div'); body.style.marginTop = '8px'; body.innerHTML = `<div><strong>${escapeHtml(it.fullname)}</strong> — <a href="mailto:${escapeAttr(it.email)}">${escapeHtml(it.email)}</a></div><div style="margin-top:6px; white-space:pre-wrap;">${escapeHtml(it.message)}</div>`;
+      const actions = document.createElement('div'); actions.style.marginTop = '8px'; actions.style.display = 'flex'; actions.style.gap = '8px';
+      const mark = document.createElement('button'); mark.className = 'btn small'; mark.textContent = it.read ? 'Lu' : 'Marquer lu';
+      const del = document.createElement('button'); del.className = 'btn small danger'; del.textContent = 'Supprimer';
+      mark.addEventListener('click', async () => {
+        try {
+          const _csrf = await getCsrfToken();
+          const res = await fetch('/api/admin/notifications/' + encodeURIComponent(it.id) + '/read', { method: 'PUT', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
+          if (res.ok) { mark.textContent = 'Lu'; el.style.opacity = '0.7'; loadNotifications(); }
+        } catch (e) {}
+      });
+      del.addEventListener('click', async () => {
+        try {
+          if (!confirm('Supprimer cette notification ?')) return;
+          const _csrf = await getCsrfToken();
+          const res = await fetch('/api/admin/notifications/' + encodeURIComponent(it.id), { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
+          if (res.ok) { showToast('Notification supprimée'); loadNotifications(); }
+        } catch (e) { showAlertModal('Erreur', 'Impossible de supprimer'); }
+      });
+      actions.appendChild(mark); actions.appendChild(del);
+      el.appendChild(meta); el.appendChild(body); el.appendChild(actions);
+      ul.appendChild(el);
+    });
+    listEl.appendChild(ul);
+  }
+
+  // small escaping helpers
+  function escapeHtml(s) { if (s === undefined || s === null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function escapeAttr(s) { return (s === undefined || s === null) ? '' : String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
 
   function renderAdminsTable(admins) {
     const tbody = document.querySelector('#admin-table tbody');

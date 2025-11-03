@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Récapitulatif commande — Maison Pardailhé</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/index.html" class="brand"><span class="brand-name">La Maison <span>Pardailhé</span></span></a>
+      <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/index.html">Accueil</a></li>
+          <li><a href="/menu.html">Menu</a></li>
+          <li><a href="/services.html">Services</a></li>
+          <li><a href="/identite.html">Identité</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main style="max-width:1100px;margin:28px auto;padding:0 16px;">
+    <h1 id="page-title">Récapitulatif commande</h1>
+    <p id="page-sub" style="color:var(--gris-velin);margin-bottom:18px">Chargement…</p>
+
+    <div id="recap-spinner" style="display:block;margin:18px 0;">
+      <span class="btn-spinner" aria-hidden="true" style="width:28px;height:28px;border-width:3px;vertical-align:middle;margin-right:8px"></span>
+      <span id="recap-spin-text" style="vertical-align:middle;color:var(--gris-velin)">Récupération des informations de la commande…</span>
+    </div>
+
+    <div id="recap" class="contact-card" style="display:none"></div>
+  </main>
+
+  <script src="/js/commande.js"></script>
+</body>
+</html>

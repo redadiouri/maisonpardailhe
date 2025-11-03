@@ -1,15 +1,41 @@
-<html>
-  <body>
-    <p>Bonjour {{customerName}},</p>
-    <p>Nous avons bien reçu votre commande pour le <strong>{{date_retrait}}</strong> à <strong>{{creneau}}</strong> ({{location}}).</p>
-    {{#if itemsHtml}}
-      <h4>Détails de la commande</h4>
-      {{{itemsHtml}}}
-    {{/if}}
-    {{#if total}}
-      <p><strong>Total: {{total}}</strong></p>
-    {{/if}}
-    <p>Vous pouvez consulter votre commande ici: <a href="{{orderUrl}}">{{orderUrl}}</a></p>
-    <p><small>Pour ne plus recevoir d'emails: <a href="{{unsubscribeUrl}}">se désabonner</a></small></p>
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Confirmation de commande</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f5f5f7;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:680px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+      <tr>
+        <td style="padding:18px 20px;background:linear-gradient(90deg,#8b2e25,#c24b3f);color:#fff;">
+          <h1 style="margin:0;font-size:18px;font-weight:700;">Maison Pardailhé — Confirmation de commande</h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:18px 20px;">
+          <p style="margin:0 0 12px 0;color:#111;">Bonjour <strong>{{customerName}}</strong>,</p>
+          <p style="margin:0 0 12px 0;color:#333;">Nous avons bien reçu votre commande pour le <strong>{{date_retrait}}</strong> à <strong>{{creneau}}</strong> <span style="color:#666">({{location}})</span>.</p>
+
+          {{#if itemsHtml}}
+          <h3 style="margin:18px 0 8px 0;font-size:15px;color:#111;">Détails de la commande</h3>
+          <div style="margin-bottom:12px;">
+            {{{itemsHtml}}}
+          </div>
+          {{/if}}
+
+          {{#if total}}
+          <p style="margin:12px 0;font-size:15px;color:#111;">Total: <strong>{{total}}</strong></p>
+          {{/if}}
+
+          <p style="margin:12px 0;color:#333;">Vous pouvez consulter votre commande ici:<br>{{orderButton}}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 20px;background:#fafafa;color:#666;font-size:13px;">
+          <p style="margin:0;">Si vous ne souhaitez plus recevoir d'emails : <a href="{{unsubscribeUrl}}" style="color:#666;text-decoration:underline;">se désabonner</a></p>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>

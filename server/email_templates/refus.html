@@ -1,8 +1,29 @@
-<html>
-  <body>
-    <p>Bonjour {{customerName}},</p>
-    <p>Malheureusement, votre commande prévue le <strong>{{date_retrait}}</strong> a été refusée.</p>
-    <p>Raison : {{reason}}</p>
-    <p><small>Pour ne plus recevoir d'emails: <a href="{{unsubscribeUrl}}">se désabonner</a></small></p>
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Commande refusée</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f5f5f7;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:680px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+      <tr>
+        <td style="padding:18px 20px;background:linear-gradient(90deg,#7a2630,#b63b3b);color:#fff;">
+          <h1 style="margin:0;font-size:18px;font-weight:700;">Maison Pardailhé — Commande refusée</h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:18px 20px;">
+          <p style="margin:0 0 12px 0;color:#111;">Bonjour <strong>{{customerName}}</strong>,</p>
+          <p style="margin:0 0 12px 0;color:#333;">Malheureusement, votre commande prévue le <strong>{{date_retrait}}</strong> a été refusée.</p>
+          <p style="margin:8px 0 0 0;color:#333;"><strong>Raison :</strong><br>{{reason}}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:12px 20px;background:#fafafa;color:#666;font-size:13px;">
+          <p style="margin:0;">Pour ne plus recevoir d'emails : <a href="{{unsubscribeUrl}}" style="color:#666;text-decoration:underline;">se désabonner</a></p>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>

@@ -169,6 +169,14 @@ app.get('/api/csrf-token', (req, res) => {
   }
 });
 
+  // Public config endpoint for small client-side settings (timezone, app URL)
+  app.get('/api/config', (req, res) => {
+    res.json({
+      timezone: process.env.TIMEZONE || 'Europe/Paris',
+      appUrl: process.env.APP_URL || `http://localhost:${PORT}`
+    });
+  });
+
 
 // Sert le site principal en statique sur la racine
 // Redirige les requêtes vers /admin vers la page de login (utile si quelqu'un tape /admin)
@@ -268,13 +276,40 @@ if (require.main === module) {
   const adminMenusRoutes = require('./routes/admin_menus');
   const unsubscribeRoutes = require('./routes/unsubscribe');
   const schedulesRoutes = require('./routes/schedules');
+  const notificationsRoutes = require('./routes/notifications');
+  const adminNotificationsRoutes = require('./routes/admin_notifications');
+
+  // Small HTML escaper used by the minimal server-side recap page and notifications
+  function escapeHtml(s) {
+    if (s === undefined || s === null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   app.use('/api/commandes', commandesRoutes);
+  // Mount public notifications before the general admin router so specific
+  // admin subroutes are not swallowed by the main `/api/admin` router.
+  app.use('/api/notifications', notificationsRoutes);
+  app.use('/api/admin/notifications', adminNotificationsRoutes);
   app.use('/api/admin', adminRoutes);
   app.use('/api/menus', menusRoutes);
   app.use('/api/admin/menus', adminMenusRoutes);
   app.use('/unsubscribe', unsubscribeRoutes);
   app.use('/api/schedules', schedulesRoutes);
+
+  // Public order recap page (simple server-side render).
+  // This allows links such as /commande/:id (used in emails and the mini-toast) to show a minimal recap
+  // without requiring a full SPA page. Keeps content lightweight and self-contained.
+  app.get('/commande/:id', (req, res) => {
+    // Redirect to the static SPA recap page which will fetch the data client-side.
+    const id = Number(req.params.id || 0);
+    if (!id) return res.status(400).send('ID invalide');
+    return res.redirect(302, `/commande.html?id=${encodeURIComponent(id)}`);
+  });
 
   logStartupInfo();
   checkDatabase().catch((e) => logger.error('DB check unexpected error: %o', e && (e.stack || e)));

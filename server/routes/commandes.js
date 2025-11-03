@@ -4,28 +4,20 @@ const { body, validationResult } = require('express-validator');
 const Commande = require('../models/commande');
 const { sendCommandeEmail } = require('../utils/email');
 const db = require('../models/db');
+const { normalizeToYMD, formatForDisplay, TZ } = require('../utils/dates');
 // Menu model not used directly here; require only where needed in other scripts
 
 // Validation simple améliorée
+// parseDateString replaced by utils/dates.normalizeToYMD for storage and
+// validation uses local Date objects created from normalized YYYY-MM-DD.
 function parseDateString(s) {
   if (!s) return null;
-  // Accept ISO YYYY-MM-DD
-  const isoMatch = /^\d{4}-\d{2}-\d{2}$/.test(s);
-  if (isoMatch) {
-    const d = new Date(s + 'T00:00:00');
-    return isNaN(d.getTime()) ? null : d;
-  }
-  // Accept French DD/MM/YYYY
-  const frMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
-  if (frMatch) {
-    const day = Number(frMatch[1]);
-    const month = Number(frMatch[2]) - 1;
-    const year = Number(frMatch[3]);
-    const d = new Date(year, month, day);
-    d.setHours(0,0,0,0);
-    return (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) ? d : null;
-  }
-  return null;
+  const ymd = normalizeToYMD(String(s));
+  if (!ymd) return null;
+  const parts = ymd.split('-').map(Number);
+  const d = new Date(parts[0], parts[1]-1, parts[2]);
+  d.setHours(0,0,0,0);
+  return d;
 }
 
 function toMinutes(t) {
@@ -175,13 +167,14 @@ router.post('/', validateCommandeFields, async (req, res) => {
 
       // All stock decremented successfully — create a commande record. Store produit as JSON string for traceability
       const produit = JSON.stringify(data.items);
-      const id = await (async () => {
-        const [result] = await conn.execute(
-          `INSERT INTO commandes (nom_complet, telephone, email, produit, date_retrait, creneau, location, precisions, statut, total_cents) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente', ?)`,
-          [data.nom_complet, data.telephone, data.email || '', produit, data.date_retrait, data.creneau, data.location || 'roquettes', data.precisions, totalCents]
-        );
-        return result.insertId;
-      })();
+        const dateYMD = normalizeToYMD(data.date_retrait) || data.date_retrait;
+        const id = await (async () => {
+          const [result] = await conn.execute(
+            `INSERT INTO commandes (nom_complet, telephone, email, produit, date_retrait, creneau, location, precisions, statut, total_cents) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en_attente', ?)`,
+            [data.nom_complet, data.telephone, data.email || '', produit, dateYMD, data.creneau, data.location || 'roquettes', data.precisions, totalCents]
+          );
+          return result.insertId;
+        })();
 
       await conn.commit();
       // Fire-and-forget: notify customer that the order was received (en_attente)
@@ -208,7 +201,9 @@ router.post('/', validateCommandeFields, async (req, res) => {
   const v = validateCommande(data);
   if (!v.ok) return res.status(400).json({ message: v.error || 'Données invalides.' });
   try {
-    const id = await Commande.create(data);
+  // normalize date for storage
+  const normalized = Object.assign({}, data, { date_retrait: normalizeToYMD(data.date_retrait) || data.date_retrait });
+  const id = await Commande.create(normalized);
     // Send creation confirmation email (non-blocking)
     (async () => {
       try {
@@ -222,6 +217,38 @@ router.post('/', validateCommandeFields, async (req, res) => {
     res.status(201).json({ id });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur.' });
+  }
+});
+
+// Public endpoint to fetch a single commande by id (used by the static recap page)
+router.get('/:id', async (req, res) => {
+  const id = Number(req.params.id || 0);
+  if (!id) return res.status(400).json({ message: 'ID invalide' });
+  try {
+    const cmd = await Commande.getById(id);
+    if (!cmd) return res.status(404).json({ message: 'Commande introuvable' });
+    // Do not expose internal DB-only fields unnecessarily; return relevant ones
+    const out = {
+      id: cmd.id,
+      nom_complet: cmd.nom_complet,
+      telephone: cmd.telephone,
+      email: cmd.email,
+      produit: cmd.produit,
+      date_retrait: cmd.date_retrait,
+      // pre-formatted display fields so clients don't need formatting logic
+      date_retrait_display: formatForDisplay(cmd.date_retrait, false),
+      datetime_retrait_display: formatForDisplay((cmd.date_retrait && cmd.creneau) ? `${cmd.date_retrait}T${cmd.creneau}:00` : cmd.date_retrait, true),
+      creneau: cmd.creneau,
+      location: cmd.location,
+      precisions: cmd.precisions,
+      statut: cmd.statut,
+      total_cents: cmd.total_cents || null,
+      date_creation: cmd.date_creation || null
+    };
+    return res.json({ commande: out });
+  } catch (err) {
+    console.error('Error fetching commande %s: %o', id, err && (err.stack || err));
+    return res.status(500).json({ message: 'Erreur serveur' });
   }
 });
 
