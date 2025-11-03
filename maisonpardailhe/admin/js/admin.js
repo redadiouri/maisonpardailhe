@@ -219,6 +219,126 @@ function showConfirmModal(title, message) {
   });
 }
 
+// Prompt-like modal to collect a short text reason from the admin. Returns Promise<string|null>
+function showReasonModal(title, message, placeholder) {
+  return new Promise((resolve) => {
+    let overlay = document.getElementById('reason-modal-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'reason-modal-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.left = '0';
+      overlay.style.top = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.background = 'rgba(0,0,0,0.6)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '10000';
+
+      const box = document.createElement('div');
+      box.style.background = 'var(--card)';
+      box.style.color = '#fff';
+      box.style.padding = '16px';
+      box.style.borderRadius = '10px';
+      box.style.maxWidth = '640px';
+      box.style.width = '90%';
+      box.style.boxShadow = '0 12px 40px rgba(0,0,0,0.6)';
+
+      const h = document.createElement('h3'); h.textContent = title || 'Raison du refus'; h.style.margin = '0 0 8px 0';
+      const p = document.createElement('p'); p.textContent = message || ''; p.style.margin = '0 0 8px 0'; p.style.color = 'var(--muted)';
+      const ta = document.createElement('textarea'); ta.placeholder = placeholder || 'Indiquer brièvement la raison du refus...'; ta.style.width = '100%'; ta.style.minHeight = '96px'; ta.style.padding = '8px'; ta.style.borderRadius = '8px'; ta.style.border = '1px solid rgba(255,255,255,0.06)'; ta.style.background = 'rgba(0,0,0,0.12)'; ta.style.color = '#fff';
+      ta.style.marginBottom = '12px';
+
+      const actions = document.createElement('div'); actions.style.display = 'flex'; actions.style.justifyContent = 'flex-end'; actions.style.gap = '8px';
+      const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn ghost'; cancelBtn.textContent = 'Annuler';
+      const okBtn = document.createElement('button'); okBtn.className = 'btn danger'; okBtn.textContent = 'Refuser';
+      actions.appendChild(cancelBtn); actions.appendChild(okBtn);
+
+      box.appendChild(h); box.appendChild(p); box.appendChild(ta); box.appendChild(actions);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      cancelBtn.addEventListener('click', () => { overlay.remove(); resolve(null); });
+      okBtn.addEventListener('click', () => { const v = (ta.value || '').trim(); overlay.remove(); resolve(v || null); });
+      overlay.addEventListener('click', (ev) => { if (ev.target === overlay) { overlay.remove(); resolve(null); } });
+      // focus textarea
+      setTimeout(()=>{ try{ ta.focus(); }catch(e){} }, 10);
+    } else {
+      const ta = overlay.querySelector('textarea');
+      overlay.querySelector('h3').textContent = title || 'Raison du refus';
+      overlay.querySelector('p').textContent = message || '';
+      ta.placeholder = placeholder || 'Indiquer brièvement la raison du refus...';
+      overlay.style.display = 'flex';
+      const ok = overlay.querySelector('.btn.danger');
+      const cancel = overlay.querySelector('.btn.ghost');
+      const cleanup = () => { overlay.style.display = 'none'; };
+      cancel.onclick = () => { cleanup(); resolve(null); };
+      ok.onclick = () => { const v = (overlay.querySelector('textarea').value || '').trim(); cleanup(); resolve(v || null); };
+      setTimeout(()=>{ try{ overlay.querySelector('textarea').focus(); } catch(e){} }, 10);
+    }
+  });
+}
+
+// Simple informational modal to display HTML content (read-only). Returns Promise<void> when closed.
+function showInfoModal(title, htmlContent) {
+  return new Promise((resolve) => {
+    let overlay = document.getElementById('info-modal-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'info-modal-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.left = '0';
+      overlay.style.top = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.background = 'rgba(0,0,0,0.6)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '10000';
+
+      const box = document.createElement('div');
+      box.style.background = 'var(--card)';
+      box.style.color = '#fff';
+      box.style.padding = '16px';
+      box.style.borderRadius = '10px';
+      box.style.maxWidth = '800px';
+      box.style.width = '92%';
+      box.style.boxShadow = '0 12px 40px rgba(0,0,0,0.6)';
+
+      const h = document.createElement('h3'); h.textContent = title || ''; h.style.margin = '0 0 8px 0';
+      const content = document.createElement('div'); content.className = 'info-modal-content'; content.style.marginBottom = '12px';
+      content.style.maxHeight = '60vh'; content.style.overflow = 'auto';
+      const actions = document.createElement('div'); actions.style.display = 'flex'; actions.style.justifyContent = 'flex-end';
+      const closeBtn = document.createElement('button'); closeBtn.className = 'btn ghost'; closeBtn.textContent = 'Fermer';
+      actions.appendChild(closeBtn);
+
+      box.appendChild(h); box.appendChild(content); box.appendChild(actions);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      closeBtn.addEventListener('click', () => { overlay.remove(); resolve(); });
+      overlay.addEventListener('click', (ev) => { if (ev.target === overlay) { overlay.remove(); resolve(); } });
+      // set html content
+      content.innerHTML = htmlContent || '';
+    } else {
+      overlay.querySelector('h3').textContent = title || '';
+      overlay.querySelector('.info-modal-content').innerHTML = htmlContent || '';
+      overlay.style.display = 'flex';
+    }
+  });
+}
+
+// Simple alert modal (OK) that mimics a blocking alert but non-blocking in async code.
+function showAlertModal(title, message) {
+  return new Promise((resolve) => {
+    const html = `<div style="padding:12px 0;">${String(message || '')}</div>`;
+    showInfoModal(title || 'Info', html).then(resolve).catch(() => resolve());
+  });
+}
+
 // Small toast helper
 function showToast(message, options = {}) {
   try {
@@ -320,6 +440,17 @@ if (document.getElementById('logoutBtn')) {
       }
     } catch (e) { /* ignore */ }
   })();
+
+  // Also perform an initial background refresh of stats so the data is available
+  // immediately when the dashboard loads (useful if admin doesn't click the tab).
+  // We call loadStats() once here; the periodic refresh is still started only
+  // when the stats tab is explicitly activated (see tab activation code).
+  try {
+    if (typeof loadStats === 'function') {
+      // fire-and-forget; failures are handled inside loadStats
+      loadStats().catch(() => {});
+    }
+  } catch (e) { /* ignore */ }
   document.getElementById('logoutBtn').onclick = async () => {
     const _csrf = await getCsrfToken();
     await fetch(apiBase + '/logout', { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
@@ -444,8 +575,8 @@ if (document.getElementById('logoutBtn')) {
         else newVal = String(input.value || '').trim();
 
         // simple validation
-        if (field === 'name' && !newVal) { alert('Le nom ne peut pas être vide.'); input.focus(); return; }
-        if (field === 'price_cents' && newVal < 0) { alert('Prix invalide'); input.focus(); return; }
+  if (field === 'name' && !newVal) { showAlertModal('Validation', 'Le nom ne peut pas être vide.'); input.focus(); return; }
+  if (field === 'price_cents' && newVal < 0) { showAlertModal('Validation', 'Prix invalide'); input.focus(); return; }
 
         // unchanged
         if (String(newVal) === String(item[field] ?? '')) { cancel(); return; }
@@ -499,7 +630,7 @@ if (document.getElementById('logoutBtn')) {
             delete td.dataset.scheduled; td.textContent = origText; td.classList.add('cell-rollback'); setTimeout(()=> td.classList.remove('cell-rollback'), 700);
             PENDING.delete(key);
             if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
-            alert('Erreur lors de la sauvegarde — modification annulée.');
+            showAlertModal('Erreur', 'Erreur lors de la sauvegarde — modification annulée.');
           }
         }, DEBOUNCE_MS);
 
@@ -570,25 +701,34 @@ if (document.getElementById('logoutBtn')) {
     const form = document.getElementById('admin-create-form');
     const refresh = document.getElementById('admin-refresh');
     if (form) {
-      form.addEventListener('submit', async (e)=>{
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('admin-username').value.trim();
         const password = document.getElementById('admin-password').value || '';
         const confirm = document.getElementById('admin-password-confirm').value || '';
         const canEditMenus = !!document.getElementById('admin-can-edit-menus').checked;
-        if (!username) return alert('Nom d\'utilisateur requis');
-        if (password.length < 8) return alert('Le mot de passe doit contenir au moins 8 caractères.');
-        if (password !== confirm) return alert('Les mots de passe ne correspondent pas.');
+
+        if (!username) { showAlertModal('Erreur', 'Nom d\'utilisateur requis'); return; }
+        if (password.length < 8) { showAlertModal('Erreur', 'Le mot de passe doit contenir au moins 8 caractères.'); return; }
+        if (password !== confirm) { showAlertModal('Erreur', 'Les mots de passe ne correspondent pas.'); return; }
+
         try {
           const _csrf = await getCsrfToken();
-          const res = await fetch(apiBase + '/admins', { method: 'POST', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, credentials:'include', body: JSON.stringify({ username, password, can_edit_menus: canEditMenus }) });
+          const res = await fetch(apiBase + '/admins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
+            credentials: 'include',
+            body: JSON.stringify({ username, password, can_edit_menus: canEditMenus })
+          });
           if (res.status === 401) { window.location.href = 'login.html'; return; }
-          if (res.status === 409) { alert('Nom d\'utilisateur déjà existant.'); return; }
+          if (res.status === 409) { showAlertModal('Erreur', 'Nom d\'utilisateur déjà existant.'); return; }
           if (!res.ok) throw new Error('err');
           form.reset();
           await loadAdmins();
           showToast('Administrateur ajouté', { duration: 3000 });
-        } catch (e) { alert('Erreur lors de la création de l\'administrateur'); }
+        } catch (e) {
+          showAlertModal('Erreur', 'Erreur lors de la création de l\'administrateur');
+        }
       });
     }
     if (refresh) refresh.addEventListener('click', ()=> loadAdmins());
@@ -634,7 +774,7 @@ if (document.getElementById('logoutBtn')) {
     if (form) {
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
-        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { alert('Permission refusée'); return; }
+        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { showAlertModal('Permission', 'Permission refusée'); return; }
   const name = document.getElementById('menu-name').value.trim();
         const description = (document.getElementById('menu-description') && document.getElementById('menu-description').value.trim()) || '';
         const price = parseFloat(document.getElementById('menu-price').value || '0');
@@ -642,8 +782,8 @@ if (document.getElementById('logoutBtn')) {
         const is_quote = !!document.getElementById('menu-is-quote').checked;
         const visible_on_menu = !!document.getElementById('menu-visible').checked;
         const available = !!document.getElementById('menu-available').checked;
-        if (!name) return alert('Nom requis');
-        if (price < 0) return alert('Prix invalide');
+  if (!name) { showAlertModal('Validation', 'Nom requis'); return; }
+  if (price < 0) { showAlertModal('Validation', 'Prix invalide'); return; }
         try {
           // Do not send `slug` — server generates it automatically from `name`.
           const body = { name, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
@@ -652,7 +792,7 @@ if (document.getElementById('logoutBtn')) {
           if (!res.ok) throw new Error('err');
           form.reset();
           await loadMenus();
-        } catch (err) { alert('Erreur lors de la sauvegarde'); }
+  } catch (err) { showAlertModal('Erreur', 'Erreur lors de la sauvegarde'); }
       });
     }
 
@@ -668,8 +808,8 @@ if (document.getElementById('logoutBtn')) {
       if (!btn) return;
       const action = btn.dataset.action;
       const id = btn.dataset.id;
-      if (action === 'delete-menu') {
-        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { alert('Permission refusée'); return; }
+  if (action === 'delete-menu') {
+  if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { showAlertModal('Permission', 'Permission refusée'); return; }
         // show a nicer confirmation modal
         const confirmed = await showConfirmModal('Supprimer ce menu ?', 'Cette action supprimera définitivement ce menu. Voulez-vous continuer ?');
         if (!confirmed) return;
@@ -679,7 +819,7 @@ if (document.getElementById('logoutBtn')) {
           if (!res.ok) throw new Error('err');
           await loadMenus();
           showToast('Menu supprimé', { duration: 3000 });
-        } catch (e) { alert('Erreur suppression'); }
+  } catch (e) { showAlertModal('Erreur', 'Erreur suppression'); }
       }
       // toggle admin permission
       if (action === 'toggle-perm') {
@@ -691,7 +831,7 @@ if (document.getElementById('logoutBtn')) {
           if (!res.ok) throw new Error('err');
           showToast('Permission mise à jour', { duration: 2000 });
         } catch (e) {
-          alert('Erreur lors de la mise à jour des permissions');
+          showAlertModal('Erreur', 'Erreur lors de la mise à jour des permissions');
           // revert checkbox
           checkbox.checked = !newVal;
         }
@@ -706,16 +846,16 @@ if (document.getElementById('logoutBtn')) {
           const res = await fetch(apiBase + '/admins/' + id, { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
           if (res.status === 400) {
             const data = await res.json().catch(()=>null);
-            alert(data && data.message ? data.message : 'Impossible de supprimer cet administrateur');
+            showAlertModal('Erreur', data && data.message ? data.message : 'Impossible de supprimer cet administrateur');
             return;
           }
           if (!res.ok) throw new Error('err');
           await loadAdmins();
           showToast('Administrateur supprimé', { duration: 2500 });
-        } catch (e) { alert('Erreur suppression'); }
+  } catch (e) { showAlertModal('Erreur', 'Erreur suppression'); }
       }
-      if (action === 'edit') {
-        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { alert('Permission refusée'); return; }
+  if (action === 'edit') {
+  if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { showAlertModal('Permission', 'Permission refusée'); return; }
         // simple inline edit: load item values into the form for editing -> on submit we'll perform create; editing not fully implemented here (could open modal)
         const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
         if (!item) return;
@@ -748,7 +888,7 @@ if (document.getElementById('logoutBtn')) {
             form.removeEventListener('submit', submitHandler);
             form.reset();
             await loadMenus();
-          } catch (err) { alert('Erreur lors de la mise à jour'); }
+          } catch (err) { showAlertModal('Erreur', 'Erreur lors de la mise à jour'); }
         };
         form.addEventListener('submit', submitHandler);
       }
@@ -899,21 +1039,24 @@ if (document.getElementById('logoutBtn')) {
             const refuseBtn = document.createElement('button');
             refuseBtn.textContent = 'Refuser';
             refuseBtn.className = 'btn ghost';
-            refuseBtn.onclick = () => {
-              const raison = prompt('Raison du refus ?');
-              if (raison) {
-                refuseBtn.disabled = true;
-                (async () => {
-                  const _csrf = await getCsrfToken();
-                  await fetch(apiBase + `/commandes/${cmd.id}/refuser`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
-                    body: JSON.stringify({ raison }),
-                    credentials: 'include'
-                  });
-                })().then(() => {
-                  loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
+            refuseBtn.onclick = async () => {
+              const raison = await showReasonModal('Refuser la commande', 'Indiquez la raison du refus qui sera transmise au client (facultatif).', 'Raison du refus');
+              if (raison === null) return; // cancelled
+              // proceed with request (reason may be empty string)
+              refuseBtn.disabled = true;
+              try {
+                const _csrf = await getCsrfToken();
+                await fetch(apiBase + `/commandes/${cmd.id}/refuser`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
+                  body: JSON.stringify({ raison }),
+                  credentials: 'include'
                 });
+                loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
+              } catch (e) {
+                console.error('Erreur lors du refus:', e);
+                // re-enable to allow retry
+                refuseBtn.disabled = false;
               }
             };
             actions.appendChild(acceptBtn);
@@ -932,7 +1075,78 @@ if (document.getElementById('logoutBtn')) {
             const noteBtn = document.createElement('button');
             noteBtn.textContent = 'Notes/Plus';
             noteBtn.className = 'btn ghost';
-            noteBtn.onclick = () => { alert('ID: ' + cmd.id + "\nStatut: " + cmd.statut + "\nCréé: " + (created || '-')); };
+            noteBtn.onclick = () => {
+              // Build a richer HTML summary for the commande
+              const parts = [];
+              parts.push(`<div style="margin-bottom:8px;"><b>ID:</b> ${cmd.id}</div>`);
+              parts.push(`<div style="margin-bottom:8px;"><b>Statut:</b> ${cmd.statut || '-'} | <b>Créé:</b> ${created || '-'}</div>`);
+              if (cmd.nom_complet) parts.push(`<div style="margin-bottom:6px;"><b>Nom:</b> ${escapeHtml(cmd.nom_complet)}</div>`);
+              if (cmd.telephone) parts.push(`<div style="margin-bottom:6px;"><b>Téléphone:</b> ${escapeHtml(cmd.telephone)}</div>`);
+              if (cmd.email) parts.push(`<div style="margin-bottom:6px;"><b>Email:</b> ${escapeHtml(cmd.email)}</div>`);
+              if (cmd.location) parts.push(`<div style="margin-bottom:6px;"><b>Lieu:</b> ${escapeHtml(cmd.location)}</div>`);
+              if (cmd.date_retrait) parts.push(`<div style="margin-bottom:6px;"><b>Date retrait:</b> ${escapeHtml(cmd.date_retrait)} ${cmd.creneau ? '| Créneau: ' + escapeHtml(cmd.creneau) : ''}</div>`);
+              if (cmd.precisions) parts.push(`<div style="margin-bottom:6px;"><b>Précisions:</b> ${escapeHtml(cmd.precisions)}</div>`);
+              // produit can be JSON or legacy string
+              try {
+                if (cmd.produit) {
+                  const p = JSON.parse(cmd.produit);
+                  if (Array.isArray(p)) {
+                    // Build a small table with product name and quantity for clarity
+                    const rows = p.map(it => {
+                      let displayName = it.name || '';
+                      if (!displayName) {
+                        const menus = window._adminMenuItems || [];
+                        const menu = menus.find(m => String(m.id) === String(it.menu_id));
+                        displayName = menu ? menu.name : ('#' + String(it.menu_id || ''));
+                      }
+                      return `<tr data-menu-id="${escapeHtml(String(it.menu_id || ''))}"><td style="padding:6px 10px;">${escapeHtml(String(displayName))}</td><td style="padding:6px 10px; text-align:right; white-space:nowrap;">${escapeHtml(String(it.qty || ''))}</td></tr>`;
+                    }).join('');
+                    const table = `<table style="width:100%; border-collapse:collapse; margin-top:6px; background:transparent;"><thead><tr><th style="text-align:left; font-weight:600; padding:6px 10px;">Produit</th><th style="text-align:right; font-weight:600; padding:6px 10px;">Qté</th></tr></thead><tbody>${rows}</tbody></table>`;
+                    parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b>${table}</div>`);
+                  } else {
+                    parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b> ${escapeHtml(String(cmd.produit))}</div>`);
+                  }
+                }
+              } catch (e) {
+                parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b> ${escapeHtml(String(cmd.produit || ''))}</div>`);
+              }
+              if (cmd.raison_refus) parts.push(`<div style="margin-top:8px; color: #f66;"><b>Raison du refus:</b> ${escapeHtml(cmd.raison_refus)}</div>`);
+
+              const html = parts.join('');
+              showInfoModal('Notes / Détails', html);
+              // If any product rows used a fallback (#id), try to fetch menus to resolve names
+              try {
+                const modal = document.getElementById('info-modal-overlay');
+                if (modal) {
+                  const rows = modal.querySelectorAll('tbody tr[data-menu-id]');
+                  const missing = [];
+                  rows.forEach(r => {
+                    const nameCell = r.querySelector('td');
+                    if (nameCell && nameCell.textContent && nameCell.textContent.trim().startsWith('#')) {
+                      missing.push(r.dataset.menuId);
+                    }
+                  });
+                  if (missing.length > 0) {
+                    // fetch menus and update names
+                    (async () => {
+                      try {
+                        const res = await fetch(apiBase + '/menus', { credentials: 'include' });
+                        if (!res.ok) return;
+                        const menus = await res.json();
+                        window._adminMenuItems = menus;
+                        rows.forEach(r => {
+                          const mid = r.dataset.menuId;
+                          if (!mid) return;
+                          const nameCell = r.querySelector('td');
+                          const menu = menus.find(m => String(m.id) === String(mid));
+                          if (menu && nameCell) nameCell.textContent = menu.name || ('#' + mid);
+                        });
+                      } catch (e) { /* ignore */ }
+                    })();
+                  }
+                }
+              } catch (e) {}
+            };
             actions.appendChild(finishBtn);
             actions.appendChild(noteBtn);
           }
@@ -971,7 +1185,9 @@ if (document.getElementById('logoutBtn')) {
   }
   // Admin dashboard statistics - fetch from protected endpoint and render
   async function loadStats() {
-    const container = document.getElementById('admin-stats');
+    // The stats tab container is `tab-stats` in the HTML. Older code looked for
+    // a non-existent `admin-stats` id which caused loadStats to be a no-op.
+    const container = document.getElementById('tab-stats');
     if (!container) return;
     try {
       const res = await fetch(apiBase + '/stats', { credentials: 'include' });
@@ -1060,7 +1276,7 @@ if (document.getElementById('logoutBtn')) {
         if (btn) {
           btn.onclick = () => {
             const s = adminLastStats || d;
-            if (!s) return alert('Aucune donnée disponible pour export.');
+            if (!s) { showAlertModal('Erreur', 'Aucune donnée disponible pour export.'); return; }
             // build CSV: date,orders,revenue_eur
             const rows = [['date','orders','revenue_eur']];
             const ob = s.orders_by_day || [];
@@ -1088,6 +1304,13 @@ if (document.getElementById('logoutBtn')) {
       } catch (e) { console.error('CSV export bind failed', e); }
     } catch (e) {
       console.error('Failed to load admin stats', e);
+      // Surface an inline error message in the stats tab so the admin sees a
+      // clear failure instead of an empty panel.
+      try {
+        if (container) {
+          container.innerHTML = `<div class="empty">Erreur lors du chargement des statistiques. Vérifiez la console pour plus d'informations.</div>`;
+        }
+      } catch (e2) { /* ignore */ }
     }
   }
   // initial load is handled when the stats tab is activated (see tab activation code)
@@ -1168,16 +1391,16 @@ if (document.getElementById('logoutBtn')) {
   }
 
     if (form) {
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-  const name = document.getElementById('stock-name').value.trim();
-  const reference = document.getElementById('stock-ref').value.trim();
-  let quantity = Number(document.getElementById('stock-qty').value);
-  const available = !!document.getElementById('stock-available').checked;
-  if (!name) return alert('Nom requis');
-  if (name.length > 255) return alert('Le nom est trop long (max 255 caractères).');
-  if (reference.length > 100) return alert('La référence est trop longue (max 100 caractères).');
-  if (isNaN(quantity) || quantity < 0) { alert('La quantité doit être un nombre >= 0.'); document.getElementById('stock-qty').focus(); return; }
+        form.addEventListener('submit', async (e)=>{
+          e.preventDefault();
+    const name = document.getElementById('stock-name').value.trim();
+    const reference = document.getElementById('stock-ref').value.trim();
+    let quantity = Number(document.getElementById('stock-qty').value);
+    const available = !!document.getElementById('stock-available').checked;
+    if (!name) { showAlertModal('Validation', 'Nom requis'); return; }
+    if (name.length > 255) { showAlertModal('Validation', 'Le nom est trop long (max 255 caractères).'); return; }
+    if (reference.length > 100) { showAlertModal('Validation', 'La référence est trop longue (max 100 caractères).'); return; }
+    if (isNaN(quantity) || quantity < 0) { showAlertModal('Validation', 'La quantité doit être un nombre >= 0.'); document.getElementById('stock-qty').focus(); return; }
   quantity = Math.floor(quantity || 0);
         try {
               // Always create a new product from the form (editing is done inline now)
@@ -1186,7 +1409,7 @@ if (document.getElementById('logoutBtn')) {
               if (!res.ok) throw new Error('err');
               form.reset();
           await loadStock();
-        } catch (err) { alert('Erreur lors de la sauvegarde'); }
+  } catch (err) { showAlertModal('Erreur', 'Erreur lors de la sauvegarde'); }
       });
     }
 
@@ -1208,13 +1431,14 @@ if (document.getElementById('logoutBtn')) {
       const id = btn.dataset.id;
       // old edit-via-form action removed; editing now happens inline by double-clicking cells
       if (action === 'delete') {
-        if (!confirm('Supprimer ce produit ?')) return;
+        const confirmedDelete = await showConfirmModal('Supprimer ce produit ?', 'Voulez-vous supprimer ce produit ?');
+        if (!confirmedDelete) return;
         try {
           const _csrf = await getCsrfToken();
           const res = await fetch('/api/stock/' + id, { method: 'DELETE', credentials:'include', headers: { 'X-CSRF-Token': _csrf || '' } });
           if (!res.ok) throw new Error('err');
           await loadStock();
-        } catch (e) { alert('Erreur suppression'); }
+  } catch (e) { showAlertModal('Erreur', 'Erreur suppression'); }
       }
       if (action === 'toggle') {
         const item = (window._adminStockItems||[]).find(x=>String(x.id)===String(id));
@@ -1224,7 +1448,7 @@ if (document.getElementById('logoutBtn')) {
           const res = await fetch('/api/stock/' + id, { method: 'PUT', headers:{'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify({ available: !item.available }), credentials:'include' });
           if (!res.ok) throw new Error('err');
           await loadStock();
-        } catch (e) { alert('Erreur'); }
+  } catch (e) { showAlertModal('Erreur', 'Erreur'); }
       }
     });
 
@@ -1282,14 +1506,14 @@ if (document.getElementById('logoutBtn')) {
 
         // Client-side validation
         if (field === 'name') {
-          if (!newVal) { alert('Le nom ne peut pas être vide.'); input.focus(); return; }
-          if (newVal.length > 255) { alert('Le nom est trop long (max 255 caractères).'); input.focus(); return; }
+          if (!newVal) { showAlertModal('Validation', 'Le nom ne peut pas être vide.'); input.focus(); return; }
+          if (newVal.length > 255) { showAlertModal('Validation', 'Le nom est trop long (max 255 caractères).'); input.focus(); return; }
         }
         if (field === 'reference') {
-          if (newVal.length > 100) { alert('La référence est trop longue (max 100 caractères).'); input.focus(); return; }
+          if (newVal.length > 100) { showAlertModal('Validation', 'La référence est trop longue (max 100 caractères).'); input.focus(); return; }
         }
         if (field === 'quantity') {
-          if (isNaN(newVal) || newVal < 0) { alert('La quantité doit être un nombre >= 0.'); input.focus(); return; }
+          if (isNaN(newVal) || newVal < 0) { showAlertModal('Validation', 'La quantité doit être un nombre >= 0.'); input.focus(); return; }
           newVal = Math.floor(newVal);
         }
 
@@ -1378,7 +1602,7 @@ if (document.getElementById('logoutBtn')) {
             setTimeout(()=> td.classList.remove('cell-rollback'), 700);
             PENDING.delete(key);
             if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
-            alert('Erreur lors de la sauvegarde — modification annulée.');
+            showAlertModal('Erreur', 'Erreur lors de la sauvegarde — modification annulée.');
           }
         }, DEBOUNCE_MS);
 

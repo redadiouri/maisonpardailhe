@@ -229,16 +229,14 @@ const populateTimeOptions = (location, dateIso) => {
                     btn.classList.add('active'); hiddenInput.value = s; hiddenInput.dispatchEvent(new Event('input',{bubbles:true}));
                 });
                 btn.addEventListener('keydown', (ev) => { if (ev.key==='Enter' || ev.key===' ') { ev.preventDefault(); btn.click(); } });
-                body.appendChild(btn);
+            body.appendChild(btn);
             });
-            // collapse large groups by default
-            if (items.length > 8) group.classList.add('collapsed');
             header.addEventListener('click', () => group.classList.toggle('collapsed'));
             header.addEventListener('keydown', (ev) => { if (ev.key==='Enter' || ev.key===' ') { ev.preventDefault(); group.classList.toggle('collapsed'); } });
             group.appendChild(header); group.appendChild(body); container.appendChild(group);
         };
 
-        renderGroup('Matin', morning);
+            renderGroup('Matin', morning);
         renderGroup('Après‑midi', afternoon);
 
         // Show a small textual hint with the last offered slot (e.g. "Dernier créneau proposé : 12:45")
@@ -356,6 +354,21 @@ function initClickCollectForm() {
         });
     } else {
         populateTimeOptions(initialLocation, todayIso());
+    }
+
+    // Also re-populate slots when the user changes the location select in the form.
+    // (Some pages bind listeners elsewhere; adding this here ensures the form updates reliably.)
+    if (locationSelect) {
+        locationSelect.addEventListener('change', () => {
+            const dateVal = (dateEl && dateEl.value) ? dateEl.value : todayIso();
+            populateTimeOptions(locationSelect.value || initialLocation, dateVal);
+            // clear any previously selected slot when location changes
+            const hiddenInput = document.getElementById('cc-time');
+            if (hiddenInput) {
+                hiddenInput.value = '';
+                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
     }
 
     // slot generation & population moved to module scope
