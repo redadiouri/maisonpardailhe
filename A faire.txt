@@ -1,21 +1,10 @@
-♿ Prompt 12 — Accessibilité
+Monitorer les performances :
 
-Vérifie l’accessibilité :
+Installer UptimeRobot pour uptime
+Activer Google Analytics
+Prochaines étapes (optionnel) :
 
-Bon contraste texte/fond.
-
-Labels et ordre de focus cohérents.
-
-Ajouter des roles ARIA si besoin.
-
-Objectif : rendre le site utilisable par tous, même sans souris.
-
-🔍 Prompt 13 — SEO / Meta
-
-Améliore le SEO :
-
-Ajoute une meta description, des balises Open Graph, favicon, etc.
-
-Garde l’attribut lang sur <html>.
-
-Objectif : meilleure visibilité sur Google et partage stylé sur les réseaux.
+CDN (CloudFlare)
+Service Worker (PWA)
+Critical CSS inline
+HTTP/2 Server Push
