@@ -25,6 +25,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const csurf = require('csurf');
 const bodyParser = require('body-parser');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const app = express();
 
 const path = require('path');
@@ -77,6 +79,39 @@ app.use(cors({
   },
   credentials: true
 }));
+
+// Compression middleware: gzip/brotli compression for all responses
+// Compress text-based responses (HTML, CSS, JS, JSON) to reduce bandwidth
+// and improve load times. This typically reduces response size by 60-80%.
+app.use(compression({
+  // Compress responses only if they're above this threshold (bytes)
+  threshold: 1024,
+  // Compression level (0-9): 6 is a good balance between speed and compression ratio
+  level: 6,
+  // Filter function: only compress compressible types (text/html, application/json, etc.)
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
+
+// Global rate limiter: protect against basic DDoS and abuse
+// More permissive than specific endpoint limiters (e.g., login)
+const globalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute window
+  max: process.env.NODE_ENV === 'production' ? 100 : 200, // 100 requests per minute in production
+  message: 'Trop de requêtes depuis cette adresse IP, veuillez réessayer dans une minute.',
+  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false, // Disable `X-RateLimit-*` headers
+  // Skip rate limiting for static assets (images, css, js)
+  skip: (req) => {
+    const path = req.path;
+    return path.match(/\.(css|js|jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i);
+  }
+});
+
+// Apply global rate limiter to all routes
+app.use(globalLimiter);
 
 app.use(bodyParser.json());
 // Ensure a session secret exists; use a development fallback if not set.
@@ -193,6 +228,7 @@ app.get(['/admin', '/admin/'], (req, res) => {
 // HTML files are served with no-cache to allow immediate updates; assets (CSS/JS/img) get a longer max-age.
 const oneHour = 1000 * 60 * 60;
 const sevenDays = 1000 * 60 * 60 * 24 * 7;
+const oneYear = 1000 * 60 * 60 * 24 * 365;
 const staticMaxAge = (process.env.NODE_ENV === 'production') ? sevenDays : oneHour;
 
 function setStaticHeaders(res, filePath) {
@@ -201,8 +237,12 @@ function setStaticHeaders(res, filePath) {
     res.setHeader('Cache-Control', 'no-cache');
   } else if (filePath.endsWith('.json')) {
     res.setHeader('Cache-Control', 'no-cache');
+  } else if (filePath.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i)) {
+    // Images and fonts: aggressive caching (1 year in prod, 7 days in dev)
+    const imageMaxAge = (process.env.NODE_ENV === 'production') ? oneYear : sevenDays;
+    res.setHeader('Cache-Control', `public, max-age=${Math.floor(imageMaxAge/1000)}, immutable`);
   } else {
-    // static assets: images, scripts, styles — allow caching
+    // CSS/JS assets: allow caching but shorter than images
     res.setHeader('Cache-Control', `public, max-age=${Math.floor(staticMaxAge/1000)}`);
   }
 }

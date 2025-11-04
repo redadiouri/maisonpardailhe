@@ -13,7 +13,9 @@
     "migrate:make": "npx knex --knexfile ./knexfile.js migrate:make",
     "migrate:rollback": "npx knex --knexfile ./knexfile.js migrate:rollback",
     "db:backup": "node scripts/db_backup.js",
-    "images:optimize": "node scripts/images_optimize.js"
+    "images:optimize": "node scripts/images_optimize.js",
+    "css:minify": "npx cleancss -o ../maisonpardailhe/css/style.min.css ../maisonpardailhe/css/style.css && npx cleancss -o ../maisonpardailhe/css/datepicker.min.css ../maisonpardailhe/css/datepicker.css && npx cleancss -o ../maisonpardailhe/admin/css/admin-clean.min.css ../maisonpardailhe/admin/css/admin-clean.css",
+    "build": "npm run images:optimize && npm run css:minify"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +25,7 @@
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "cheerio": "^1.0.0-rc.12",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
     "dotenv": "^17.2.3",
@@ -43,6 +46,7 @@
     "sharp": "^0.32.4"
   },
   "devDependencies": {
+    "clean-css-cli": "^5.6.3",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-jest": "^27.2.1",

@@ -7,8 +7,18 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  // Optimize connection pool for small-medium traffic sites
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '15', 10),
+  queueLimit: 0,
+  // Enable connection pooling optimizations
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  // Timeout settings for better resource management
+  connectTimeout: 10000, // 10 seconds
+  // Use charset utf8mb4 for full Unicode support (emojis, etc.)
+  charset: 'utf8mb4',
+  // Timezone setting for consistency
+  timezone: '+00:00'
 });
 
 module.exports = pool;

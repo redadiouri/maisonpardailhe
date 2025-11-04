@@ -22,8 +22,9 @@ const DEFAULT_IMG_DIR = path.join(__dirname, '..', '..', 'maisonpardailhe', 'img
 const IMG_DIR = process.env.TARGET_DIR ? path.resolve(process.env.TARGET_DIR) : DEFAULT_IMG_DIR;
 const OUT_DIR = path.join(IMG_DIR, 'optimized');
 
-const widths = [400, 800, 1200];
-const webpQuality = 80;
+const widths = [400, 800, 1200, 1600]; // Ajout de 1600px pour les grands écrans
+const webpQuality = 82; // Légère amélioration de la qualité (80→82)
+const jpegQuality = 85; // Meilleure qualité JPEG pour fallback
 
 async function ensureDir(p) {
   await fs.promises.mkdir(p, { recursive: true });
@@ -63,9 +64,9 @@ async function processImage(file) {
       const optimizedName = `${name}-opt${ext}`;
       const optimizedPath = path.join(OUT_DIR, optimizedName);
       if (ext === '.png') {
-        await image.png({ compressionLevel: 8 }).toFile(optimizedPath);
+        await image.png({ compressionLevel: 9, quality: 85 }).toFile(optimizedPath);
       } else {
-        await image.jpeg({ quality: 82 }).toFile(optimizedPath);
+        await image.jpeg({ quality: jpegQuality, mozjpeg: true }).toFile(optimizedPath);
       }
       meta.outputs.push({ format: ext.replace('.', ''), path: optimizedPath, width: info.width, height: info.height });
     }
