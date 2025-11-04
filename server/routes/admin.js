@@ -92,6 +92,33 @@ router.post('/change-password', auth, wrap(async (req, res) => {
   res.json({ success: true, message: 'Mot de passe mis à jour.' });
 }));
 
+// SSE endpoint for real-time order updates
+router.get('/commandes/stream', auth, (req, res) => {
+  // Set headers for SSE
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+
+  // Send initial connection success message
+  res.write('data: {"type":"connected"}\n\n');
+
+  // Register this client with the order event emitter
+  const orderEmitter = require('../utils/eventEmitter');
+  orderEmitter.addClient(res);
+
+  // Keep connection alive with heartbeat every 30 seconds
+  const heartbeatInterval = setInterval(() => {
+    res.write(': heartbeat\n\n');
+  }, 30000);
+
+  // Clean up when client disconnects
+  req.on('close', () => {
+    clearInterval(heartbeatInterval);
+    orderEmitter.removeClient(res);
+  });
+});
+
 // Get commandes by statut
 router.get('/commandes', auth, wrap(async (req, res) => {
   const { statut } = req.query;

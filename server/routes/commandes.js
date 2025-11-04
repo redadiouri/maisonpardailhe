@@ -181,7 +181,12 @@ router.post('/', validateCommandeFields, async (req, res) => {
       (async () => {
         try {
           const commande = await Commande.getById(id);
-          if (commande) await sendCommandeEmail('creation', commande);
+          if (commande) {
+            await sendCommandeEmail('creation', commande);
+            // Broadcast to connected admin clients via SSE
+            const orderEmitter = require('../utils/eventEmitter');
+            orderEmitter.broadcastNewOrder(commande);
+          }
         } catch (e) {
           const logger = require('../logger');
           logger.error('Failed to send creation email for commande %s: %o', id, e && (e.stack || e));
@@ -208,7 +213,12 @@ router.post('/', validateCommandeFields, async (req, res) => {
     (async () => {
       try {
         const commande = await Commande.getById(id);
-        if (commande) await sendCommandeEmail('creation', commande);
+        if (commande) {
+          await sendCommandeEmail('creation', commande);
+          // Broadcast to connected admin clients via SSE
+          const orderEmitter = require('../utils/eventEmitter');
+          orderEmitter.broadcastNewOrder(commande);
+        }
       } catch (e) {
         const logger = require('../logger');
         logger.error('Failed to send creation email for commande %s: %o', id, e && (e.stack || e));

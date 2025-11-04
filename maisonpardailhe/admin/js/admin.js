@@ -1767,6 +1767,176 @@ if (document.getElementById('logoutBtn')) {
   loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
   loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
 
+  // ==================== SSE for real-time order updates ====================
+  let eventSource = null;
+  let notificationSound = null;
+
+  // Preload notification sound (using Web Audio API for better control)
+  function initNotificationSound() {
+    try {
+      // Create a simple notification beep using Web Audio API
+      notificationSound = {
+        play: function() {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          // Two-tone beep: 800Hz then 1000Hz
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.15);
+          
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.4);
+        }
+      };
+    } catch (e) {
+      console.warn('Failed to initialize notification sound:', e);
+    }
+  }
+
+  // Initialize SSE connection for real-time updates
+  function setupSSE() {
+    if (eventSource) {
+      eventSource.close();
+    }
+
+    eventSource = new EventSource('/api/admin/commandes/stream');
+
+    eventSource.onopen = function() {
+      console.log('SSE connection established');
+    };
+
+    eventSource.onmessage = function(event) {
+      try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'connected') {
+          console.log('SSE connected successfully');
+          return;
+        }
+        
+        if (message.type === 'new_order') {
+          console.log('New order received via SSE:', message.data);
+          
+          // Play notification sound
+          if (notificationSound) {
+            notificationSound.play();
+          }
+          
+          // Show visual notification
+          showOrderNotification(message.data);
+          
+          // Refresh the "en_attente" list to show the new order
+          loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
+        }
+      } catch (e) {
+        console.error('Failed to parse SSE message:', e);
+      }
+    };
+
+    eventSource.onerror = function(err) {
+      console.error('SSE error:', err);
+      eventSource.close();
+      
+      // Reconnect after 5 seconds
+      setTimeout(() => {
+        console.log('Attempting to reconnect SSE...');
+        setupSSE();
+      }, 5000);
+    };
+  }
+
+  // Show a visual notification for new orders
+  function showOrderNotification(commande) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'order-notification';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+      color: white;
+      padding: 18px 24px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 6px 18px rgba(0,0,0,0.6);
+      z-index: 10000;
+      font-weight: 600;
+      animation: slideInRight 0.3s ease-out;
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+      font-family: Inter, 'Segoe UI', Roboto, Arial, sans-serif;
+    `;
+    
+    notification.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="
+          width: 48px;
+          height: 48px;
+          border-radius: 10px;
+          background: linear-gradient(90deg, #c02929, #8f1212);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          box-shadow: 0 4px 12px rgba(192, 41, 41, 0.4);
+        ">🔔</div>
+        <div style="flex: 1;">
+          <div style="font-size: 15px; margin-bottom: 5px; color: #fff; font-weight: 700;">Nouvelle commande !</div>
+          <div style="font-size: 13px; color: #bdbfc1; font-weight: 500;">
+            <span style="color: #fff; font-weight: 600;">${commande.nom_complet}</span>
+            ${commande.location ? ` • ${commande.location}` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Add slide-in animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideInRight {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 5000);
+  }
+
+  // Initialize sound and SSE
+  initNotificationSound();
+  setupSSE();
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    if (eventSource) {
+      eventSource.close();
+    }
+  });
+  // ==================== End SSE setup ====================
+
   // re-adjust on resize (cards may wrap/change height)
   window.addEventListener('resize', function () {
     adjustListMaxHeight('attente-list');
