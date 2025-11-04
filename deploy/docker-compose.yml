@@ -17,8 +17,10 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - SESSION_SECRET=${SESSION_SECRET}
+      # PROD_ALLOWED_ORIGINS: comma-separated list of allowed origins for CORS (required for production)
+      # Example: https://serv-test.smp4.xyz,https://azeur-mdp-web.smp4.xyz,https://azeur-cloud-web.smp4.xyz
       - PROD_ALLOWED_ORIGINS=${PROD_ALLOWED_ORIGINS}
-      - TIMEZONE=${TIMEZONE}
+      - TIMEZONE=${TIMEZONE:-Europe/Paris}
       - APP_URL=${APP_URL}
     # If you want to mount persistent storage for uploads or logs, configure volumes in Portainer
     # volumes:

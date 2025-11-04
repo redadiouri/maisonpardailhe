@@ -117,7 +117,9 @@ function escapeHtml(s) {
 async function sendMail({ to, subject, html, text, from } = {}) {
   const masked = maskEmail(to);
   const hashed = hashEmail(to);
-  const mailFrom = from || process.env.EMAIL_FROM || `no-reply@${process.env.APP_HOST || 'localhost'}`;
+  // Prefer explicit FROM_ADDRESS (allows display name, e.g. "Maison Pardailhé <no-reply@smp4.xyz>")
+  // Fallback to EMAIL_FROM for backwards compatibility, then to a sensible default.
+  const mailFrom = from || process.env.FROM_ADDRESS || process.env.EMAIL_FROM || `no-reply@${process.env.APP_HOST || 'localhost'}`;
 
   const mailOptions = {
     from: mailFrom,
@@ -126,6 +128,34 @@ async function sendMail({ to, subject, html, text, from } = {}) {
     text: text || undefined,
     html: html || undefined
   };
+
+  // Normalize and validate recipients to avoid nodemailer "No recipients defined" errors.
+  const normalizeRecipients = (v) => {
+    if (!v) return [];
+    if (Array.isArray(v)) return v.map(String).map(s => s.trim()).filter(Boolean);
+    return String(v).split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+  };
+  const recipients = normalizeRecipients(mailOptions.to);
+  if (recipients.length === 0) {
+    logger.warn({ toMasked: masked, toHash: hashed }, 'No recipients defined for email, aborting send');
+    return { ok: false, reason: 'no-recipient' };
+  }
+  mailOptions.to = recipients.join(', ');
+
+  // Some SMTP relays (Brevo/Sendinblue, etc.) reject an arbitrary MAIL FROM (envelope sender)
+  // and require the authenticated SMTP user or a verified sender. Set the envelope.from to
+  // the configured SMTP user when available so the SMTP MAIL FROM is acceptable while keeping
+  // the visible From header (mailFrom) as configured.
+  try {
+    const envelopeFrom = process.env.SMTP_USER || (String(mailFrom).match(/<([^>]+)>/) || [])[1] || mailFrom;
+    mailOptions.envelope = { from: envelopeFrom };
+    // Also explicitly set envelope.to to avoid rare cases where nodemailer cannot infer
+    // recipients from the header and throws "No recipients defined". Use the normalized
+    // recipients array so the SMTP envelope contains valid addresses.
+    mailOptions.envelope.to = recipients;
+  } catch (e) {
+    // ignore envelope construction errors and proceed without explicit envelope
+  }
 
   // If no transporter configured but nodemailer is available in dev, create test acct
   if (!transporter && nodemailer && process.env.NODE_ENV !== 'production') {
@@ -166,9 +196,14 @@ async function sendMail({ to, subject, html, text, from } = {}) {
 
 // High-level helper to send commande emails (creation/acceptation/refus)
 async function sendCommandeEmail(type, commande, extra = {}) {
-  const to = commande.email || commande.telephone;
+  // Prefer a real email address as recipient. Some orders contain only a telephone
+  // number (legacy/optional) and using that as the recipient leads to SMTP errors
+  // like "No recipients defined". Validate that commande.email looks like an email
+  // (simple '@' check) before attempting to send. If no valid email is present,
+  // abort early and return a clear result.
+  const to = (commande && commande.email && String(commande.email).includes('@')) ? String(commande.email).trim() : null;
   if (!to) {
-    logger.warn({ orderId: commande && commande.id }, 'No recipient for commande email');
+    logger.warn({ orderId: commande && commande.id, telephone: commande && commande.telephone }, 'No valid email recipient for commande, aborting send');
     return { ok: false, reason: 'no-recipient' };
   }
 
@@ -227,6 +262,11 @@ async function sendCommandeEmail(type, commande, extra = {}) {
       out = out.replace(/{{#if\s+itemsHtml}}([\s\S]*?){{\/if}}/g, itemsHtml || '');
       out = out.replace(/{{{\s*itemsHtml\s*}}}/g, itemsHtml || '');
       out = out.replace(/{{\s*itemsHtml\s*}}/g, itemsHtml || '');
+      // Handle optional total block: keep inner HTML only when we have a total value,
+      // otherwise remove the whole {{#if total}}...{{/if}} block so no template tags leak.
+      out = out.replace(/{{#if\s+total}}([\s\S]*?){{\/if}}/g, (m, inner) => {
+        return (commande.total_cents || computedTotal) ? inner : '';
+      });
       html = out.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
         .replace(/{{date_retrait}}/g, escapeHtml(dateDisplay || ''))
         .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
@@ -252,6 +292,10 @@ async function sendCommandeEmail(type, commande, extra = {}) {
       out = out.replace(/{{#if\s+itemsHtml}}([\s\S]*?){{\/if}}/g, itemsHtml || '');
       out = out.replace(/{{{\s*itemsHtml\s*}}}/g, itemsHtml || '');
       out = out.replace(/{{\s*itemsHtml\s*}}/g, itemsHtml || '');
+      // Keep or remove the total section depending on whether we have a total value.
+      out = out.replace(/{{#if\s+total}}([\s\S]*?){{\/if}}/g, (m, inner) => {
+        return (commande.total_cents || computedTotal) ? inner : '';
+      });
       html = out.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
         .replace(/{{date_retrait}}/g, escapeHtml(dateDisplay || ''))
         .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))

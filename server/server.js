@@ -266,10 +266,52 @@ function setStaticHeaders(res, filePath) {
   }
 }
 
+// Redirect requests that explicitly include `index.html` to the clean path.
+// Example: /index.html -> / , /accueil/index.html -> /accueil
+// Do not redirect admin pages (keep /admin/index.html intact).
+app.use((req, res, next) => {
+  try {
+    const p = req.path || '';
+    if (!p.startsWith('/admin') && p.match(/(^|\/)index\.html$/i)) {
+      // compute target by removing trailing index.html
+      const target = p.replace(/index\.html$/i, '') || '/';
+      return res.redirect(301, target);
+    }
+  } catch (e) {
+    // ignore and continue
+  }
+  return next();
+});
+
 // Serve the main site with caching middleware
 app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
 // Serve the admin static folder (the admin UI is static HTML/JS too)
 app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
+
+// Support friendly URLs for the static site.
+// Serve `index.html` for the root, and redirect other friendly routes to
+// the root with a fragment (e.g. /menu -> /#menu) so the client-side JS can
+// display the correct section without exposing `index.html` in the URL.
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../maisonpardailhe/index.html'));
+});
+
+const routeToFile = {
+  '/': 'index.html',
+  '/accueil': 'index.html',
+  '/menu': 'menu.html',
+  '/contact': 'contact.html',
+  '/commande': 'commande.html',
+  '/services': 'services.html',
+  '/identite': 'identite.html'
+};
+
+Object.keys(routeToFile).forEach(route => {
+  app.get(route, (req, res) => {
+    const file = routeToFile[route];
+    return res.sendFile(path.join(__dirname, `../maisonpardailhe/${file}`));
+  });
+});
 
 // Route handlers are required lazily when running the server to avoid heavy
 // module initialization during tests (which may otherwise import DB-heavy code).
