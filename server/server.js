@@ -46,7 +46,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-  scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+  // Allow 'unsafe-inline' for scripts to support existing inline scripts used
+  // by the static frontend. This is a pragmatic relaxation — for production
+  // you may prefer nonces or script-hashing for tighter security.
+  scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
   // Allow loading styles from the CDN used for flatpickr. Keep 'unsafe-inline'
   // to support inline styles used by some components (kept from previous config).
   styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
@@ -66,14 +69,30 @@ app.use(helmet({
 
 // CORS: in production restrict origins via PROD_ALLOWED_ORIGINS env (comma-separated).
 // In development allow common localhost origins for convenience.
-const allowedOrigins = (process.env.NODE_ENV === 'production' && process.env.PROD_ALLOWED_ORIGINS)
-  ? process.env.PROD_ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
-  : ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:5500', 'http://127.0.0.1:5500'];
+let allowedOrigins;
+if (process.env.NODE_ENV === 'production') {
+  if (process.env.PROD_ALLOWED_ORIGINS) {
+    allowedOrigins = process.env.PROD_ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean);
+  } else if (process.env.APP_URL) {
+    // If APP_URL is provided, include it as an allowed origin.
+    allowedOrigins = [process.env.APP_URL];
+  } else {
+    // No explicit allowed origins set in production — be permissive but log a warning.
+    // This is pragmatic for containerized deployments behind proxies (Portainer, reverse proxies).
+    // For stronger security, set PROD_ALLOWED_ORIGINS (comma-separated) to the allowed origins.
+    logger.warn('PROD_ALLOWED_ORIGINS not set in production — allowing all origins. Set PROD_ALLOWED_ORIGINS to restrict CORS.');
+    allowedOrigins = null; // null means allow any origin in our runtime check below
+  }
+} else {
+  allowedOrigins = ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:5500', 'http://127.0.0.1:5500'];
+}
 
 app.use(cors({
   origin: function(origin, callback) {
     // allow requests with no origin (e.g., curl, mobile apps)
     if (!origin) return callback(null, true);
+    // If allowedOrigins is null, allow all origins (warned above)
+    if (!allowedOrigins) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
     return callback(new Error('Origin not allowed by CORS'));
   },

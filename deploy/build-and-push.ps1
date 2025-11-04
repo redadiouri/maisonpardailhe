@@ -17,7 +17,11 @@ param(
     [string]$Username = $env:DOCKERHUB_USERNAME,
     [string]$Repo = $env:DOCKERHUB_REPO,
     [string]$Tag = $env:IMAGE_TAG,
+    # Directory where the Dockerfile lives (used for informational purposes).
     [string]$ContextPath = 'server',
+    # The actual docker build context (defaults to repo root '.') so the Dockerfile
+    # can COPY top-level folders like `maisonpardailhe`.
+    [string]$BuildContext = '.',
     [string]$Dockerfile = "$PSScriptRoot/../server/Dockerfile",
     [switch]$NoLogin
 )
@@ -39,9 +43,11 @@ Write-Host "Context: $ContextPath"
 Write-Host "Dockerfile: $Dockerfile"
 
 try {
-    Push-Location (Resolve-Path -Path $ContextPath)
+    # Switch to the build context directory so relative paths in the build operate
+    # from the correct root. Default BuildContext is '.' (repo root).
+    Push-Location (Resolve-Path -Path $BuildContext)
 } catch {
-    Write-Err "Context path '$ContextPath' not found. Run this script from the repo root or provide a valid -ContextPath."
+    Write-Err "Build context path '$BuildContext' not found. Run this script from the repo root or provide a valid -BuildContext."
     exit 3
 }
 
@@ -57,7 +63,7 @@ try {
         if ($proc.ExitCode -ne 0) { Write-Err "docker login failed. Ensure DOCKERHUB_TOKEN is correct."; exit 4 }
     }
 
-    $buildArgs = @('build','-t',$image,'-f',$Dockerfile,'.')
+    $buildArgs = @('build','-t',$image,'-f',$Dockerfile,$BuildContext)
     Write-Host "Running: docker $($buildArgs -join ' ')"
     $b = & docker @buildArgs
     if ($LASTEXITCODE -ne 0) { Write-Err "docker build failed"; exit 5 }
