@@ -208,6 +208,7 @@ async function sendCommandeEmail(type, commande, extra = {}) {
   }
 
   const token = signToken(to);
+  // unsubscribeUrl intentionally not used in emails per configuration
   const unsubscribeUrl = `${process.env.APP_URL || 'http://localhost:3001'}/unsubscribe?token=${encodeURIComponent(token)}`;
 
   // helper: format cents to euros
@@ -273,17 +274,15 @@ async function sendCommandeEmail(type, commande, extra = {}) {
         .replace(/{{datetime_retrait_display}}/g, escapeHtml(datetimeDisplay || ''))
         .replace(/{{location}}/g, escapeHtml(commande.location || ''))
         .replace(/{{orderButton}}/g, orderButtonHtml)
-        .replace(/{{orderUrl}}/g, orderUrl)
-        .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl)
-        .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+  .replace(/{{orderUrl}}/g, orderUrl)
+  .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
     } catch (e) {
       html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Nous avons bien reçu votre commande pour le ${escapeHtml(datetimeDisplay || dateDisplay)} (${escapeHtml(commande.location || '')}).</p>`;
       if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
       if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
-      html += `<p>Vous pouvez consulter votre commande ici: ${orderButtonHtml}</p>`;
-      html += `<p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
+  html += `<p>Vous pouvez consulter votre commande ici: ${orderButtonHtml}</p>`;
     }
-    text = `Bonjour ${commande.nom_complet || ''}\nNous avons reçu votre commande pour le ${datetimeDisplay || dateDisplay} (${commande.location || ''}).\nConsulter: ${orderUrl}\nSe désabonner: ${unsubscribeUrl}`;
+  text = `Bonjour ${commande.nom_complet || ''}\nNous avons reçu votre commande pour le ${datetimeDisplay || dateDisplay} (${commande.location || ''}).\nConsulter: ${orderUrl}`;
   } else if (type === 'acceptation') {
     subject = 'Votre commande Maison Pardailhé est en traitement';
     try {
@@ -301,29 +300,53 @@ async function sendCommandeEmail(type, commande, extra = {}) {
         .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
         .replace(/{{datetime_retrait_display}}/g, escapeHtml(datetimeDisplay || ''))
         .replace(/{{orderButton}}/g, orderButtonHtml)
-        .replace(/{{orderUrl}}/g, orderUrl)
-        .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl)
-        .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+  .replace(/{{orderUrl}}/g, orderUrl)
+  .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
     } catch (e) {
       html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Bonne nouvelle — votre commande prévue le ${escapeHtml(datetimeDisplay || dateDisplay)} est maintenant en traitement.</p>`;
       if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
       if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
-      html += `<p>Suivre votre commande: ${orderButtonHtml}</p>`;
-      html += `<p>Merci pour votre commande — à bientôt !</p><p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
+  html += `<p>Suivre votre commande: ${orderButtonHtml}</p>`;
+  html += `<p>Merci pour votre commande — à bientôt !</p>`;
     }
-    text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} est en traitement. Consulter: ${orderUrl}\nSe désabonner: ${unsubscribeUrl}`;
+  text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} est en traitement. Consulter: ${orderUrl}`;
   } else if (type === 'refus') {
     subject = 'Votre commande Maison Pardailhé a été refusée';
     try {
       const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'refus.html'), 'utf8');
       html = tpl.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
         .replace(/{{date_retrait}}/g, escapeHtml(datetimeDisplay || dateDisplay))
-        .replace(/{{reason}}/g, escapeHtml(extra.raison || ''))
-        .replace(/{{unsubscribeUrl}}/g, unsubscribeUrl);
+        .replace(/{{reason}}/g, escapeHtml(extra.raison || ''));
     } catch (e) {
-      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Malheureusement, votre commande prévue le ${escapeHtml(datetimeDisplay || dateDisplay)} a été refusée.</p><p>Raison : ${escapeHtml(extra.raison || '')}</p><p><small>Pour ne plus recevoir d'emails: <a href="${unsubscribeUrl}">se désabonner</a></small></p>`;
+  html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Malheureusement, votre commande prévue le ${escapeHtml(datetimeDisplay || dateDisplay)} a été refusée.</p><p>Raison : ${escapeHtml(extra.raison || '')}</p>`;
     }
-    text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} a été refusée.\nRaison: ${extra.raison || ''}\nSe désabonner: ${unsubscribeUrl}`;
+  text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} a été refusée.\nRaison: ${extra.raison || ''}`;
+  }
+  else if (type === 'terminee' || type === 'livree') {
+    subject = 'Votre commande a été livrée — Merci';
+    try {
+      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'terminee.html'), 'utf8');
+      let out = tpl;
+      out = out.replace(/{{#if\s+itemsHtml}}([\s\S]*?){{\/if}}/g, itemsHtml || '');
+      out = out.replace(/{{{\s*itemsHtml\s*}}}/g, itemsHtml || '');
+      out = out.replace(/{{\s*itemsHtml\s*}}/g, itemsHtml || '');
+      out = out.replace(/{{#if\s+total}}([\s\S]*?){{\/if}}/g, (m, inner) => {
+        return (commande.total_cents || computedTotal) ? inner : '';
+      });
+      html = out.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+        .replace(/{{date_retrait}}/g, escapeHtml(dateDisplay || ''))
+        .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
+        .replace(/{{datetime_retrait_display}}/g, escapeHtml(datetimeDisplay || ''))
+        .replace(/{{orderButton}}/g, orderButtonHtml)
+  .replace(/{{orderUrl}}/g, orderUrl)
+  .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+    } catch (e) {
+      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Nous confirmons que votre commande prévue le ${escapeHtml(datetimeDisplay || dateDisplay)} a été livrée.</p>`;
+      if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
+      if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
+  html += `<p>Merci de nous avoir fait confiance.</p>`;
+    }
+  text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} a été livrée. Consulter: ${orderUrl}`;
   }
 
   return sendMail({ to, subject, html, text });

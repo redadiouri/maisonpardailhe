@@ -280,19 +280,31 @@ function initNavigation() {
     const links = navLinks ? navLinks.querySelectorAll('a') : [];
 
     if (!navToggle || !navLinks) {
-    initSelectionPanel();
+        return;
     }
 
     const closeMenu = () => {
         navLinks.classList.remove('is-open');
         navToggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = ''; // Restore scroll
+    };
+
+    const openMenu = () => {
+        navLinks.classList.add('is-open');
+        navToggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden'; // Prevent scroll when menu open
     };
 
     navToggle.addEventListener('click', () => {
-        const isOpen = navLinks.classList.toggle('is-open');
-        navToggle.setAttribute('aria-expanded', String(isOpen));
+        const isOpen = navLinks.classList.contains('is-open');
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
     });
 
+    // Close menu when clicking on links
     links.forEach((link) => {
         link.addEventListener('click', () => {
             if (navLinks.classList.contains('is-open')) {
@@ -301,6 +313,19 @@ function initNavigation() {
         });
     });
 
+    // Close menu when clicking outside (on overlay)
+    document.addEventListener('click', (event) => {
+        if (navLinks.classList.contains('is-open')) {
+            const isClickInsideMenu = navLinks.contains(event.target);
+            const isClickOnToggle = navToggle.contains(event.target);
+            
+            if (!isClickInsideMenu && !isClickOnToggle) {
+                closeMenu();
+            }
+        }
+    });
+
+    // Close menu with Escape key
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && navLinks.classList.contains('is-open')) {
             closeMenu();

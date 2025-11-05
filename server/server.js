@@ -60,7 +60,9 @@ app.use(helmet({
       imgSrc: ["'self'", 'data:'],
   // Allow connecting to the CDN used by the admin dashboard (Chart.js source maps)
   connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+  // Allow embedding Google Maps iframes on the public site
+  frameSrc: ["'self'", 'https://www.google.com', 'https://maps.google.com', 'https://www.google.com/maps', 'https://maps.gstatic.com'],
+    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"]
     }

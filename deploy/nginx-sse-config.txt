@@ -1,0 +1,28 @@
+# Configuration Nginx SIMPLIFIÉE pour Nginx Proxy Manager
+# À coller dans l'onglet "Advanced" > "Custom Nginx Configuration"
+
+# Configuration spécifique pour SSE (Server-Sent Events)
+location ~ ^/api/admin/commandes/stream {
+    proxy_pass http://192.168.1.77:3001;
+    proxy_http_version 1.1;
+    
+    # Headers essentiels
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    
+    # CRITIQUE pour SSE : désactiver tout buffering
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_set_header Connection '';
+    
+    # Timeouts très longs pour SSE
+    proxy_connect_timeout 1d;
+    proxy_send_timeout 1d;
+    proxy_read_timeout 1d;
+    
+    # Headers SSE
+    add_header X-Accel-Buffering no;
+    add_header Cache-Control no-cache;
+}

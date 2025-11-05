@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const Commande = require('../models/commande');
+const EmailUtil = require('../utils/email');
 const Admin = require('../models/admin');
 const auth = require('../middleware/auth');
 
@@ -232,6 +233,10 @@ router.post('/commandes/:id/terminer', auth, wrap(async (req, res) => {
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
   await Commande.updateStatut(id, 'terminée');
+  // Send a thank-you email to customer if email is available (fire-and-forget)
+  try {
+    EmailUtil.sendCommandeEmail('terminee', commande).catch(()=>{});
+  } catch (e) { /* ignore email errors */ }
   res.json({ success: true });
 }));
 

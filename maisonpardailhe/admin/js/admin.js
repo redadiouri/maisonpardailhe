@@ -969,6 +969,307 @@ if (document.getElementById('logoutBtn')) {
     });
   })();
 
+  // Helper function to format dates
+  function formatDateISO(d) {
+    if (!d) return '-';
+    // ISO YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const dt = new Date(d + 'T00:00:00');
+      if (!isNaN(dt.getTime())) {
+        return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      }
+    }
+    // French DD/MM/YYYY
+    const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(d);
+    if (fr) {
+      const day = Number(fr[1]);
+      const month = Number(fr[2]) - 1;
+      const year = Number(fr[3]);
+      const dt = new Date(year, month, day);
+      if (dt.getFullYear() === year && dt.getMonth() === month && dt.getDate() === day) {
+        return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      }
+    }
+    // Fallback: try general Date parsing
+    try {
+      const dt = new Date(d);
+      if (!isNaN(dt.getTime())) return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    } catch (e) {}
+    return d;
+  }
+
+  // Helper to parse combined date + time into a Date object
+  function parseDateTime(dateStr, timeStr) {
+    if (!dateStr || !timeStr) return null;
+    // If dateStr already contains a time or timezone, try parsing directly
+    if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr) || dateStr.includes('Z')) {
+      try {
+        // create a date from dateStr then overwrite hours/minutes from timeStr
+        const base = new Date(dateStr);
+        if (isNaN(base.getTime())) return null;
+        const [hh, mm] = timeStr.split(':').map(Number);
+        base.setHours(hh, mm, 0, 0);
+        return base;
+      } catch (e) { /* fallthrough */ }
+    }
+    // ISO YYYY-MM-DD (with or without time)
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr) && /^\d{2}:\d{2}$/.test(timeStr)) {
+      // join as local time
+      const iso = `${dateStr}T${timeStr}:00`;
+      const d = new Date(iso);
+      if (!isNaN(d.getTime())) return d;
+    }
+    // French DD/MM/YYYY
+    const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr);
+    if (fr && /^\d{2}:\d{2}$/.test(timeStr)) {
+      const day = Number(fr[1]);
+      const month = Number(fr[2]) - 1;
+      const year = Number(fr[3]);
+      const [hh, mm] = timeStr.split(':').map(Number);
+      const d = new Date(year, month, day, hh, mm, 0);
+      if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) return d;
+    }
+    // fallback: try Date parse with concatenation
+    try {
+      const d = new Date(`${dateStr} ${timeStr}`);
+      return isNaN(d.getTime()) ? null : d;
+    } catch (e) { return null; }
+  }
+
+  // Helper function to create a commande card element
+  function createCommandeCard(cmd, statut) {
+    const card = document.createElement('div');
+    card.className = 'commande-card';
+    card.dataset.commandeId = cmd.id;
+    
+    const dateRetrait = formatDateISO(cmd.date_retrait);
+    const created = cmd.date_creation ? new Date(cmd.date_creation).toLocaleString('fr-FR') : '';
+    const totalDisplay = cmd.total_cents ? `<div style="margin-top:8px;"><b>Total:</b> <span style="color:#0a0;font-weight:700;">${(Number(cmd.total_cents)/100).toFixed(2)} €</span></div>` : '';
+    
+    card.innerHTML = `
+      <div class="left">
+        <div class="header">
+          <div>
+            <div class="client">${cmd.nom_complet} <span class="id" style="color:var(--muted);font-weight:600;font-size:0.85rem">#${cmd.id}</span></div>
+            <div class="phone"><a href="tel:${cmd.telephone}" style="color:inherit;text-decoration:none">${cmd.telephone}</a></div>
+            ${cmd.email ? `<div class="email"><a href="mailto:${cmd.email}" style="color:inherit;text-decoration:none">${cmd.email}</a></div>` : ''}
+          </div>
+          <div class="status" style="font-size:0.9rem;color:var(--muted);text-transform:capitalize">${cmd.statut.replace('_',' ')}</div>
+        </div>
+        <div class="product">${renderProduitHtml(cmd.produit)}</div>
+        ${totalDisplay}
+        <div class="meta">
+          <div><b>Date retrait:</b> ${dateRetrait} &nbsp;|&nbsp; <b>Créneau:</b> ${cmd.creneau} &nbsp;|&nbsp; <b>Lieu:</b> ${cmd.location || '-'} </div>
+          <div><b>Commandé le:</b> ${created}</div>
+          <div><b>Précisions:</b> ${cmd.precisions || '-'}</div>
+        </div>
+        ${cmd.raison_refus ? `<div class="small-note"><b>Raison du refus:</b> ${cmd.raison_refus}</div>` : ''}
+      </div>
+      <div class="right">
+        <div class="commande-actions"></div>
+      </div>`;
+    
+    const actions = card.querySelector('.commande-actions');
+    
+    if (statut === 'en_attente') {
+      const acceptBtn = document.createElement('button');
+      acceptBtn.textContent = 'Accepter';
+      acceptBtn.className = 'btn primary';
+      acceptBtn.onclick = async () => {
+        acceptBtn.disabled = true;
+        acceptBtn.style.opacity = '0.8';
+        const _csrf = await getCsrfToken();
+        await fetch(apiBase + `/commandes/${cmd.id}/accepter`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
+        loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
+        loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
+      };
+      const refuseBtn = document.createElement('button');
+      refuseBtn.textContent = 'Refuser';
+      refuseBtn.className = 'btn ghost';
+      refuseBtn.onclick = async () => {
+        const raison = await showReasonModal('Refuser la commande', 'Indiquez la raison du refus qui sera transmise au client (facultatif).', 'Raison du refus');
+        if (raison === null) return;
+        refuseBtn.disabled = true;
+        try {
+          const _csrf = await getCsrfToken();
+          await fetch(apiBase + `/commandes/${cmd.id}/refuser`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
+            body: JSON.stringify({ raison }),
+            credentials: 'include'
+          });
+          loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
+        } catch (e) {
+          console.error('Erreur lors du refus:', e);
+          refuseBtn.disabled = false;
+        }
+      };
+      actions.appendChild(acceptBtn);
+      actions.appendChild(refuseBtn);
+    }
+    
+    if (statut === 'en_cours') {
+      const finishBtn = document.createElement('button');
+      finishBtn.textContent = 'Commande terminée';
+      finishBtn.className = 'btn primary';
+      finishBtn.onclick = async () => {
+        finishBtn.disabled = true;
+        const _csrf = await getCsrfToken();
+        try {
+          const res = await fetch(apiBase + `/commandes/${cmd.id}/terminer`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
+          if (res.ok) {
+            // Visible log for admins: toast + console message
+            showToast('Commande marquée terminée — demande d\'envoi d\'un email de remerciement déclenchée', { type: 'success' });
+            console.info(`📧 Email trigger requested for commande #${cmd.id}`);
+            // try to log server response body for debugging (non-blocking)
+            try { const body = await res.json().catch(()=>null); console.debug('Server response for terminer:', body); } catch(e){}
+          } else {
+            showToast('Erreur lors de la finalisation de la commande', { type: 'error' });
+            console.warn('Failed to mark commande as terminée', res.status);
+          }
+        } catch (err) {
+          showToast('Erreur réseau lors de la finalisation', { type: 'error' });
+          console.error('Error finishing commande', err);
+        } finally {
+          loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
+        }
+      };
+      
+      const noteBtn = document.createElement('button');
+      noteBtn.textContent = 'Notes/Plus';
+      noteBtn.className = 'btn ghost';
+      noteBtn.onclick = () => {
+        const created = cmd.date_creation ? new Date(cmd.date_creation).toLocaleString('fr-FR') : '';
+        // Build a richer HTML summary for the commande
+        const parts = [];
+        parts.push(`<div style="margin-bottom:8px;"><b>ID:</b> ${cmd.id}</div>`);
+        parts.push(`<div style="margin-bottom:8px;"><b>Statut:</b> ${cmd.statut || '-'} | <b>Créé:</b> ${created || '-'}</div>`);
+        if (cmd.nom_complet) parts.push(`<div style="margin-bottom:6px;"><b>Nom:</b> ${escapeHtml(cmd.nom_complet)}</div>`);
+        if (cmd.telephone) parts.push(`<div style="margin-bottom:6px;"><b>Téléphone:</b> ${escapeHtml(cmd.telephone)}</div>`);
+        if (cmd.email) parts.push(`<div style="margin-bottom:6px;"><b>Email:</b> ${escapeHtml(cmd.email)}</div>`);
+        if (cmd.location) parts.push(`<div style="margin-bottom:6px;"><b>Lieu:</b> ${escapeHtml(cmd.location)}</div>`);
+        if (cmd.date_retrait) parts.push(`<div style="margin-bottom:6px;"><b>Date retrait:</b> ${escapeHtml(cmd.date_retrait)} ${cmd.creneau ? '| Créneau: ' + escapeHtml(cmd.creneau) : ''}</div>`);
+        if (cmd.precisions) parts.push(`<div style="margin-bottom:6px;"><b>Précisions:</b> ${escapeHtml(cmd.precisions)}</div>`);
+        // produit can be JSON or legacy string
+        try {
+          if (cmd.produit) {
+            const p = JSON.parse(cmd.produit);
+            if (Array.isArray(p)) {
+              const rows = p.map(it => {
+                let displayName = it.name || '';
+                if (!displayName) {
+                  const menus = window._adminMenuItems || [];
+                  const menu = menus.find(m => String(m.id) === String(it.menu_id));
+                  displayName = menu ? menu.name : ('#' + String(it.menu_id || ''));
+                }
+                return `<tr data-menu-id="${escapeHtml(String(it.menu_id || ''))}"><td style="padding:6px 10px;">${escapeHtml(String(displayName))}</td><td style="padding:6px 10px; text-align:right; white-space:nowrap;">${escapeHtml(String(it.qty || ''))}</td></tr>`;
+              }).join('');
+              const table = `<table style="width:100%; border-collapse:collapse; margin-top:6px; background:transparent;"><thead><tr><th style="text-align:left; font-weight:600; padding:6px 10px;">Produit</th><th style="text-align:right; font-weight:600; padding:6px 10px;">Qté</th></tr></thead><tbody>${rows}</tbody></table>`;
+              parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b>${table}</div>`);
+            } else {
+              parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b> ${escapeHtml(String(cmd.produit))}</div>`);
+            }
+          }
+        } catch (e) {
+          parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b> ${escapeHtml(String(cmd.produit || ''))}</div>`);
+        }
+        if (cmd.raison_refus) parts.push(`<div style="margin-top:8px; color: #f66;"><b>Raison du refus:</b> ${escapeHtml(cmd.raison_refus)}</div>`);
+
+        const html = parts.join('');
+        showInfoModal('Notes / Détails', html);
+      };
+      
+      actions.appendChild(finishBtn);
+      actions.appendChild(noteBtn);
+      
+      // Add countdown for en_cours orders
+      const metaDiv = card.querySelector('.meta');
+      if (metaDiv) {
+        const countdownDiv = document.createElement('div');
+        countdownDiv.className = 'countdown-row';
+        const pickupDateObj = parseDateTime(cmd.date_retrait, cmd.creneau);
+        if (pickupDateObj) {
+          const ts = pickupDateObj.getTime();
+          countdownDiv.innerHTML = `<b>Temps restant:</b> <span class="countdown" data-target="${ts}">--:--:--</span>`;
+        } else {
+          countdownDiv.innerHTML = `<b>Temps restant:</b> -`;
+        }
+        metaDiv.appendChild(countdownDiv);
+      }
+    }
+    
+    return card;
+  }
+
+  // Add a new commande dynamically to the list (used by SSE)
+  async function addCommandeToList(cmd, statut, containerId, badgeId) {
+    console.log('🔧 addCommandeToList called with:', { cmd, statut, containerId, badgeId }); // DEBUG
+    
+    const list = document.getElementById(containerId);
+    const badge = document.getElementById(badgeId);
+    
+    if (!list) {
+      console.error('❌ List element not found:', containerId);
+      return;
+    }
+    
+    console.log('✅ List element found:', list);
+    
+    // Ensure menus cache is loaded
+    try { await preloadMenus().catch(()=>{}); } catch(e) {}
+    
+    // Check if commande already exists (prevent duplicates)
+    const existing = list.querySelector(`[data-commande-id="${cmd.id}"]`);
+    if (existing) {
+      console.log('⚠️ Commande already in list, skipping duplicate. ID:', cmd.id);
+      return;
+    }
+    
+    console.log('✅ No duplicate found, proceeding...');
+    
+    // Remove "Aucune commande" message if present
+    const noCommandeMsg = list.querySelector('div[style*="Aucune commande"]');
+    if (noCommandeMsg) {
+      console.log('🗑️ Removing "Aucune commande" message');
+      noCommandeMsg.remove();
+    }
+    
+    // Create and insert the card at the top with animation
+    console.log('🎨 Creating commande card...');
+    const card = createCommandeCard(cmd, statut);
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(-10px)';
+    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    
+    console.log('📌 Inserting card at top of list...');
+    list.insertBefore(card, list.firstChild);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+      console.log('✨ Animation triggered');
+    });
+    
+    // Update badge count
+    if (badge) {
+      const currentCount = parseInt(badge.textContent) || 0;
+      badge.textContent = currentCount + 1;
+      console.log('🔢 Badge updated:', currentCount, '->', currentCount + 1);
+    }
+    
+    // Initialize countdown if this is an en_cours order
+    if (statut === 'en_cours') {
+      try { 
+        if (typeof updateCountdowns === 'function') updateCountdowns(); 
+      } catch (e) {}
+    }
+    
+    // Adjust list max height
+    adjustListMaxHeight(containerId);
+    console.log('✅ addCommandeToList completed successfully!');
+  }
+
   // Load commandes
   async function loadCommandes(statut, containerId, badgeId, loaderId) {
     const loader = document.getElementById(loaderId);
@@ -996,254 +1297,16 @@ if (document.getElementById('logoutBtn')) {
           adjustListMaxHeight(containerId);
           return;
         }
-        // small helper to format date strings to dd/mm/yyyy
-        // Accepts ISO (YYYY-MM-DD) or French (DD/MM/YYYY) and falls back safely
-        function formatDateISO(d) {
-          if (!d) return '-';
-          // ISO YYYY-MM-DD
-          if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-            const dt = new Date(d + 'T00:00:00');
-            if (!isNaN(dt.getTime())) {
-              return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            }
-          }
-          // French DD/MM/YYYY
-          const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(d);
-          if (fr) {
-            const day = Number(fr[1]);
-            const month = Number(fr[2]) - 1;
-            const year = Number(fr[3]);
-            const dt = new Date(year, month, day);
-            if (dt.getFullYear() === year && dt.getMonth() === month && dt.getDate() === day) {
-              return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            }
-          }
-          // Fallback: try general Date parsing
-          try {
-            const dt = new Date(d);
-            if (!isNaN(dt.getTime())) return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-          } catch (e) {}
-          return d;
-        }
 
   // ensure menus cache is populated so produit names can be rendered
   try { await preloadMenus().catch(()=>{}); } catch(e) {}
 
   commandes.forEach(cmd => {
-          // create card element for this commande with structured layout and labels
-          const card = document.createElement('div');
-          card.className = 'commande-card';
-          const dateRetrait = formatDateISO(cmd.date_retrait);
-          const created = cmd.date_creation ? new Date(cmd.date_creation).toLocaleString('fr-FR') : '';
-          // Format total price (convert cents to euros)
-          const totalDisplay = cmd.total_cents ? `<div style="margin-top:8px;"><b>Total:</b> <span style="color:#0a0;font-weight:700;">${(Number(cmd.total_cents)/100).toFixed(2)} €</span></div>` : '';
-          card.innerHTML = `
-            <div class="left">
-              <div class="header">
-                <div>
-                  <div class="client">${cmd.nom_complet} <span class="id" style="color:var(--muted);font-weight:600;font-size:0.85rem">#${cmd.id}</span></div>
-                  <div class="phone"><a href="tel:${cmd.telephone}" style="color:inherit;text-decoration:none">${cmd.telephone}</a></div>
-                  ${cmd.email ? `<div class="email"><a href="mailto:${cmd.email}" style="color:inherit;text-decoration:none">${cmd.email}</a></div>` : ''}
-                </div>
-                <div class="status" style="font-size:0.9rem;color:var(--muted);text-transform:capitalize">${cmd.statut.replace('_',' ')}</div>
-              </div>
-              <div class="product">${renderProduitHtml(cmd.produit)}</div>
-              ${totalDisplay}
-              <div class="meta">
-                <div><b>Date retrait:</b> ${dateRetrait} &nbsp;|&nbsp; <b>Créneau:</b> ${cmd.creneau} &nbsp;|&nbsp; <b>Lieu:</b> ${cmd.location || '-'} </div>
-                <div><b>Commandé le:</b> ${created}</div>
-                <div><b>Précisions:</b> ${cmd.precisions || '-'}</div>
-              </div>
-              ${cmd.raison_refus ? `<div class="small-note"><b>Raison du refus:</b> ${cmd.raison_refus}</div>` : ''}
-            </div>
-            <div class="right">
-              <div class="commande-actions"></div>
-            </div>`;
-          const actions = card.querySelector('.commande-actions');
-
-          // helper to parse combined date + time into a Date object
-          function parseDateTime(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return null;
-            // If dateStr already contains a time or timezone, try parsing directly
-            if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr) || dateStr.includes('Z')) {
-              try {
-                // create a date from dateStr then overwrite hours/minutes from timeStr
-                const base = new Date(dateStr);
-                if (isNaN(base.getTime())) return null;
-                const [hh, mm] = timeStr.split(':').map(Number);
-                base.setHours(hh, mm, 0, 0);
-                return base;
-              } catch (e) { /* fallthrough */ }
-            }
-            // ISO YYYY-MM-DD (with or without time)
-            if (/^\d{4}-\d{2}-\d{2}/.test(dateStr) && /^\d{2}:\d{2}$/.test(timeStr)) {
-              // join as local time
-              const iso = `${dateStr}T${timeStr}:00`;
-              const d = new Date(iso);
-              if (!isNaN(d.getTime())) return d;
-            }
-            // French DD/MM/YYYY
-            const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr);
-            if (fr && /^\d{2}:\d{2}$/.test(timeStr)) {
-              const day = Number(fr[1]);
-              const month = Number(fr[2]) - 1;
-              const year = Number(fr[3]);
-              const [hh, mm] = timeStr.split(':').map(Number);
-              const d = new Date(year, month, day, hh, mm, 0);
-              if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) return d;
-            }
-            // fallback: try Date parse with concatenation
-            try {
-              const d = new Date(`${dateStr} ${timeStr}`);
-              return isNaN(d.getTime()) ? null : d;
-            } catch (e) { return null; }
-          }
-          if (statut === 'en_attente') {
-            const acceptBtn = document.createElement('button');
-            acceptBtn.textContent = 'Accepter';
-            acceptBtn.className = 'btn primary';
-            acceptBtn.onclick = async () => {
-              acceptBtn.disabled = true;
-              acceptBtn.style.opacity = '0.8';
-              const _csrf = await getCsrfToken();
-              await fetch(apiBase + `/commandes/${cmd.id}/accepter`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
-              loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
-              loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
-            };
-            const refuseBtn = document.createElement('button');
-            refuseBtn.textContent = 'Refuser';
-            refuseBtn.className = 'btn ghost';
-            refuseBtn.onclick = async () => {
-              const raison = await showReasonModal('Refuser la commande', 'Indiquez la raison du refus qui sera transmise au client (facultatif).', 'Raison du refus');
-              if (raison === null) return; // cancelled
-              // proceed with request (reason may be empty string)
-              refuseBtn.disabled = true;
-              try {
-                const _csrf = await getCsrfToken();
-                await fetch(apiBase + `/commandes/${cmd.id}/refuser`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' },
-                  body: JSON.stringify({ raison }),
-                  credentials: 'include'
-                });
-                loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
-              } catch (e) {
-                console.error('Erreur lors du refus:', e);
-                // re-enable to allow retry
-                refuseBtn.disabled = false;
-              }
-            };
-            actions.appendChild(acceptBtn);
-            actions.appendChild(refuseBtn);
-          }
-          if (statut === 'en_cours') {
-            const finishBtn = document.createElement('button');
-            finishBtn.textContent = 'Commande terminée';
-            finishBtn.className = 'btn primary';
-            finishBtn.onclick = async () => {
-              finishBtn.disabled = true;
-              const _csrf = await getCsrfToken();
-              await fetch(apiBase + `/commandes/${cmd.id}/terminer`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
-              loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
-            };
-            const noteBtn = document.createElement('button');
-            noteBtn.textContent = 'Notes/Plus';
-            noteBtn.className = 'btn ghost';
-            noteBtn.onclick = () => {
-              // Build a richer HTML summary for the commande
-              const parts = [];
-              parts.push(`<div style="margin-bottom:8px;"><b>ID:</b> ${cmd.id}</div>`);
-              parts.push(`<div style="margin-bottom:8px;"><b>Statut:</b> ${cmd.statut || '-'} | <b>Créé:</b> ${created || '-'}</div>`);
-              if (cmd.nom_complet) parts.push(`<div style="margin-bottom:6px;"><b>Nom:</b> ${escapeHtml(cmd.nom_complet)}</div>`);
-              if (cmd.telephone) parts.push(`<div style="margin-bottom:6px;"><b>Téléphone:</b> ${escapeHtml(cmd.telephone)}</div>`);
-              if (cmd.email) parts.push(`<div style="margin-bottom:6px;"><b>Email:</b> ${escapeHtml(cmd.email)}</div>`);
-              if (cmd.location) parts.push(`<div style="margin-bottom:6px;"><b>Lieu:</b> ${escapeHtml(cmd.location)}</div>`);
-              if (cmd.date_retrait) parts.push(`<div style="margin-bottom:6px;"><b>Date retrait:</b> ${escapeHtml(cmd.date_retrait)} ${cmd.creneau ? '| Créneau: ' + escapeHtml(cmd.creneau) : ''}</div>`);
-              if (cmd.precisions) parts.push(`<div style="margin-bottom:6px;"><b>Précisions:</b> ${escapeHtml(cmd.precisions)}</div>`);
-              // produit can be JSON or legacy string
-              try {
-                if (cmd.produit) {
-                  const p = JSON.parse(cmd.produit);
-                  if (Array.isArray(p)) {
-                    // Build a small table with product name and quantity for clarity
-                    const rows = p.map(it => {
-                      let displayName = it.name || '';
-                      if (!displayName) {
-                        const menus = window._adminMenuItems || [];
-                        const menu = menus.find(m => String(m.id) === String(it.menu_id));
-                        displayName = menu ? menu.name : ('#' + String(it.menu_id || ''));
-                      }
-                      return `<tr data-menu-id="${escapeHtml(String(it.menu_id || ''))}"><td style="padding:6px 10px;">${escapeHtml(String(displayName))}</td><td style="padding:6px 10px; text-align:right; white-space:nowrap;">${escapeHtml(String(it.qty || ''))}</td></tr>`;
-                    }).join('');
-                    const table = `<table style="width:100%; border-collapse:collapse; margin-top:6px; background:transparent;"><thead><tr><th style="text-align:left; font-weight:600; padding:6px 10px;">Produit</th><th style="text-align:right; font-weight:600; padding:6px 10px;">Qté</th></tr></thead><tbody>${rows}</tbody></table>`;
-                    parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b>${table}</div>`);
-                  } else {
-                    parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b> ${escapeHtml(String(cmd.produit))}</div>`);
-                  }
-                }
-              } catch (e) {
-                parts.push(`<div style="margin-bottom:6px;"><b>Produits:</b> ${escapeHtml(String(cmd.produit || ''))}</div>`);
-              }
-              if (cmd.raison_refus) parts.push(`<div style="margin-top:8px; color: #f66;"><b>Raison du refus:</b> ${escapeHtml(cmd.raison_refus)}</div>`);
-
-              const html = parts.join('');
-              showInfoModal('Notes / Détails', html);
-              // If any product rows used a fallback (#id), try to fetch menus to resolve names
-              try {
-                const modal = document.getElementById('info-modal-overlay');
-                if (modal) {
-                  const rows = modal.querySelectorAll('tbody tr[data-menu-id]');
-                  const missing = [];
-                  rows.forEach(r => {
-                    const nameCell = r.querySelector('td');
-                    if (nameCell && nameCell.textContent && nameCell.textContent.trim().startsWith('#')) {
-                      missing.push(r.dataset.menuId);
-                    }
-                  });
-                  if (missing.length > 0) {
-                    // fetch menus and update names
-                    (async () => {
-                      try {
-                        const res = await fetch(apiBase + '/menus', { credentials: 'include' });
-                        if (!res.ok) return;
-                        const menus = await res.json();
-                        window._adminMenuItems = menus;
-                        rows.forEach(r => {
-                          const mid = r.dataset.menuId;
-                          if (!mid) return;
-                          const nameCell = r.querySelector('td');
-                          const menu = menus.find(m => String(m.id) === String(mid));
-                          if (menu && nameCell) nameCell.textContent = menu.name || ('#' + mid);
-                        });
-                      } catch (e) { /* ignore */ }
-                    })();
-                  }
-                }
-              } catch (e) {}
-            };
-            actions.appendChild(finishBtn);
-            actions.appendChild(noteBtn);
-          }
+          // Use the shared createCommandeCard function
+          const card = createCommandeCard(cmd, statut);
           list.appendChild(card);
 
-          // If this card is in 'en_cours', append a countdown element showing time remaining until pickup
-          if (statut === 'en_cours') {
-            const metaDiv = card.querySelector('.meta');
-            if (metaDiv) {
-              const countdownDiv = document.createElement('div');
-              countdownDiv.className = 'countdown-row';
-              const pickupDateObj = parseDateTime(cmd.date_retrait, cmd.creneau);
-              if (pickupDateObj) {
-                const ts = pickupDateObj.getTime();
-                countdownDiv.innerHTML = `<b>Temps restant:</b> <span class="countdown" data-target="${ts}">--:--:--</span>`;
-              } else {
-                countdownDiv.innerHTML = `<b>Temps restant:</b> -`;
-              }
-              metaDiv.appendChild(countdownDiv);
-              // initialize immediately so the user doesn't wait 1s
-              try { if (typeof updateCountdowns === 'function') updateCountdowns(); } catch (e) {}
-            }
-          }
+          // countdown is handled inside createCommandeCard() to avoid duplicates
         });
         // After rendering, adjust max-height to show exactly 3 cards (then scroll)
         adjustListMaxHeight(containerId);
@@ -1770,6 +1833,85 @@ if (document.getElementById('logoutBtn')) {
   // ==================== SSE for real-time order updates ====================
   let eventSource = null;
   let notificationSound = null;
+  let sseReconnectAttempts = 0;
+  const MAX_SSE_RECONNECT_ATTEMPTS = 3;
+  let sseWorking = false;
+  let fallbackPollingInterval = null;
+
+  // Fallback: poll for new orders if SSE doesn't work
+  function startFallbackPolling() {
+    if (fallbackPollingInterval) {
+      console.log('⚠️ Polling already active, skipping...');
+      return; // Already polling
+    }
+    
+    console.log('🔄 Starting fallback polling (every 5 seconds)...');
+    let lastCommandeId = 0;
+    
+    // Get the highest commande ID currently displayed
+    const existingCards = document.querySelectorAll('[data-commande-id]');
+    existingCards.forEach(card => {
+      const id = parseInt(card.dataset.commandeId);
+      if (id > lastCommandeId) lastCommandeId = id;
+    });
+    
+    console.log('📊 Last commande ID:', lastCommandeId);
+    
+    fallbackPollingInterval = setInterval(async () => {
+      try {
+        // Only check if we're on the "en_attente" tab
+        const attenteTab = document.getElementById('tab-attente');
+        if (!attenteTab || !attenteTab.classList.contains('active')) return;
+        
+        // Fetch recent orders
+        const res = await fetch(apiBase + '/commandes?statut=en_attente', { credentials: 'include' });
+        if (!res.ok) return;
+        
+        const commandes = await res.json();
+        
+        // Check for new orders (ID higher than last known)
+        const newCommandes = commandes.filter(cmd => cmd.id > lastCommandeId);
+        
+        if (newCommandes.length > 0) {
+          console.log(`🆕 ${newCommandes.length} new order(s) detected via polling`);
+          
+          // Sort by ID ascending to add oldest first
+          newCommandes.sort((a, b) => a.id - b.id);
+          
+          for (const cmd of newCommandes) {
+            const existing = document.querySelector(`[data-commande-id="${cmd.id}"]`);
+            if (!existing) {
+              console.log('� Adding order #' + cmd.id);
+              await addCommandeToList(cmd, 'en_attente', 'attente-list', 'badge-attente');
+              
+              // Play notification sound
+              if (notificationSound) {
+                try { notificationSound.play(); } catch (e) {}
+              }
+              
+              // Show visual notification
+              showOrderNotification(cmd);
+              
+              // Update last ID
+              if (cmd.id > lastCommandeId) lastCommandeId = cmd.id;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('❌ Polling error:', e);
+      }
+    }, 5000); // Poll every 5 seconds
+    
+    console.log('✅ Fallback polling started');
+  }
+
+  function stopFallbackPolling() {
+    if (fallbackPollingInterval) {
+      clearInterval(fallbackPollingInterval);
+      fallbackPollingInterval = null;
+      console.log('⏹️ Fallback polling stopped');
+    }
+  }
 
   // Preload notification sound (using Web Audio API for better control)
   function initNotificationSound() {
@@ -1803,53 +1945,82 @@ if (document.getElementById('logoutBtn')) {
   // Initialize SSE connection for real-time updates
   function setupSSE() {
     if (eventSource) {
-      eventSource.close();
+      try {
+        eventSource.close();
+      } catch (e) {}
     }
 
-    eventSource = new EventSource('/api/admin/commandes/stream');
+    try {
+      eventSource = new EventSource('/api/admin/commandes/stream');
 
-    eventSource.onopen = function() {
-      console.log('SSE connection established');
-    };
+      eventSource.onopen = function() {
+        console.log('✅ SSE connection established');
+        sseReconnectAttempts = 0; // Reset counter on successful connection
+        sseWorking = true;
+        stopFallbackPolling(); // Stop polling if SSE works
+      };
 
-    eventSource.onmessage = function(event) {
-      try {
-        const message = JSON.parse(event.data);
-        
-        if (message.type === 'connected') {
-          console.log('SSE connected successfully');
-          return;
-        }
-        
-        if (message.type === 'new_order') {
-          console.log('New order received via SSE:', message.data);
+      eventSource.onmessage = function(event) {
+        console.log('📨 SSE message received:', event.data); // DEBUG
+        try {
+          const message = JSON.parse(event.data);
+          console.log('📦 Parsed message:', message); // DEBUG
           
-          // Play notification sound
-          if (notificationSound) {
-            notificationSound.play();
+          if (message.type === 'connected') {
+            console.log('✅ SSE connected successfully');
+            return;
           }
           
-          // Show visual notification
-          showOrderNotification(message.data);
-          
-          // Refresh the "en_attente" list to show the new order
-          loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
+          if (message.type === 'new_order') {
+            console.log('🆕 New order received via SSE:', message.data);
+            
+            // Play notification sound
+            if (notificationSound) {
+              try {
+                notificationSound.play();
+              } catch (e) {
+                console.warn('Failed to play notification sound:', e);
+              }
+            }
+            
+            // Show visual notification
+            showOrderNotification(message.data);
+            
+            // Add the new order dynamically to the top of the "en_attente" list
+            console.log('➕ Calling addCommandeToList...'); // DEBUG
+            addCommandeToList(message.data, 'en_attente', 'attente-list', 'badge-attente')
+              .then(() => console.log('✅ Order added to list'))
+              .catch(err => console.error('❌ Error adding order to list:', err));
+          }
+        } catch (e) {
+          console.error('❌ Failed to parse SSE message:', e, 'Raw data:', event.data);
         }
-      } catch (e) {
-        console.error('Failed to parse SSE message:', e);
-      }
-    };
+      };
 
-    eventSource.onerror = function(err) {
-      console.error('SSE error:', err);
-      eventSource.close();
-      
-      // Reconnect after 5 seconds
-      setTimeout(() => {
-        console.log('Attempting to reconnect SSE...');
-        setupSSE();
-      }, 5000);
-    };
+      eventSource.onerror = function(err) {
+        console.error('❌ SSE error:', err);
+        sseWorking = false;
+        
+        try {
+          eventSource.close();
+        } catch (e) {}
+        
+        // Only attempt to reconnect if we haven't exceeded max attempts
+        if (sseReconnectAttempts < MAX_SSE_RECONNECT_ATTEMPTS) {
+          sseReconnectAttempts++;
+          const delay = Math.min(5000 * sseReconnectAttempts, 15000); // Exponential backoff, max 15s
+          console.log(`⏳ Attempting to reconnect SSE in ${delay/1000}s (attempt ${sseReconnectAttempts}/${MAX_SSE_RECONNECT_ATTEMPTS})...`);
+          setTimeout(() => {
+            setupSSE();
+          }, delay);
+        } else {
+          console.warn('⚠️ SSE max reconnection attempts reached. Continuing with polling mode.');
+          // Don't show toast anymore since polling is already active
+        }
+      };
+    } catch (e) {
+      console.error('Failed to setup SSE:', e);
+    }
   }
 
   // Show a visual notification for new orders
@@ -1927,6 +2098,12 @@ if (document.getElementById('logoutBtn')) {
 
   // Initialize sound and SSE
   initNotificationSound();
+  
+  // Start polling immediately as primary method
+  // (SSE will stop it if it works)
+  startFallbackPolling();
+  
+  // Try SSE in parallel
   setupSSE();
 
   // Clean up on page unload
@@ -1934,14 +2111,140 @@ if (document.getElementById('logoutBtn')) {
     if (eventSource) {
       eventSource.close();
     }
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+    }
   });
   // ==================== End SSE setup ====================
+
+  // ==================== Simple auto-refresh fallback ====================
+  let autoRefreshInterval = null;
+  let lastKnownOrderIds = new Set();
+
+  function checkForNewOrdersSimple() {
+    const attenteTab = document.getElementById('tab-attente');
+    if (!attenteTab || !attenteTab.classList.contains('active')) return;
+    
+    fetch(apiBase + '/commandes?statut=en_attente', { credentials: 'include' })
+      .then(res => res.ok ? res.json() : [])
+      .then(async cmds => {
+        const newOnes = cmds.filter(c => !lastKnownOrderIds.has(c.id));
+        if (newOnes.length > 0) {
+          console.log(`🆕 ${newOnes.length} nouvelle(s) commande(s)`);
+          newOnes.sort((a,b) => a.id - b.id);
+          
+          for (const cmd of newOnes) {
+            lastKnownOrderIds.add(cmd.id);
+            if (!document.querySelector(`[data-commande-id="${cmd.id}"]`)) {
+              console.log(`✅ Ajout commande #${cmd.id}`);
+              await addCommandeToList(cmd, 'en_attente', 'attente-list', 'badge-attente');
+              if (notificationSound) try { notificationSound.play(); } catch(e) {}
+              showOrderNotification(cmd);
+            }
+          }
+        }
+        cmds.forEach(c => lastKnownOrderIds.add(c.id));
+      })
+      .catch(e => console.error('❌ Auto-refresh error:', e));
+  }
+
+  function initAutoRefresh() {
+    document.querySelectorAll('[data-commande-id]').forEach(card => {
+      const id = parseInt(card.dataset.commandeId);
+      if (id) lastKnownOrderIds.add(id);
+    });
+    console.log(`📊 ${lastKnownOrderIds.size} commande(s) initiale(s)`);
+    checkForNewOrdersSimple();
+    autoRefreshInterval = setInterval(checkForNewOrdersSimple, 3000);
+    console.log('🔄 Auto-refresh activé (3s)');
+  }
+
+  // Start auto-refresh
+  initAutoRefresh();
+
+  // Re-init when switching to attente tab
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tab === 'attente') {
+        setTimeout(() => {
+          lastKnownOrderIds.clear();
+          document.querySelectorAll('[data-commande-id]').forEach(card => {
+            const id = parseInt(card.dataset.commandeId);
+            if (id) lastKnownOrderIds.add(id);
+          });
+        }, 100);
+      }
+    });
+  });
+  // ==================== End auto-refresh ====================
 
   // re-adjust on resize (cards may wrap/change height)
   window.addEventListener('resize', function () {
     adjustListMaxHeight('attente-list');
     adjustListMaxHeight('encours-list');
   });
+
+  // Device detection: adjust layout / list height based on device resolution
+  // This sets a CSS variable --commande-card-height that controls how many cards are visible
+  // and adds a body class (device-mobile / device-tablet / device-desktop) for further styling.
+  let _deviceResizeTimer = null;
+  function detectDeviceAndApplyLayout() {
+    try {
+      const w = window.innerWidth || document.documentElement.clientWidth;
+      const h = window.innerHeight || document.documentElement.clientHeight;
+      let mode = 'desktop';
+      let cardHeight = '420px'; // default (desktop shows ~3 cards)
+
+      // Heuristics (can be adjusted):
+      // mobile: up to 520px
+      // tablet: 521 - 1024px
+      // desktop: >1024px
+      if (w <= 520) {
+        mode = 'mobile';
+        cardHeight = '360px';
+      } else if (w <= 1024) {
+        mode = 'tablet';
+        // On tablets we want to show only one card at a time (user request)
+        cardHeight = getComputedStyle(document.documentElement).getPropertyValue('--commande-card-height') || '260px';
+        // ensure we have a sensible default
+        if (!cardHeight || cardHeight.trim() === '') cardHeight = '260px';
+      } else {
+        mode = 'desktop';
+        cardHeight = '640px';
+      }
+
+  // CSS variable --commande-card-height is set via CSS media queries; no inline override here
+
+      // Toggle body classes
+      document.body.classList.remove('device-mobile', 'device-tablet', 'device-desktop');
+      document.body.classList.add('device-' + mode);
+
+      // Recalculate list heights after layout change
+      adjustListMaxHeight('attente-list');
+      adjustListMaxHeight('encours-list');
+      animateCards('attente-list');
+      animateCards('encours-list');
+      adminDebug && typeof adminDebug === 'function' && adminDebug(`[device] mode=${mode} w=${w} h=${h} cardHeight=${cardHeight}`);
+    } catch (e) {
+      console.warn('Device detection failed', e);
+    }
+  }
+
+  // Debounced resize handler
+  window.addEventListener('resize', function () {
+    if (_deviceResizeTimer) clearTimeout(_deviceResizeTimer);
+    _deviceResizeTimer = setTimeout(() => {
+      detectDeviceAndApplyLayout();
+    }, 150);
+  });
+
+  // Also respond to orientation changes on mobile/tablet
+  window.addEventListener('orientationchange', function () {
+    setTimeout(detectDeviceAndApplyLayout, 200);
+  });
+
+  // Run once on load
+  try { detectDeviceAndApplyLayout(); } catch (e) {}
 
   // Countdown updater: refresh all .countdown elements every second
   function formatRemaining(ms) {
