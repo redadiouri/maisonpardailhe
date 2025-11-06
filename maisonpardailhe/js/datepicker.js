@@ -1,10 +1,8 @@
-// Lightweight custom datepicker for Click & Collect (no external deps)
 (function(){
   function pad(n){ return String(n).padStart(2,'0'); }
   function iso(date){ return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`; }
   function parseISO(s){ if(!s) return null; const [y,m,d]=String(s).split('-').map(Number); return new Date(y,m-1,d); }
-  // Verbose French display e.g. "Lundi 1 Nov 2025"
-  const FRENCH_WEEKDAYS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    const FRENCH_WEEKDAYS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const FRENCH_MONTHS_SHORT = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
   function formatVerboseFromISO(s){ if(!s) return ''; const [y,m,d]=String(s).split('-').map(Number); const dt = new Date(y,m-1,d); const dayName = FRENCH_WEEKDAYS[dt.getDay()] || ''; const monthName = FRENCH_MONTHS_SHORT[(m-1)||0]; return `${dayName} ${d} ${monthName} ${y}`; }
   function formatDisplayFromISO(s){ return formatVerboseFromISO(s); }
@@ -30,8 +28,7 @@
     ['L','M','M','J','V','S','D'].forEach(w=>{ const el=document.createElement('div'); el.className='mp-weekday'; el.textContent=w; grid.appendChild(el); });
 
     const first = new Date(year, month, 1);
-    const startDay = (first.getDay()+6)%7; // Monday=0
-    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const startDay = (first.getDay()+6)%7;     const daysInMonth = new Date(year, month+1, 0).getDate();
 
     for(let i=0;i<startDay;i++){ const e=document.createElement('div'); grid.appendChild(e); }
 
@@ -53,8 +50,7 @@
             }
         }
       } catch (e) {
-        // ignore
-      }
+              }
       if (opts.min && isoStr < opts.min) { day.classList.add('disabled'); day.disabled=true; }
       if (opts.max && isoStr > opts.max) { day.classList.add('disabled'); day.disabled=true; }
       if (opts.value && isoStr === opts.value) { day.classList.add('selected'); }
@@ -66,8 +62,7 @@
 
     if (opts && typeof opts.onNavigate === 'function') opts.onNavigate(year, month);
 
-    // navigation handlers
-    prev.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ ev.currentTarget && ev.currentTarget.focus(); }catch(e){}; const m = month-1<0 ? 11 : month-1; const y = month-1<0 ? year-1 : year; createCalendar(container, y, m, opts); });
+        prev.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ ev.currentTarget && ev.currentTarget.focus(); }catch(e){}; const m = month-1<0 ? 11 : month-1; const y = month-1<0 ? year-1 : year; createCalendar(container, y, m, opts); });
     next.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ ev.currentTarget && ev.currentTarget.focus(); }catch(e){}; const m = month+1>11 ? 0 : month+1; const y = month+1>11 ? year+1 : year; createCalendar(container, y, m, opts); });
 
     header.tabIndex = 0;
@@ -76,8 +71,7 @@
       if (ev.key === 'ArrowRight') { ev.preventDefault(); next.click(); }
     });
 
-  // Disable year/month chooser: clicking the title no longer opens the chooser.
-  titleBtn.addEventListener('click', (ev)=>{ ev.stopPropagation(); ev.preventDefault(); /* chooser disabled */ });
+    titleBtn.addEventListener('click', (ev)=>{ ev.stopPropagation(); ev.preventDefault();  });
     goBtn.addEventListener('click', (ev)=>{ ev.stopPropagation(); const y = Number(yearSelect.value); const m = Number(monthSelect.value); createCalendar(container, y, m, opts); chooser.style.display='none'; });
   }
 
@@ -145,8 +139,7 @@
       document.addEventListener('mouseup', onDocMouseUpGlobal);
       document.addEventListener('pointerup', onDocMouseUpGlobal);
       document.addEventListener('touchend', onDocMouseUpGlobal);
-    // close on pointerdown outside for reliable fast interactions
-    const onDocPointerDown = (ev)=>{ if (!popup) return; if (ev.target===display) return; if (!popup.contains(ev.target)) close(); };
+        const onDocPointerDown = (ev)=>{ if (!popup) return; if (ev.target===display) return; if (!popup.contains(ev.target)) close(); };
     document.addEventListener('pointerdown', onDocPointerDown);
     document.addEventListener('keydown', onKey);
 
@@ -173,8 +166,7 @@
             }
           }
         } catch (e) {
-          // ignore
-        }
+                  }
       };
       if (locSelect) locSelect.addEventListener('change', onLocChange);
       popup._onLocChange = onLocChange;
@@ -184,9 +176,7 @@
 
   display.addEventListener('focus', open);
   display.addEventListener('click', open);
-  // remove blur-based close (causes races when clicking quickly).
-  // We now rely on document click/focusin to close the popup which is more robust for fast interactions.
-  }
+      }
 
   function init(){
     const els = document.querySelectorAll('[data-datepicker]');

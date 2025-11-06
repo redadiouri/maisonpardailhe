@@ -5,6 +5,5 @@ module.exports = async () => {
       await app.shutdown();
     }
   } catch (e) {
-    // ignore during teardown
-  }
+      }
 };

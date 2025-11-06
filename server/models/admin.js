@@ -24,15 +24,13 @@ const Admin = {
   }
 };
 
-// Additional helpers
 Admin.deleteById = async (id) => {
   const [result] = await db.execute(`DELETE FROM admins WHERE id = ?`, [id]);
   return result.affectedRows;
 };
 
 Admin.updatePermissions = async (id, perms) => {
-  // perms: { can_edit_menus: 0|1 }
-  const fields = [];
+    const fields = [];
   const values = [];
   if (perms.can_edit_menus !== undefined) {
     fields.push('can_edit_menus = ?');

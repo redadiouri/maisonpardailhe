@@ -1,8 +1,6 @@
 require('dotenv').config();
 const logger = require('./logger');
 
-// --- Startup env verification -------------------------------------------------
-// Provide a helpful message at startup listing any missing environment variables
 const verifyEnv = () => {
   const required = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'SESSION_SECRET'];
   const missing = required.filter((k) => !process.env[k]);
@@ -15,11 +13,8 @@ const verifyEnv = () => {
   logger.warn('The server will continue to run, but some functionality (DB, sessions) may fail.');
 };
 verifyEnv();
-// -----------------------------------------------------------------------------
 const express = require('express');
 const session = require('express-session');
-// Use a persistent MySQL-backed session store instead of the default memory store.
-// express-mysql-session is lighter to run locally when Redis isn't available.
 const MySQLStore = require('express-mysql-session')(session);
 const cors = require('cors');
 const helmet = require('helmet');
@@ -31,37 +26,22 @@ const app = express();
 
 const path = require('path');
 
-// Helper to partially mask secrets for logs
 const mask = (v) => {
   if (!v) return '(empty)';
   if (v.length <= 6) return '******';
   return v.slice(0, 3) + '…' + v.slice(-3);
 };
 
-// Security headers
-// Configure a strict Content Security Policy but allow the CDN used for
-// admin dashboard assets (Chart.js). The public site remains restricted to
-// self-hosted scripts by default.
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-  // Allow 'unsafe-inline' for scripts to support existing inline scripts used
-  // by the static frontend. This is a pragmatic relaxation — for production
-  // you may prefer nonces or script-hashing for tighter security.
-  scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://maps.gstatic.com', "'unsafe-inline'"],
-  // Allow loading styles from the CDN used for flatpickr. Keep 'unsafe-inline'
-  // to support inline styles used by some components (kept from previous config).
-  styleSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
-  // Some browsers report violations against 'style-src-elem' when it is not
-  // explicitly set; define it as well to include the CDN so <link> elements
-  // can load external stylesheets like flatpickr.min.css.
-  "styleSrcElem": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
+        scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://maps.gstatic.com', "'unsafe-inline'"],
+      styleSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
+        "styleSrcElem": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://*.googleapis.com', 'https://*.gstatic.com'],
-  // Allow connecting to the CDN used by the admin dashboard (Chart.js source maps)
-  connectSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com'],
-  // Allow embedding Google Maps iframes on the public site
-  frameSrc: ["'self'", 'https://www.google.com', 'https://maps.google.com'],
+    connectSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com'],
+    frameSrc: ["'self'", 'https://www.google.com', 'https://maps.google.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"]
@@ -69,96 +49,65 @@ app.use(helmet({
   }
 }));
 
-// CORS: in production restrict origins via PROD_ALLOWED_ORIGINS env (comma-separated).
-// In development allow common localhost origins for convenience.
 let allowedOrigins;
 if (process.env.NODE_ENV === 'production') {
   if (process.env.PROD_ALLOWED_ORIGINS) {
     allowedOrigins = process.env.PROD_ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean);
   } else if (process.env.APP_URL) {
-    // If APP_URL is provided, include it as an allowed origin.
-    allowedOrigins = [process.env.APP_URL];
+        allowedOrigins = [process.env.APP_URL];
   } else {
-    // No explicit allowed origins set in production — be permissive but log a warning.
-    // This is pragmatic for containerized deployments behind proxies (Portainer, reverse proxies).
-    // For stronger security, set PROD_ALLOWED_ORIGINS (comma-separated) to the allowed origins.
-    logger.warn('PROD_ALLOWED_ORIGINS not set in production — allowing all origins. Set PROD_ALLOWED_ORIGINS to restrict CORS.');
-    allowedOrigins = null; // null means allow any origin in our runtime check below
-  }
+                logger.warn('PROD_ALLOWED_ORIGINS not set in production — allowing all origins. Set PROD_ALLOWED_ORIGINS to restrict CORS.');
+    allowedOrigins = null;   }
 } else {
   allowedOrigins = ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:5500', 'http://127.0.0.1:5500'];
 }
 
 app.use(cors({
   origin: function(origin, callback) {
-    // allow requests with no origin (e.g., curl, mobile apps)
-    if (!origin) return callback(null, true);
-    // If allowedOrigins is null, allow all origins (warned above)
-    if (!allowedOrigins) return callback(null, true);
+        if (!origin) return callback(null, true);
+        if (!allowedOrigins) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
     return callback(new Error('Origin not allowed by CORS'));
   },
   credentials: true
 }));
 
-// Compression middleware: gzip/brotli compression for all responses
-// Compress text-based responses (HTML, CSS, JS, JSON) to reduce bandwidth
-// and improve load times. This typically reduces response size by 60-80%.
 app.use(compression({
-  // Compress responses only if they're above this threshold (bytes)
-  threshold: 1024,
-  // Compression level (0-9): 6 is a good balance between speed and compression ratio
-  level: 6,
-  // Filter function: only compress compressible types (text/html, application/json, etc.)
-  filter: (req, res) => {
+    threshold: 1024,
+    level: 6,
+    filter: (req, res) => {
     if (req.headers['x-no-compression']) return false;
     return compression.filter(req, res);
   }
 }));
 
-// Global rate limiter: protect against basic DDoS and abuse
-// More permissive than specific endpoint limiters (e.g., login)
 const globalLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute window
-  max: process.env.NODE_ENV === 'production' ? 100 : 200, // 100 requests per minute in production
-  message: 'Trop de requêtes depuis cette adresse IP, veuillez réessayer dans une minute.',
-  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
-  legacyHeaders: false, // Disable `X-RateLimit-*` headers
-  // Skip rate limiting for static assets (images, css, js)
-  skip: (req) => {
+  windowMs: 1 * 60 * 1000,   max: process.env.NODE_ENV === 'production' ? 100 : 200,   message: 'Trop de requêtes depuis cette adresse IP, veuillez réessayer dans une minute.',
+  standardHeaders: true,   legacyHeaders: false,     skip: (req) => {
     const path = req.path;
     return path.match(/\.(css|js|jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i);
   }
 });
 
-// Apply global rate limiter to all routes
 app.use(globalLimiter);
 
 app.use(bodyParser.json());
-// Ensure a session secret exists; use a development fallback if not set.
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-this';
 if (!process.env.SESSION_SECRET) {
   logger.warn('Warning: SESSION_SECRET not set in .env — using fallback. Set SESSION_SECRET for production.');
 }
-// When running behind a proxy (Heroku / any reverse proxy) and using secure cookies,
-// enable trust proxy so Express knows the connection is secure.
 if (process.env.NODE_ENV === 'production') {
-  // trust first proxy
-  app.set('trust proxy', 1);
+    app.set('trust proxy', 1);
 }
 
-// Configure MySQL-backed session store (express-mysql-session)
 const sessionStoreOptions = {
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  // Optional: automatically create sessions table if missing
-  createDatabaseTable: true
+    createDatabaseTable: true
 };
-// Create a mysql2 callback-style pool for the session store and assign the store
-// inline so options are colocated with the session middleware.
 const mysql2 = require('mysql2/promise');
 const sessionConnection = mysql2.createPool({
   host: sessionStoreOptions.host,
@@ -169,7 +118,6 @@ const sessionConnection = mysql2.createPool({
   connectionLimit: 5
 });
 
-// Ensure session pool is closed on process exit to avoid lingering handles in test runners
 try {
   process.on('beforeExit', async () => {
     try {
@@ -177,16 +125,11 @@ try {
         await sessionConnection.end();
       }
     } catch (e) {
-      // ignore
-    }
+          }
   });
 } catch (e) {
-  // no-op
-}
+  }
 
-// express-mysql-session expects an object whose `query` method returns a Promise.
-// The mysql2 promise pool exposes `query` that returns a Promise, but to be explicit
-// create a small adapter exposing the required `query` function.
 const sessionPoolForStore = {
   query: (...args) => sessionConnection.query(...args)
 };
@@ -197,26 +140,16 @@ app.use(session({
   store: new MySQLStore(sessionStoreOptions, sessionPoolForStore),
   resave: false,
   saveUninitialized: false,
-  // Refresh session expiration on every response to keep active sessions alive
-  // and mitigate risk from stolen cookies by limiting the window of validity.
-  rolling: true,
+      rolling: true,
   cookie: {
-    secure: (process.env.NODE_ENV === 'production'), // only send cookie over HTTPS in prod
-    httpOnly: true,
+    secure: (process.env.NODE_ENV === 'production'),     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 // 1 hour
-  }
+    maxAge: 1000 * 60 * 60   }
 }));
 
-// CSRF protection: use csurf with sessions (not cookie mode here).
-// We mount CSRF protection on /api routes so state-changing requests require a valid token.
 const csrfProtection = csurf();
-// Mount csurf for the /api subtree so req.csrfToken() is available for GET and
-// non-safe methods are automatically validated. This ensures the csrf-token
-// endpoint can generate a token for client-side apps.
 app.use('/api', csrfProtection);
 
-// Expose an endpoint to fetch CSRF token for client-side apps that use fetch + credentials
 app.get('/api/csrf-token', (req, res) => {
   try {
     res.json({ csrfToken: req.csrfToken() });
@@ -225,8 +158,7 @@ app.get('/api/csrf-token', (req, res) => {
   }
 });
 
-  // Public config endpoint for small client-side settings (timezone, app URL)
-  app.get('/api/config', (req, res) => {
+    app.get('/api/config', (req, res) => {
     res.json({
       timezone: process.env.TIMEZONE || 'Europe/Paris',
       appUrl: process.env.APP_URL || `http://localhost:${PORT}`
@@ -234,19 +166,12 @@ app.get('/api/csrf-token', (req, res) => {
   });
 
 
-// Sert le site principal en statique sur la racine
-// Redirige les requêtes vers /admin vers la page de login (utile si quelqu'un tape /admin)
-// Catch-all for any /admin... route (including /admin and anything under /admin/)
-// Only redirect when the user requests exactly /admin or /admin/ to avoid looping
 app.get(['/admin', '/admin/'], (req, res) => {
-  // If admin session exists, go directly to dashboard, otherwise to login
-  if (req.session && req.session.admin) {
+    if (req.session && req.session.admin) {
     return res.redirect(302, '/admin/dashboard');
   }
   return res.redirect(302, '/admin/login');
 });
-// Serve static files with conservative caching headers to improve frontend performance.
-// HTML files are served with no-cache to allow immediate updates; assets (CSS/JS/img) get a longer max-age.
 const oneHour = 1000 * 60 * 60;
 const sevenDays = 1000 * 60 * 60 * 24 * 7;
 const oneYear = 1000 * 60 * 60 * 24 * 365;
@@ -254,21 +179,17 @@ const staticMaxAge = (process.env.NODE_ENV === 'production') ? sevenDays : oneHo
 
 function setStaticHeaders(res, filePath) {
   if (filePath.endsWith('.html')) {
-    // prefer clients to revalidate HTML on each request so edits propagate quickly
-    res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Cache-Control', 'no-cache');
   } else if (filePath.endsWith('.json')) {
     res.setHeader('Cache-Control', 'no-cache');
   } else if (filePath.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i)) {
-    // Images and fonts: aggressive caching (1 year in prod, 7 days in dev)
-    const imageMaxAge = (process.env.NODE_ENV === 'production') ? oneYear : sevenDays;
+        const imageMaxAge = (process.env.NODE_ENV === 'production') ? oneYear : sevenDays;
     res.setHeader('Cache-Control', `public, max-age=${Math.floor(imageMaxAge/1000)}, immutable`);
   } else {
-    // CSS/JS assets: allow caching but shorter than images
-    res.setHeader('Cache-Control', `public, max-age=${Math.floor(staticMaxAge/1000)}`);
+        res.setHeader('Cache-Control', `public, max-age=${Math.floor(staticMaxAge/1000)}`);
   }
 }
 
-// Redirect URLs with .html extension to clean URLs (before static middleware)
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const cleanPath = req.path.replace(/\.html$/, '');
@@ -277,25 +198,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Redirect requests that explicitly include `index.html` to the clean path.
-// Example: /index.html -> / , /accueil/index.html -> /accueil
-// Do not redirect admin pages (keep /admin/index.html intact).
 app.use((req, res, next) => {
   try {
     const p = req.path || '';
     if (!p.startsWith('/admin') && p.match(/(^|\/)index\.html$/i)) {
-      // compute target by removing trailing index.html
-      const target = p.replace(/index\.html$/i, '') || '/';
+            const target = p.replace(/index\.html$/i, '') || '/';
       return res.redirect(301, target);
     }
   } catch (e) {
-    // ignore and continue
-  }
+      }
   return next();
 });
 
-// Support friendly URLs for the static site - BEFORE static middleware
-// Serve `index.html` for the root, and map clean routes to their HTML files
 const routeToFile = {
   '/': 'index.html',
   '/accueil': 'index.html',
@@ -315,16 +229,10 @@ Object.keys(routeToFile).forEach(route => {
   });
 });
 
-// Serve the main site with caching middleware - AFTER clean URL routes
 app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
-// Serve the admin static folder (the admin UI is static HTML/JS too)
 app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
 
-// Route handlers are required lazily when running the server to avoid heavy
-// module initialization during tests (which may otherwise import DB-heavy code).
-// NOTE: 404 handler is defined AFTER mounting API routes (see bottom of this file)
 
-// Prevent the process from exiting on unhandled promise rejections during dev
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at: %o reason: %o', promise, reason);
 });
@@ -334,7 +242,6 @@ process.on('uncaughtException', (err) => {
 
 const PORT = process.env.PORT || 3001;
 
-// Improved startup logging and quick DB health check (non-blocking)
 const logStartupInfo = () => {
   logger.info('='.repeat(60));
   logger.info('MaisonPardailhe - server startup');
@@ -354,8 +261,7 @@ const logStartupInfo = () => {
 
 const checkDatabase = async () => {
   try {
-    // require here to avoid importing DB pool before dotenv runs in other contexts
-    const pool = require('./models/db');
+        const pool = require('./models/db');
     await pool.query('SELECT 1');
     logger.info('Database check: OK');
   } catch (err) {
@@ -367,8 +273,7 @@ const checkDatabase = async () => {
 };
 
 if (require.main === module) {
-  // Only wire heavy routes and perform DB checks when running as the main process.
-  const commandesRoutes = require('./routes/commandes');
+    const commandesRoutes = require('./routes/commandes');
   const adminRoutes = require('./routes/admin');
   const menusRoutes = require('./routes/menus');
   const adminMenusRoutes = require('./routes/admin_menus');
@@ -379,8 +284,7 @@ if (require.main === module) {
   const emailTemplatesRoutes = require('./routes/email_templates');
   const requireAuth = require('./middleware/auth');
 
-  // Small HTML escaper used by the minimal server-side recap page and notifications
-  function escapeHtml(s) {
+    function escapeHtml(s) {
     if (s === undefined || s === null) return '';
     return String(s)
       .replace(/&/g, '&amp;')
@@ -391,8 +295,8 @@ if (require.main === module) {
   }
 
   app.use('/api/commandes', commandesRoutes);
-  // Mount public notifications before the general admin router so specific
-  // admin subroutes are not swallowed by the main `/api/admin` router.
+  
+  
   app.use('/api/notifications', notificationsRoutes);
   app.use('/api/admin/notifications', adminNotificationsRoutes);
   app.use('/api/admin', adminRoutes);
@@ -402,32 +306,32 @@ if (require.main === module) {
   app.use('/unsubscribe', unsubscribeRoutes);
   app.use('/api/schedules', schedulesRoutes);
 
-  // Public order recap page (simple server-side render).
-  // This allows links such as /commande/:id (used in emails and the mini-toast) to show a minimal recap
-  // without requiring a full SPA page. Keeps content lightweight and self-contained.
+  
+  
+  
   app.get('/commande/:id', (req, res) => {
-    // Redirect to the static SPA recap page which will fetch the data client-side.
+    
     const id = Number(req.params.id || 0);
     if (!id) return res.status(400).send('ID invalide');
     return res.redirect(302, `/commande?id=${encodeURIComponent(id)}`);
   });
 
-  // 404 handler - MUST be after all other routes (especially API routes)
+  
   app.use((req, res, next) => {
-    // Only serve 404.html for GET requests to non-API routes
+    
     if (req.method === 'GET' && !req.path.startsWith('/api')) {
       return res.status(404).sendFile(path.join(__dirname, '../maisonpardailhe/404.html'));
     }
-    // For API routes, return JSON 404
+    
     if (req.path.startsWith('/api')) {
       return res.status(404).json({ message: 'API endpoint not found' });
     }
     next();
   });
 
-  // Global error handler to avoid crashing on DB errors and to return 500
+  
   app.use((err, req, res, next) => {
-    // Handle CSRF errors specifically
+    
     if (err && err.code === 'EBADCSRFTOKEN') {
       logger.warn('CSRF token validation failed: %o', err && (err.message || err));
       if (!res.headersSent) return res.status(403).json({ message: 'Invalid CSRF token' });
@@ -443,13 +347,13 @@ if (require.main === module) {
     logger.info(`Server running on port ${PORT}`);
   });
 } else {
-  // when required as a module in tests or by other scripts, export the app without
-  // initializing routes that may have heavy side-effects (DB connections, etc.).
-  // Attach a shutdown helper so tests can gracefully close DB pools created here
-  // (notably the sessionConnection pool) as well as the application's main DB pool.
+  
+  
+  
+  
   module.exports = app;
   module.exports.shutdown = async () => {
-    // try to end the sessionConnection pool created above
+    
     try {
       if (sessionConnection && typeof sessionConnection.end === 'function') {
         await sessionConnection.end();
@@ -459,7 +363,7 @@ if (require.main === module) {
       logger.warn('Error closing session connection pool: %o', e && e.message);
     }
 
-    // try to end the primary DB pool exported by ./models/db
+    
     try {
       const pool = require('./models/db');
       if (pool && typeof pool.end === 'function') {

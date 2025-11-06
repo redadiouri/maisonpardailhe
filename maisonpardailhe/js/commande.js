@@ -1,8 +1,7 @@
-// small util to read query params
 function qp(name){ const u = new URL(location.href); return u.searchParams.get(name); }
 function escapeHtml(s){ if (s===undefined||s===null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-// SVG Icons
+
 const icons = {
   user: '<svg class="order-info-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
   phone: '<svg class="order-info-icon" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>',
@@ -20,7 +19,7 @@ const icons = {
   hourglass: '<svg class="status-icon" viewBox="0 0 24 24"><path d="M6 2v6h.01L6 8.01 10 12l-4 4 .01.01H6V22h12v-5.99h-.01L18 16l-4-4 4-3.99-.01-.01H18V2H6zm10 14.5V20H8v-3.5l4-4 4 4zm-4-5l-4-4V4h8v3.5l-4 4z"/></svg>'
 };
 
-// Map statut to French labels and icons
+
 const statutConfig = {
   'en_attente': { label: 'En attente', icon: icons.hourglass },
   'en_cours': { label: 'Acceptée - En cours', icon: icons.clock_status },
@@ -28,7 +27,7 @@ const statutConfig = {
   'refusée': { label: 'Refusée', icon: icons.close }
 };
 
-// Load menu names from API
+
 async function loadMenuNames() {
   try {
     const res = await fetch('/api/menus');
@@ -47,18 +46,18 @@ async function loadMenuNames() {
   }
 }
 
-// Render products as a beautiful table with icons
+
 async function renderProducts(produit){
-  // Load menu names first
+  
   const menuNames = await loadMenuNames();
   
-  // produit may be JSON array or legacy string
+  
   try {
     const arr = JSON.parse(produit);
     if (Array.isArray(arr)){
       const rows = arr.map(it=>{
         const menuId = Number(it.menu_id);
-        // Try to get the real menu name from the API
+        
         const name = menuNames.get(menuId) || it.title || it.name || `Article #${menuId || ''}`;
         const qty = escapeHtml(String(it.qty || it.quantity || '1'));
         return `<tr>
@@ -68,12 +67,12 @@ async function renderProducts(produit){
       }).join('');
       return `<table class="products-table"><tbody>${rows}</tbody></table>`;
     }
-  } catch (e){ /* not JSON */ }
-  // fallback: plain preformatted or semi-parsed string
+  } catch (e){  }
+  
   return `<div style="padding:12px;background:#f8f9fa;border-radius:8px;white-space:pre-wrap;">${escapeHtml(String(produit||''))}</div>`;
 }
 
-// Format price in euros
+
 function formatPrice(cents) {
   if (!cents || isNaN(cents)) return '';
   return `${(cents / 100).toFixed(2)} €`;
@@ -81,7 +80,7 @@ function formatPrice(cents) {
 
 (async function(){
   const id = qp('id');
-  // Fetch server-side config (timezone, app URL). Fallback to Europe/Paris.
+  
   let TZ = 'Europe/Paris';
   try {
     const cfgRes = await fetch('/api/config');
@@ -90,7 +89,7 @@ function formatPrice(cents) {
       if (cfg && cfg.timezone) TZ = cfg.timezone;
     }
   } catch (e) {
-    // ignore, keep default TZ
+    
   }
   const title = document.getElementById('page-title');
   const sub = document.getElementById('page-sub');
@@ -100,7 +99,7 @@ function formatPrice(cents) {
   if (!id){ title.textContent = 'Commande introuvable'; sub.textContent = 'Identifiant manquant dans l\'URL.'; return; }
   title.textContent = `Récapitulatif — Commande #${id}`;
   try{
-    // show spinner
+    
     if (spinner) spinner.style.display = 'block';
     const res = await fetch(`/api/commandes/${id}`);
     if (!res.ok){
@@ -119,11 +118,11 @@ function formatPrice(cents) {
     if (!cmd){ sub.textContent = 'Données invalides.'; return; }
     sub.style.display='none'; recap.style.display='block'; if (spinner) spinner.style.display = 'none';
     
-    // small helper: format date strings into human-friendly French date
+    
     function formatDateForDisplay(d){
       if (!d) return '';
       try {
-        // Parse into Date and format in configured timezone to avoid UTC offset crossing days
+        
         const dt = new Date(d);
         if (isNaN(dt)) return escapeHtml(String(d));
         const fmt = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TZ });
@@ -133,7 +132,7 @@ function formatPrice(cents) {
       }
     }
 
-    // Format full datetime
+    
     function formatDateTimeForDisplay(d){
       if (!d) return '';
       try {
@@ -153,12 +152,12 @@ function formatPrice(cents) {
       }
     }
 
-    // Build status badge
+    
     const statutClass = `status-${cmd.statut || 'en_attente'}`;
     const config = statutConfig[cmd.statut] || { label: escapeHtml(cmd.statut || 'Inconnu'), icon: icons.clipboard };
     const statusBadge = `<span class="status-badge ${statutClass}">${config.icon}${config.label}</span>`;
 
-    // Build order header
+    
     const orderDate = cmd.date_creation ? formatDateTimeForDisplay(cmd.date_creation) : '';
     const headerHtml = `
       <div class="order-header">
@@ -167,7 +166,7 @@ function formatPrice(cents) {
       </div>
     `;
 
-    // Build customer info card
+    
     const customerInfo = `
       <div class="order-card">
         <h2><svg class="card-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> Informations client</h2>
@@ -201,7 +200,7 @@ function formatPrice(cents) {
       </div>
     `;
 
-    // Build pickup info card
+    
     const pickupDate = cmd.date_retrait ? formatDateForDisplay(cmd.date_retrait) : '';
     const pickupTime = cmd.creneau ? escapeHtml(cmd.creneau) : '';
     const pickupLocation = cmd.location ? escapeHtml(cmd.location) : '';
@@ -248,7 +247,7 @@ function formatPrice(cents) {
       </div>
     `;
 
-    // Build products card
+    
     const productsHtml = await renderProducts(cmd.produit);
     const totalPrice = cmd.total_cents ? `<div class="total-price">${icons.money}Total : <strong>${formatPrice(cmd.total_cents)}</strong></div>` : '';
     
@@ -260,7 +259,7 @@ function formatPrice(cents) {
       </div>
     `;
 
-    // Build status card
+    
     const statusCard = `
       <div class="order-card" style="grid-column: 1 / -1; text-align: center;">
         <h2 style="justify-content: center;">${icons.clipboard} Statut de la commande</h2>
@@ -276,7 +275,7 @@ function formatPrice(cents) {
       </div>
     `;
 
-    // Assemble everything
+    
     recap.innerHTML = `
       ${headerHtml}
       <div class="order-container">

@@ -1,10 +1,8 @@
 const Menu = require('./menu');
 
-// Adapter: keep the Stock API but operate on the menus table.
 const Stock = {
   create: async (data) => {
-    // map stock fields to menu fields
-    const menuData = {
+        const menuData = {
       name: data.name,
       description: data.description || '',
       price_cents: data.price_cents || 0,
@@ -34,8 +32,7 @@ const Stock = {
     return await Menu.delete(id);
   },
   getAll: async () => {
-    // return all menus (including not visible)
-    return await Menu.getAll(false);
+        return await Menu.getAll(false);
   },
   getByReference: async (ref) => {
     return await Menu.getByReference(ref);

@@ -133,18 +133,18 @@
     color: var(--blanc-opale);
 }
 
-/* Remove native number input spinner (platform/browser-specific) so the input matches dark theme */
+
 .selection-item__controls input[type="number"]::-webkit-outer-spin-button,
 .selection-item__controls input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 .selection-item__controls input[type="number"] {
-    -moz-appearance: textfield; /* Firefox */
+    -moz-appearance: textfield; 
     appearance: textfield;
 }
 
-/* Price displayed next to quantity controls in selection panel */
+
 .selection-item__price {
     margin-left: 0.6rem;
     font-weight: 700;
@@ -159,7 +159,7 @@
     color: rgba(247,247,247,0.7);
 }
 
-/* animation when total changes in the selection summary */
+
 @keyframes total-pop {
     0% { transform: scale(1); color: inherit; }
     30% { transform: scale(1.06); color: var(--rouge-intense); }
@@ -212,7 +212,7 @@
     box-shadow: 0 18px 30px rgba(255, 31, 31, 0.16);
 }
 
-/* Button spinner and disabled styles for forms */
+
 .btn[disabled], button[disabled] {
     opacity: 0.6;
     cursor: wait;
@@ -228,7 +228,7 @@
     vertical-align: middle;
     animation: spin 0.8s linear infinite;
 }
-/* Slot picker styles */
+
 .cc-time-container {
     display: flex;
     flex-wrap: wrap;
@@ -274,7 +274,7 @@
     font-size: 0.95rem;
 }
 
-/* Small hint showing the last offered slot */
+
 .cc-last-slot {
     margin-top: 0.5rem;
     color: rgba(247,247,247,0.72);
@@ -282,7 +282,7 @@
     text-align: left;
 }
 
-/* subtle fade-in for updates to the last-slot hint */
+
 .cc-fade-in {
     animation: cc-fade-in 360ms cubic-bezier(.2,.9,.2,1);
 }
@@ -291,7 +291,7 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Grouped slot UI */
+
 .cc-slot-group {
     width: 100%;
     margin-bottom: 1rem;
@@ -341,7 +341,7 @@
     display: none; 
 }
 
-/* Error state when no slot chosen */
+
 .cc-time-container.error {
     outline: 2px solid rgba(255, 31, 31, 0.6);
     border-radius: 8px;
@@ -354,7 +354,7 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Mini toast (order recap quick link) */
+
 .mp-toast {
     position: fixed;
     right: 1rem;
@@ -511,7 +511,7 @@ header {
     background: transparent;
     border: none;
     cursor: pointer;
-    margin-left: auto; /* Always push hamburger to the right */
+    margin-left: auto; 
 }
 
 .nav-toggle span {
@@ -628,7 +628,7 @@ header {
     border-color: var(--rouge-intense);
 }
 
-/* Utility: full-width button variant used on forms */
+
 .btn--block {
     min-width: auto;
     width: 100%;
@@ -636,7 +636,7 @@ header {
 }
 
 .contact-card .btn--block {
-    border-radius: 12px; /* match input corners */
+    border-radius: 12px; 
     padding: 0.9rem 1.25rem;
 }
 
@@ -1655,7 +1655,7 @@ textarea {
     text-align: center;
 }
 
-/* Services list, timeline, contact extras */
+
 
 .services-list {
     display: grid;
@@ -1760,7 +1760,7 @@ textarea {
     gap: 2rem;
 }
 
-/* Responsive */
+
 @media (max-width: 960px) {
     .nav-links {
         position: fixed;
@@ -1782,7 +1782,7 @@ textarea {
         transform: translateX(0);
     }
 
-    /* Overlay sombre derrière le menu */
+    
     .nav-links::before {
         content: "";
         position: fixed;
@@ -1816,7 +1816,7 @@ textarea {
         transform: translateY(-7px) rotate(-45deg);
     }
 
-    /* Hero adjustments for tablet/large mobile */
+    
     .hero {
         min-height: 70vh;
         padding: 6rem 1.5rem 5rem;
@@ -1827,7 +1827,7 @@ textarea {
         max-width: 90%;
     }
 
-    /* CTA group improvements */
+    
     .cta-group {
         flex-direction: column;
         width: 100%;
@@ -1840,20 +1840,20 @@ textarea {
         padding: 1rem 2rem;
     }
 
-    /* Grid adjustments */
+    
     .grid--three {
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 2rem;
     }
 
-    /* Sections padding */
+    
     section {
         padding: 4rem 1.5rem;
     }
 }
 
 @media (max-width: 720px) {
-    /* Header mobile optimization */
+    
     header {
         background-color: rgba(7, 7, 7, 0.95);
     }
@@ -1884,7 +1884,7 @@ textarea {
         height: 2.5px;
     }
     
-    /* Typography mobile optimizations */
+    
     .hero-title {
         font-size: clamp(2rem, 8vw, 3rem);
         letter-spacing: 0.2rem;
@@ -1903,14 +1903,14 @@ textarea {
         padding: 0 0.5rem;
     }
 
-    /* Grid optimizations - single column on mobile */
+    
     .grid--two,
     .grid--three {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
 
-    /* Card improvements */
+    
     .card {
         padding: 1.5rem;
         border-radius: 16px;
@@ -1926,7 +1926,7 @@ textarea {
         line-height: 1.6;
     }
 
-    /* Better touch targets for buttons */
+    
     .btn {
         padding: 1.1rem 2rem;
         font-size: 1.05rem;
@@ -1947,7 +1947,7 @@ textarea {
         transform: scale(0.98);
     }
 
-    /* Hero section mobile */
+    
     .hero {
         min-height: 65vh;
         padding: 5rem 1rem 4rem;
@@ -1959,18 +1959,18 @@ textarea {
         max-width: 100%;
     }
 
-    /* Better spacing for sections */
+    
     section {
         padding: 3rem 1rem;
     }
 
-    /* Contact form improvements */
+    
     input[type="text"],
     input[type="email"],
     input[type="tel"],
     textarea,
     select {
-        font-size: 16px; /* Prevents zoom on iOS */
+        font-size: 16px; 
         padding: 1.1rem 1.25rem;
         min-height: 52px;
         border-radius: 10px;
@@ -1981,7 +1981,7 @@ textarea {
         margin-bottom: 0.7rem;
     }
     
-    /* Click & Collect mobile optimizations */
+    
     #click-collect {
         padding: 2.5rem 1rem;
     }
@@ -2015,7 +2015,7 @@ textarea {
         padding-top: 1rem;
     }
     
-    /* Selection panel mobile */
+    
     .selection-display {
         padding: 1.1rem 1.25rem;
         min-height: 52px;
@@ -2059,7 +2059,7 @@ textarea {
         font-size: 1.05rem;
     }
 
-    /* Footer mobile */
+    
     .footer {
         padding: 3rem 1rem 1.5rem;
     }
@@ -2110,7 +2110,7 @@ textarea {
         font-size: 0.85rem;
     }
 
-    /* Media cards (images) */
+    
     .media-card img {
         border-radius: 12px;
         height: 220px;
@@ -2118,9 +2118,9 @@ textarea {
     }
 }
 
-/* Extra small devices (portrait phones) */
+
 @media (max-width: 400px) {
-    /* Header extra small */
+    
     .nav-container {
         padding: 0.6rem 0.75rem;
     }

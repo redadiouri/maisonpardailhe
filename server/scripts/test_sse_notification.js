@@ -1,9 +1,7 @@
-// Test script to simulate a new order and verify SSE notifications
 const http = require('http');
 
 const API_BASE = 'http://localhost:3001';
 
-// Get CSRF token first
 function getCsrfToken() {
   return new Promise((resolve, reject) => {
     const options = {
@@ -41,8 +39,7 @@ function getCsrfToken() {
 async function testSSE() {
   console.log('Testing SSE notifications for new orders...\n');
 
-  // Test order payload
-  const testOrder = {
+    const testOrder = {
     nom_complet: 'Test Client SSE',
     telephone: '0612345678',
     email: 'test@example.com',
@@ -62,8 +59,7 @@ async function testSSE() {
   console.log('3. You are logged into the admin panel\n');
 
   try {
-    // Get CSRF token
-    console.log('Getting CSRF token...');
+        console.log('Getting CSRF token...');
     const csrfToken = await getCsrfToken();
     if (csrfToken) {
       console.log('✓ CSRF token obtained\n');
@@ -82,8 +78,7 @@ async function testSSE() {
       }
     };
 
-    // Add CSRF token if we got one
-    if (csrfToken) {
+        if (csrfToken) {
       options.headers['X-CSRF-Token'] = csrfToken;
     }
 

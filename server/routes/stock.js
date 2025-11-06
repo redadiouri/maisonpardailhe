@@ -3,7 +3,6 @@ const router = express.Router();
 const Stock = require('../models/stock');
 const auth = require('../middleware/auth');
 
-// Public list
 router.get('/', async (req, res) => {
   try {
     const items = await Stock.getAll();
@@ -13,7 +12,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Protected: create
 router.post('/', auth, async (req, res) => {
   const data = req.body || {};
   const name = (data.name || '').toString().trim();
@@ -33,7 +31,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Protected: update
 router.put('/:id', auth, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ message: 'ID invalide.' });
@@ -66,7 +63,6 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// Protected: delete
 router.delete('/:id', auth, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ message: 'ID invalide.' });

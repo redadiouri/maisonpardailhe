@@ -1,9 +1,6 @@
-/**
- * Skeleton Loaders CSS
- * Animations de chargement élégantes pour Maison Pardailhé
- */
 
-/* Animation de shimmer */
+
+
 @keyframes skeleton-shimmer {
   0% {
     background-position: -1000px 0;
@@ -22,7 +19,7 @@
   }
 }
 
-/* Base skeleton */
+
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -49,7 +46,7 @@
   bottom: 0;
 }
 
-/* Variantes de taille */
+
 .skeleton-text {
   height: 16px;
   margin-bottom: 8px;
@@ -76,10 +73,10 @@
   border-radius: 6px;
 }
 
-/* Skeleton pour images */
+
 .skeleton-image {
   width: 100%;
-  padding-top: 66.67%; /* Aspect ratio 3:2 */
+  padding-top: 66.67%; 
   border-radius: 12px;
   position: relative;
 }
@@ -96,14 +93,14 @@
   border-radius: 50%;
 }
 
-/* Skeleton pour boutons */
+
 .skeleton-button {
   height: 44px;
   width: 140px;
   border-radius: 8px;
 }
 
-/* Skeleton Card - pour les menus */
+
 .skeleton-card {
   background: white;
   border-radius: 12px;
@@ -136,7 +133,7 @@
   width: 60%;
 }
 
-/* Grid layout pour skeleton cards */
+
 .skeleton-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -144,7 +141,7 @@
   margin: 24px 0;
 }
 
-/* Skeleton pour la commande */
+
 .skeleton-order-card {
   background: white;
   border-radius: 16px;
@@ -192,7 +189,7 @@
   border-radius: 4px;
 }
 
-/* Skeleton pour liste de produits */
+
 .skeleton-product-list {
   margin: 20px 0;
 }
@@ -231,13 +228,13 @@
   border-radius: 4px;
 }
 
-/* Pulse variant (alternative au shimmer) */
+
 .skeleton-pulse {
   animation: skeleton-pulse 1.5s ease-in-out infinite !important;
   background: #e8e8e8 !important;
 }
 
-/* Mode sombre */
+
 @media (prefers-color-scheme: dark) {
   .skeleton {
     background: linear-gradient(
@@ -267,7 +264,7 @@
   }
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
   .skeleton-grid {
     grid-template-columns: 1fr;
@@ -282,7 +279,7 @@
   }
 }
 
-/* Utilitaires */
+
 .skeleton-inline {
   display: inline-block;
   vertical-align: middle;

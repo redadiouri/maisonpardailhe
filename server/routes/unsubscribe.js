@@ -3,7 +3,6 @@ const router = express.Router();
 const { verifyToken, addUnsubscribe } = require('../utils/email');
 const logger = require('../logger');
 
-// GET /unsubscribe?token=...
 router.get('/', async (req, res) => {
   const token = req.query.token;
   if (!token) return res.status(400).send('<h1>Token manquant</h1>');
@@ -14,8 +13,7 @@ router.get('/', async (req, res) => {
   }
   try {
     await addUnsubscribe(email);
-    // Simple confirmation page (email masked)
-    const parts = String(email).split('@');
+        const parts = String(email).split('@');
     let displayed = '***';
     if (parts.length === 2) {
       const name = parts[0];

@@ -1,18 +1,5 @@
 #!/usr/bin/env node
-/**
- * images_optimize.js
- *
- * Simple image optimization script using sharp.
- * - Reads images from ../maisonpardailhe/img (relative to server/)
- * - Produces WebP variants and resized widths into ../maisonpardailhe/img/optimized/
- * - Writes a manifest JSON mapping original -> generated files
- *
- * Usage (from server/):
- *   node scripts/images_optimize.js
- *
- * Environment:
- *   - TARGET_DIR: optional path to the images directory (default ../maisonpardailhe/img)
- */
+
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
@@ -22,10 +9,7 @@ const DEFAULT_IMG_DIR = path.join(__dirname, '..', '..', 'maisonpardailhe', 'img
 const IMG_DIR = process.env.TARGET_DIR ? path.resolve(process.env.TARGET_DIR) : DEFAULT_IMG_DIR;
 const OUT_DIR = path.join(IMG_DIR, 'optimized');
 
-const widths = [400, 800, 1200, 1600]; // Ajout de 1600px pour les grands écrans
-const webpQuality = 82; // Légère amélioration de la qualité (80→82)
-const jpegQuality = 85; // Meilleure qualité JPEG pour fallback
-
+const widths = [400, 800, 1200, 1600]; const webpQuality = 82; const jpegQuality = 85; 
 async function ensureDir(p) {
   await fs.promises.mkdir(p, { recursive: true });
 }
@@ -44,23 +28,19 @@ async function processImage(file) {
     const image = sharp(inputPath);
     const info = await image.metadata();
 
-    // Write a WebP version at original size
-    const webpFilename = `${name}.webp`;
+        const webpFilename = `${name}.webp`;
     const webpPath = path.join(OUT_DIR, webpFilename);
     await image.webp({ quality: webpQuality }).toFile(webpPath);
     meta.outputs.push({ format: 'webp', path: webpPath, width: info.width, height: info.height });
 
-    // Generate resized WebP variants for target widths
-    for (const w of widths) {
-      if (!info.width || info.width < w) continue; // skip upscaling
-      const resizedName = `${name}-${w}.webp`;
+        for (const w of widths) {
+      if (!info.width || info.width < w) continue;       const resizedName = `${name}-${w}.webp`;
       const resizedPath = path.join(OUT_DIR, resizedName);
       await image.resize({ width: w }).webp({ quality: webpQuality }).toFile(resizedPath);
       meta.outputs.push({ format: 'webp', path: resizedPath, width: w });
     }
 
-    // For JPEG/PNG originals also produce an optimized original-format copy (optional)
-    if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
+        if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
       const optimizedName = `${name}-opt${ext}`;
       const optimizedPath = path.join(OUT_DIR, optimizedName);
       if (ext === '.png') {

@@ -1,7 +1,6 @@
 (async function(){
   try {
-    // Fetch server config to get appUrl if available
-    let appUrl = window.location.origin;
+        let appUrl = window.location.origin;
     try {
       const res = await fetch('/api/config');
       if (res.ok) {
@@ -9,11 +8,9 @@
         if (cfg && cfg.appUrl) appUrl = cfg.appUrl.replace(/\/$/, '');
       }
     } catch (e) {
-      // ignore, fallback to window.location.origin
-    }
+          }
 
-    // Resolve canonical: if meta exists, make absolute, otherwise create from location
-    const canonical = document.querySelector('link[rel="canonical"]') || document.createElement('link');
+        const canonical = document.querySelector('link[rel="canonical"]') || document.createElement('link');
     canonical.setAttribute('rel','canonical');
     const rawHref = canonical.getAttribute('href') || window.location.pathname || '/';
     let hrefAbs = rawHref;
@@ -21,14 +18,12 @@
       const parsed = new URL(rawHref, appUrl + '/');
       hrefAbs = parsed.href;
     } catch (e) {
-      // fallback
-      hrefAbs = appUrl + (rawHref.startsWith('/') ? rawHref : '/' + rawHref);
+            hrefAbs = appUrl + (rawHref.startsWith('/') ? rawHref : '/' + rawHref);
     }
     canonical.setAttribute('href', hrefAbs);
     if (!document.head.contains(canonical)) document.head.appendChild(canonical);
 
-    // Build JSON-LD LocalBusiness
-    const ld = {
+        const ld = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
       "@id": appUrl + '/#company',

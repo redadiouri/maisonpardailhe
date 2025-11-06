@@ -1,22 +1,11 @@
-/**
- * Skeleton Loader Helper
- * Utilitaire pour créer facilement des skeleton loaders
- * Usage:
- *   createSkeleton('menu-card', 3)
- *   createSkeleton('order-recap')
- *   createSkeleton('product-list', 5)
- */
+
 
 (function() {
   'use strict';
 
-  /**
-   * Templates de skeleton pré-définis
-   */
+  
   const SKELETON_TEMPLATES = {
-    /**
-     * Skeleton pour une carte menu
-     */
+    
     'menu-card': () => `
       <div class="skeleton-card">
         <div class="skeleton skeleton-card-image"></div>
@@ -31,9 +20,7 @@
       </div>
     `,
 
-    /**
-     * Skeleton pour le récapitulatif de commande
-     */
+    
     'order-recap': () => `
       <div class="skeleton-order-card">
         <div class="skeleton-order-header">
@@ -82,9 +69,7 @@
       </div>
     `,
 
-    /**
-     * Skeleton pour un item de produit
-     */
+    
     'product-item': () => `
       <div class="skeleton-product-item">
         <div class="skeleton skeleton-product-image"></div>
@@ -96,9 +81,7 @@
       </div>
     `,
 
-    /**
-     * Skeleton pour liste de produits
-     */
+    
     'product-list': (count = 5) => {
       let html = '<div class="skeleton-product-list">';
       for (let i = 0; i < count; i++) {
@@ -108,9 +91,7 @@
       return html;
     },
 
-    /**
-     * Skeleton pour texte simple
-     */
+    
     'text': (lines = 3) => {
       let html = '<div>';
       for (let i = 0; i < lines; i++) {
@@ -121,9 +102,7 @@
       return html;
     },
 
-    /**
-     * Skeleton pour titre + sous-titre
-     */
+    
     'header': () => `
       <div style="margin-bottom: 24px;">
         <div class="skeleton skeleton-title"></div>
@@ -131,9 +110,7 @@
       </div>
     `,
 
-    /**
-     * Skeleton pour une grille de cartes
-     */
+    
     'grid': (count = 6) => {
       let html = '<div class="skeleton-grid">';
       for (let i = 0; i < count; i++) {
@@ -143,9 +120,7 @@
       return html;
     },
 
-    /**
-     * Skeleton pour formulaire
-     */
+    
     'form': () => `
       <div style="max-width: 600px; margin: 0 auto;">
         <div class="skeleton skeleton-title" style="width: 50%; margin-bottom: 32px;"></div>
@@ -172,13 +147,7 @@
     `
   };
 
-  /**
-   * Crée un skeleton loader
-   * @param {string} type - Type de skeleton (menu-card, order-recap, etc.)
-   * @param {number|HTMLElement} countOrContainer - Nombre de répétitions ou container DOM
-   * @param {HTMLElement} container - Container DOM (si countOrContainer est un nombre)
-   * @returns {string|void} HTML string ou void si inséré dans le DOM
-   */
+  
   function createSkeleton(type, countOrContainer, container) {
     const template = SKELETON_TEMPLATES[type];
     
@@ -187,14 +156,12 @@
       return '';
     }
 
-    // Si le type supporte un count (grid, product-list)
-    let html;
+        let html;
     if (type === 'grid' || type === 'product-list' || type === 'text') {
       const count = typeof countOrContainer === 'number' ? countOrContainer : 3;
       html = template(count);
     } else if (typeof countOrContainer === 'number') {
-      // Répéter le template N fois
-      html = '';
+            html = '';
       for (let i = 0; i < countOrContainer; i++) {
         html += template();
       }
@@ -202,8 +169,7 @@
       html = template();
     }
 
-    // Si un container DOM est fourni, insérer directement
-    const targetContainer = container || (countOrContainer instanceof HTMLElement ? countOrContainer : null);
+        const targetContainer = container || (countOrContainer instanceof HTMLElement ? countOrContainer : null);
     if (targetContainer) {
       targetContainer.innerHTML = html;
       return;
@@ -212,12 +178,7 @@
     return html;
   }
 
-  /**
-   * Affiche un skeleton dans un élément
-   * @param {string|HTMLElement} selector - Sélecteur CSS ou élément DOM
-   * @param {string} type - Type de skeleton
-   * @param {number} count - Nombre de répétitions
-   */
+  
   function showSkeleton(selector, type, count) {
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) {
@@ -228,11 +189,7 @@
     createSkeleton(type, count, element);
   }
 
-  /**
-   * Cache un skeleton et affiche le contenu
-   * @param {string|HTMLElement} selector - Sélecteur CSS ou élément DOM
-   * @param {string} content - Contenu HTML à afficher
-   */
+  
   function hideSkeleton(selector, content) {
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) {
@@ -240,8 +197,7 @@
       return;
     }
     
-    // Fade out skeleton, fade in content
-    element.style.opacity = '0.5';
+        element.style.opacity = '0.5';
     element.style.transition = 'opacity 0.3s ease';
     
     setTimeout(() => {
@@ -250,13 +206,7 @@
     }, 300);
   }
 
-  /**
-   * Enveloppe async avec skeleton loader
-   * @param {string|HTMLElement} selector - Sélecteur CSS ou élément DOM
-   * @param {string} skeletonType - Type de skeleton
-   * @param {Function} asyncFn - Fonction asynchrone
-   * @param {number} count - Nombre de répétitions du skeleton
-   */
+  
   async function withSkeleton(selector, skeletonType, asyncFn, count = 1) {
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) {
@@ -264,16 +214,12 @@
       return;
     }
 
-    // Afficher skeleton
-    showSkeleton(element, skeletonType, count);
+        showSkeleton(element, skeletonType, count);
 
     try {
-      // Exécuter la fonction async
-      const result = await asyncFn();
+            const result = await asyncFn();
       
-      // Le contenu sera probablement mis à jour par asyncFn
-      // mais on peut retourner le résultat
-      return result;
+                  return result;
     } catch (error) {
       console.error('Error in withSkeleton:', error);
       element.innerHTML = `
@@ -286,8 +232,7 @@
     }
   }
 
-  // Exposer les fonctions globalement
-  window.createSkeleton = createSkeleton;
+    window.createSkeleton = createSkeleton;
   window.showSkeleton = showSkeleton;
   window.hideSkeleton = hideSkeleton;
   window.withSkeleton = withSkeleton;

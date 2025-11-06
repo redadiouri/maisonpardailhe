@@ -1,5 +1,3 @@
-// Test script to verify total_cents calculation
-// Run: node server/scripts/test_total_calculation.js
 
 const fetch = require('node-fetch');
 
@@ -8,8 +6,7 @@ const apiBase = 'http://localhost:3001/api';
 async function testOrderWithTotal() {
   console.log('🧪 Test: Creating order with items to verify total_cents calculation...\n');
   
-  // First, get available menus to know their IDs and prices
-  try {
+    try {
     const menusRes = await fetch(`${apiBase}/menus`);
     if (!menusRes.ok) {
       console.error('❌ Failed to fetch menus');
@@ -21,18 +18,14 @@ async function testOrderWithTotal() {
       console.log(`  - ${m.name} (ID: ${m.id}): ${(m.price_cents/100).toFixed(2)}€ (stock: ${m.stock})`);
     });
     
-    // Create a test order with 2 items
-    const testOrder = {
+        const testOrder = {
       nom_complet: 'Test Client',
       telephone: '0600000000',
       email: 'test@example.com',
-      date_retrait: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), // +7 days
-      creneau: '12:00',
+      date_retrait: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),       creneau: '12:00',
       location: 'roquettes',
       items: [
-        { menu_id: menus[0].id, qty: 2 },  // First menu × 2
-        { menu_id: menus[1].id, qty: 1 }   // Second menu × 1
-      ]
+        { menu_id: menus[0].id, qty: 2 },          { menu_id: menus[1].id, qty: 1 }         ]
     };
     
     const expectedTotal = (menus[0].price_cents * 2) + (menus[1].price_cents * 1);

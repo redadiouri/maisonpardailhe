@@ -10,8 +10,7 @@ module.exports = {
   },
   rules: {
     'no-console': 'off',
-    // Relax some rules for the legacy codebase so CI lint step is not blocking.
-    'no-inner-declarations': 'off',
+        'no-inner-declarations': 'off',
     'no-constant-condition': 'off',
     'no-redeclare': 'off',
     'no-unused-vars': ['warn', { 'args': 'none', 'varsIgnorePattern': '^_' }],

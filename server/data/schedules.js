@@ -1,6 +1,3 @@
-// Centralized schedules for pickup locations.
-// Exported so both server routes and the schedules API can read the same source of truth.
-// Weekday numbers: 0 = Sunday .. 6 = Saturday
 module.exports = {
   roquettes: {
     ranges: {

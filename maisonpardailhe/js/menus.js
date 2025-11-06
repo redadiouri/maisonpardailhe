@@ -1,4 +1,3 @@
-// Fetch menus from API and render them on menu.html and in the click & collect selection panel
 (function(){
   async function fetchMenus() {
     try {
@@ -19,13 +18,11 @@
   function renderMenuCard(m) {
     const article = document.createElement('article');
     article.className = 'menu-card';
-    // badge only if price or quote
-    const badge = document.createElement('span');
+        const badge = document.createElement('span');
     badge.className = 'menu-badge';
     badge.textContent = m.is_quote ? 'Sur devis' : (m.price_cents && m.price_cents>0 ? '' : '');
     if (!m.is_quote) {
-      // leave badge empty if not needed
-      badge.style.display = 'none';
+            badge.style.display = 'none';
     }
     const h3 = document.createElement('h3'); h3.textContent = m.name;
     const p = document.createElement('p'); p.textContent = m.description || '';
@@ -47,8 +44,7 @@
     const div = document.createElement('div');
   div.className = 'selection-item';
   div.dataset.menuId = String(m.id);
-  // expose price in cents on the DOM so other scripts can compute totals without parsing text
-  div.dataset.priceCents = String(Number(m.price_cents || 0));
+    div.dataset.priceCents = String(Number(m.price_cents || 0));
     const info = document.createElement('div'); info.className = 'selection-item__info';
     const h4 = document.createElement('h4'); h4.textContent = m.name;
     const p = document.createElement('p'); p.textContent = m.description || '';
@@ -57,13 +53,11 @@
     const controls = document.createElement('div'); controls.className = 'selection-item__controls';
     const dec = document.createElement('button'); dec.type='button'; dec.className='quantity-btn'; dec.dataset.action='decrement'; dec.setAttribute('aria-label','Retirer'); dec.textContent='−';
   const input = document.createElement('input'); input.type='number'; input.min='0'; input.value='0'; input.name = `cc-items[${m.id}]`;
-  // set maximum allowed quantity to the available stock
-  input.max = String(Math.max(0, Number(m.stock || 0)));
+    input.max = String(Math.max(0, Number(m.stock || 0)));
   input.dataset.max = String(Math.max(0, Number(m.stock || 0)));
     const inc = document.createElement('button'); inc.type='button'; inc.className='quantity-btn'; inc.dataset.action='increment'; inc.setAttribute('aria-label','Ajouter'); inc.textContent='+';
   const stockSpan = document.createElement('div'); stockSpan.className = 'selection-item__stock'; stockSpan.textContent = `Stock: ${m.stock}`;
-  // price element placed next to quantity controls for a compact, readable layout
-  const priceDiv = document.createElement('div'); priceDiv.className = 'selection-item__price';
+    const priceDiv = document.createElement('div'); priceDiv.className = 'selection-item__price';
   priceDiv.textContent = m.is_quote ? 'Sur devis' : formatPrice(m.price_cents);
     if (m.stock <= 0) {
       inc.disabled = true;
@@ -78,8 +72,7 @@
 
   async function init() {
     const menus = await fetchMenus();
-    // render on menu.html
-    const root = document.getElementById('menus-root');
+        const root = document.getElementById('menus-root');
     if (root) {
       root.innerHTML = '';
       menus.forEach(m => {
@@ -87,23 +80,19 @@
         root.appendChild(card);
       });
     }
-    // render selection panel on index.html
-    const grid = document.getElementById('selection-grid');
+        const grid = document.getElementById('selection-grid');
     if (grid) {
       grid.innerHTML = '';
       menus.forEach(m => {
-        // do not include items that are 'sur devis' in the Click & Collect selection
-        if (m.is_quote) return;
+                if (m.is_quote) return;
         const item = renderSelectionItem(m);
         grid.appendChild(item);
       });
-      // signal that menus are loaded so other scripts may attach handlers
-      document.dispatchEvent(new CustomEvent('menus:loaded'));
+            document.dispatchEvent(new CustomEvent('menus:loaded'));
     }
   }
 
-  // Auto-init
-  if (document.readyState === 'loading') {
+    if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();

@@ -1,5 +1,3 @@
-// Simple test runner to verify email sending via configured transporter
-// Load environment variables from .env so this script behaves like the server
 require('dotenv').config();
 const { sendMail } = require('../utils/email');
 async function run() {

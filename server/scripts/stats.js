@@ -1,14 +1,5 @@
 #!/usr/bin/env node
-/*
-  server/scripts/stats.js
-  Small helper to compute basic statistics from the commandes table.
-  - counts total orders and orders by status
-  - aggregates items sold when `produit` is stored as JSON [{menu_id, qty}]
-  - estimates revenue using menus.price_cents when possible
 
-  Usage: from repo root -> cd server && node scripts/stats.js
-  Requires server/.env with DB_* values or environment already set.
-*/
 
 const db = require('../models/db');
 
@@ -21,13 +12,11 @@ async function loadMenus() {
 
 function tryParseProduit(p) {
   if (!p) return null;
-  // If it looks like JSON array
-  try {
+    try {
     const parsed = JSON.parse(p);
     if (Array.isArray(parsed)) return parsed;
   } catch (e) {
-    // not JSON
-  }
+      }
   return null;
 }
 
@@ -36,8 +25,7 @@ async function main() {
 
   const [all] = await db.query('SELECT id, produit, statut, date_creation FROM commandes ORDER BY date_creation DESC');
 
-  // Ne compter que les commandes acceptées (en_cours ou terminée)
-  const accepted = all.filter(c => c.statut === 'en_cours' || c.statut === 'terminée');
+    const accepted = all.filter(c => c.statut === 'en_cours' || c.statut === 'terminée');
 
   const totalOrders = accepted.length;
   const byStatus = {};

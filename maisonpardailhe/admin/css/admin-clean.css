@@ -1,4 +1,4 @@
-/* admin-clean.css - Modern responsive admin panel styles */
+
 :root{
   --bg:#0f1112;
   --panel:#151617;
@@ -7,7 +7,7 @@
   --accent-dark:#8f1212;
   --accent:#c02929;
   
-  /* Responsive spacing system */
+  
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -15,7 +15,7 @@
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
   
-  /* Responsive font sizes */
+  
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -24,10 +24,10 @@
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 2rem;
   
-  /* Dynamic sidebar width */
+  
   --sidebar-width: 280px;
   
-  /* Grid breakpoints as custom properties for JS access */
+  
   --breakpoint-sm: 520px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
@@ -35,7 +35,7 @@
   --breakpoint-2xl: 1920px;
 }
 
-/* Adjust spacing for smaller screens */
+
 @media (max-width: 768px) {
   :root {
     --spacing-lg: 1rem;
@@ -55,30 +55,30 @@
 }
 *{box-sizing:border-box}
 html{
-  /* Smooth scrolling and tap highlight */
+  
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: rgba(192, 41, 41, 0.2);
   overflow-x: hidden;
 }
 body.admin-bg{
   margin:0;min-height:100vh;background:linear-gradient(180deg,var(--bg),#0b0b0b);color:#fff;font-family:Inter, 'Segoe UI', Roboto, Arial, sans-serif;
-  /* Prevent text selection for better touch experience */
+  
   -webkit-user-select: none;
   user-select: none;
-  /* Smooth scrolling on iOS */
+  
   -webkit-overflow-scrolling: touch;
-  /* Better font rendering */
+  
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
-/* Allow text selection in inputs and content areas */
+
 input, textarea, .commande-card, .admin-table{
   -webkit-user-select: text;
   user-select: text;
 }
 
-/* Login box styling */
+
 .admin-login-box{
   width:100%;
   max-width:420px;
@@ -98,14 +98,14 @@ input, textarea, .commande-card, .admin-table{
 .admin-login-box button[type="submit"]{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;font-weight:700;cursor:pointer;min-height:50px;touch-action:manipulation}
 .admin-login-box .error{color:#ff6b6b;background:rgba(255,107,107,0.06);padding:8px;border-radius:8px;margin-top:10px}
 
-/* small loader */
+
 .admin-login-box .loader{height:28px;margin-top:10px}
 .admin-login-box .loader:after{content:"";display:inline-block;width:18px;height:18px;border-radius:50%;border:3px solid rgba(255,255,255,0.08);border-top-color:var(--accent);animation:spin 900ms linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Mobile Header */
+
 .admin-mobile-header {
-  display: none; /* Hidden on desktop */
+  display: none; 
   position: sticky;
   top: 0;
   z-index: 100;
@@ -175,7 +175,7 @@ input, textarea, .commande-card, .admin-table{
   text-align: center;
 }
 
-/* Sidebar Overlay (mobile) */
+
 .sidebar-overlay {
   display: none;
   position: fixed;
@@ -219,7 +219,7 @@ input, textarea, .commande-card, .admin-table{
   position:relative;
 }
 
-/* Sidebar */
+
 .admin-sidebar{
   width:280px;
   min-width:280px;
@@ -236,7 +236,7 @@ input, textarea, .commande-card, .admin-table{
   overflow-x: hidden;
 }
 
-/* Hide scrollbar for sidebar */
+
 .admin-sidebar::-webkit-scrollbar {
   width: 0px;
   background: transparent;
@@ -247,8 +247,8 @@ input, textarea, .commande-card, .admin-table{
 }
 
 .admin-sidebar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
 }
 
 .sidebar-header {
@@ -260,7 +260,7 @@ input, textarea, .commande-card, .admin-table{
   flex-shrink: 0;
 }
 
-/* Sidebar Toggle Button */
+
 .sidebar-toggle-btn {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -285,7 +285,7 @@ input, textarea, .commande-card, .admin-table{
   transition: transform 0.3s ease;
 }
 
-/* Collapsed sidebar state */
+
 .admin-sidebar.collapsed {
   width: 70px;
   min-width: 70px;
@@ -318,7 +318,7 @@ input, textarea, .commande-card, .admin-table{
   justify-content: center;
 }
 
-/* Smooth transition for sidebar width */
+
 .admin-sidebar {
   transition: width 0.3s ease, min-width 0.3s ease;
 }
@@ -327,7 +327,7 @@ input, textarea, .commande-card, .admin-table{
   margin-left: 0;
 }
 
-/* Tooltip for collapsed state */
+
 .admin-sidebar.collapsed .tab-btn-vertical {
   position: relative;
 }
@@ -370,7 +370,7 @@ input, textarea, .commande-card, .admin-table{
   padding-right: 4px;
 }
 
-/* Hide scrollbar for tabs */
+
 .admin-tabs-vertical::-webkit-scrollbar {
   width: 0px;
 }
@@ -505,7 +505,7 @@ input, textarea, .commande-card, .admin-table{
   transform: translateY(0);
 }
 
-/* Password change section */
+
 .admin-change-pwd {
   display: flex;
   flex-direction: column;
@@ -584,7 +584,7 @@ input, textarea, .commande-card, .admin-table{
   text-align: center;
 }
 
-/* Main */
+
 .admin-main{
   flex:1;
   height:100vh;
@@ -596,7 +596,7 @@ input, textarea, .commande-card, .admin-table{
   overflow-x:hidden;
 }
 
-/* Hide scrollbar for main content */
+
 .admin-main::-webkit-scrollbar {
   width: 6px;
 }
@@ -641,7 +641,7 @@ input, textarea, .commande-card, .admin-table{
 }
 .tab-content .empty{text-align:center;padding:40px 16px;color:#9aa0a3}
 .commande-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));border:1px solid rgba(255,255,255,0.06);padding:18px;border-radius:12px;margin-bottom:14px;color:#e8e8e8;display:grid;grid-template-columns:1fr 180px;gap:14px;align-items:start;box-shadow:0 6px 18px rgba(0,0,0,0.6);
-  /* Better touch target */
+  
   touch-action: manipulation;
 }
 .commande-card .left{display:block}
@@ -666,9 +666,9 @@ input, textarea, .commande-card, .admin-table{
   text-align:center;
   transition:transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
   box-shadow: 0 8px 18px rgba(0,0,0,0.35);
-  min-height:44px; /* Minimum 44px for touch targets (Apple/Android guidelines) */
+  min-height:44px; 
   min-width:44px;
-  /* Better touch interaction */
+  
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
@@ -676,19 +676,19 @@ input, textarea, .commande-card, .admin-table{
 .btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;box-shadow:none}
 .btn:focus-visible{outline:3px solid rgba(192,24,24,0.18);outline-offset:2px;border-radius:10px}
 
-/* Variants */
+
 .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff}
 .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.12)}
 .btn.ghost.inverse{background:#fff;color:var(--accent-dark);border:none}
 .btn.danger{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#fff}
 
-/* Specific container adjustments (keep previous layout for commande-actions) */
+
 .commande-actions .btn{width:100%;display:inline-flex}
 .commande-card .small-note{font-size:0.85rem;color:#bfbfbf;margin-top:8px}
 .admin-login-box input{width:100%;padding:12px;border-radius:8px;border:none;background:#0c0c0c;color:#fff;margin-bottom:10px}
 .admin-login-box button{width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;font-weight:700}
 
-/* Admin panel form fields (menus, admins, filters) */
+
 .admin-main input,
 .admin-main select,
 .admin-main textarea,
@@ -710,42 +710,40 @@ input, textarea, .commande-card, .admin-table{
 .admin-main select:focus,
 .admin-main textarea:focus{outline: none; border-color: rgba(198,40,40,0.85); box-shadow: 0 6px 18px rgba(198,40,40,0.06); background: rgba(0,0,0,0.22)}
 
-/* compact form inputs (inline form in header) -- keep smaller spacing */
+
 #menu-form input, #menu-form select { min-height:36px; padding:8px 10px }
 #menu-form input[type="number"]{ width:88px }
 #menu-form #menu-description{ min-width:220px }
 
-/* small helper for icon-only input areas */
+
 .admin-main .input-inline{display:inline-flex;align-items:center;gap:8px}
 
-/* Responsive - Tablettes (768px - 1024px) */
+
 @media (max-width:1024px){
   .admin-dashboard-wrapper{padding:16px}
   .admin-dashboard-card{max-width:98vw}
   
-  /* Larger touch targets on tablet */
+  
   .btn{min-height:48px;padding:12px 16px;font-size:1rem}
   .tab-btn-vertical{padding:14px;font-size:1rem}
   
-  /* Commande cards optimized for tablet */
+  
   .commande-card{padding:20px;grid-template-columns:1fr 200px;gap:16px}
   .commande-card .client{font-size:1.15rem}
   .commande-card .phone{font-size:1rem}
   .commande-card .product{font-size:1.05rem;padding:10px}
 }
 
-/* Tablet orientation-specific overrides */
+
 @media (max-width:1024px) and (orientation:portrait) {
 }
 @media (max-width:1024px) and (orientation:landscape) {
 }
 
-/* Responsive - Petites tablettes et mobiles (< 768px) */
-/* ============================================
-   RESPONSIVE - TABLET & MOBILE
-   ============================================ */
 
-/* Tablet (768px - 1024px) */
+
+
+
 @media (max-width: 1024px) {
   .admin-dashboard-wrapper {
     padding: 16px;
@@ -772,14 +770,14 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Hide sidebar toggle on tablet and smaller (mobile menu is used instead) */
+
 @media (max-width: 1024px) {
   .sidebar-toggle-btn {
     display: none !important;
   }
 }
 
-/* Mobile (max-width: 768px) */
+
 @media (max-width: 768px) {
   .admin-dashboard-wrapper {
     padding: 0;
@@ -794,12 +792,12 @@ input, textarea, .commande-card, .admin-table{
     box-shadow: none;
   }
 
-  /* Show mobile header */
+  
   .admin-mobile-header {
     display: flex;
   }
 
-  /* Transform sidebar into drawer */
+  
   .admin-sidebar {
     position: fixed;
     top: 0;
@@ -839,7 +837,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Small Mobile (max-width: 520px) */
+
 @media (max-width: 520px) {
   .admin-mobile-header {
     padding: 0.75rem;
@@ -892,14 +890,14 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Timer more compact */
+
 .commande-card .timer-section{
     margin-top:8px;
     padding:8px;
     font-size:0.85rem;
   }
   
-  /* Login box mobile */
+  
   .admin-login-box{
     margin:6vh auto;
     padding:20px;
@@ -907,7 +905,7 @@ input, textarea, .commande-card, .admin-table{
   }
   .admin-login-box h1{font-size:1.2rem;margin-bottom:14px}
   
-  /* Table mobile optimizations */
+  
   .admin-table tbody tr{
     padding:10px;
     margin-bottom:10px;
@@ -928,7 +926,7 @@ input, textarea, .commande-card, .admin-table{
     min-height:40px;
   }
   
-  /* Header row mobile - stack vertically if needed */
+  
   .admin-main .header-row{
     flex-direction:column;
     align-items:stretch;
@@ -938,10 +936,10 @@ input, textarea, .commande-card, .admin-table{
     width:100%;
   }
 
-/* small helpers */
+
 .hidden{display:none!important}
 
-/* Stagger reveal for cards */
+
 .commande-card{
   opacity: 0;
   transform: translateY(10px);
@@ -952,36 +950,36 @@ input, textarea, .commande-card, .admin-table{
   transform: translateY(0);
 }
 
-/* Dynamic list height for commandes - adapts to screen size */
+
 .tab-content > div[id$="-list"]{
-  max-height: calc(100vh - 220px); /* Use viewport height minus header/navigation */
-  min-height: 300px; /* Minimum height to show at least 1-2 cards */
+  max-height: calc(100vh - 220px); 
+  min-height: 300px; 
   overflow: auto;
-  padding-right: 6px; /* keep space for scrollbar */
+  padding-right: 6px; 
 }
 
-/* Large screens - show more commandes */
+
 @media (min-width: 1440px) {
   .tab-content > div[id$="-list"] {
     max-height: calc(100vh - 200px);
   }
 }
 
-/* Medium screens */
+
 @media (min-width: 1024px) and (max-width: 1440px) {
   .tab-content > div[id$="-list"] {
     max-height: calc(100vh - 240px);
   }
 }
 
-/* Tablets */
+
 @media (min-width: 768px) and (max-width: 1024px) {
   .tab-content > div[id$="-list"] {
     max-height: calc(100vh - 280px);
   }
 }
 
-/* Small screens/Mobile */
+
 @media (max-width: 768px) {
   .tab-content > div[id$="-list"] {
     max-height: calc(100vh - 300px);
@@ -989,7 +987,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Extra small screens */
+
 @media (max-width: 520px) {
   .tab-content > div[id$="-list"] { 
     max-height: calc(100vh - 320px);
@@ -997,14 +995,14 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Landscape orientation - maximize vertical space */
+
 @media (max-height: 700px) and (orientation: landscape) {
   .tab-content > div[id$="-list"] {
     max-height: calc(100vh - 180px);
   }
 }
 
-/* Custom scrollbar styles (WebKit + Firefox) for the commandes list */
+
 .tab-content > div[id$="-list"]::-webkit-scrollbar{
   width:10px;
   height:10px;
@@ -1021,7 +1019,7 @@ input, textarea, .commande-card, .admin-table{
   background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
 }
 
-/* Scrollbar styles for stats sections */
+
 .stats-products-grid::-webkit-scrollbar,
 .stats-activity-table::-webkit-scrollbar,
 .stats-customers-table::-webkit-scrollbar {
@@ -1048,7 +1046,7 @@ input, textarea, .commande-card, .admin-table{
   background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
 }
 
-/* Firefox scrollbar */
+
 .stats-products-grid,
 .stats-activity-table,
 .stats-customers-table {
@@ -1059,30 +1057,30 @@ input, textarea, .commande-card, .admin-table{
 .admin-table{width:100%;border-collapse:separate;border-spacing:0;background:transparent;color:var(--muted)}
 .admin-table thead th{color:#fff;padding:12px 14px;text-align:left;font-weight:700;font-size:0.95rem}
 .admin-table tbody td{padding:12px 14px;vertical-align:middle;border-top:1px solid rgba(255,255,255,0.02)}
-.admin-table td[data-label="Description"]{/* description column */
+.admin-table td[data-label="Description"]{
   width:36%;white-space:normal;line-height:1.3;color:var(--muted)}
-.admin-table td[data-label="Slug"]{/* slug */
+.admin-table td[data-label="Slug"]{
   width:18%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
-.admin-table td[data-label="Actions"]{/* actions */
+.admin-table td[data-label="Actions"]{
   width:86px;text-align:center}
 
-/* Make header sticky on large screens for easier scanning (stick inside scroll containers) */
+
 @media(min-width:768px){
   .admin-table thead th{position:sticky;top:0;background:var(--card);z-index:3}
 }
 
-/* Responsive: convert table to vertical list/cards on small screens */
+
 @media (max-width: 768px) {
   .admin-table{display:block}
   .admin-table thead{display:none}
   .admin-table tbody{display:block}
   .admin-table tbody tr{display:block;margin:0 0 12px;background:rgba(0,0,0,0.06);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
-  /* tighter card spacing and alignment */
+  
   .admin-table tbody tr{margin:0 0 8px;padding:8px}
   .admin-table tbody td{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-top:none;border-left:none;border-right:none}
   .admin-table tbody td + td{margin-top:6px}
   .admin-table tbody td:first-child{margin-top:0}
-  /* Label before each cell using column position (no HTML changes needed) */
+  
   .admin-table tbody td::before{content:"";display:inline-block;font-weight:700;margin-right:8px;color:var(--muted);width:42%;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .admin-table tbody td[data-label="Nom"]::before{content:"Nom"}
   .admin-table tbody td[data-label="Slug"]::before{content:"Slug"}
@@ -1094,89 +1092,86 @@ input, textarea, .commande-card, .admin-table{
   .admin-table tbody td[data-label="Visible"]::before{content:"Visible"}
   .admin-table tbody td[data-label="Actions"]::before{content:"Actions"}
 
-  /* Buttons/icons tweaks inside cards */
+  
   .admin-table .btn.small{padding:6px 8px;font-size:0.9rem;min-height:36px;border-radius:8px}
   .admin-table .btn.small svg{display:inline-block;vertical-align:middle;margin-right:6px}
   .admin-table .btn.small.danger{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#fff}
   .admin-table tbody td img{max-width:56px;height:auto;border-radius:6px}
 
-  /* Icon-only button style (circular) for delete actions */
+  
   .admin-table .btn.icon-only{padding:0;width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
   .admin-table .btn.icon-only svg{width:18px;height:18px;margin:0}
-    /* outline, more discreet delete button */
+    
     .admin-table .btn.icon-only.danger{background:transparent;color:var(--muted);border:1px solid rgba(255,80,80,0.12);box-shadow:none}
     .admin-table .btn.icon-only.danger svg{stroke: #ff8a8a}
 
-  /* Toast messages */
+  
   .toast-message{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5);font-weight:700;color:#fff}
   .toast-message .toast-icon{width:18px;height:18px;flex:0 0 18px}
   .toast-message .toast-text{line-height:1}
-  /* variants */
+  
   .toast--success{background:linear-gradient(90deg,#1db954,#20c06b);color:#04220f}
   .toast--error{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#330800}
   .toast--info{background:linear-gradient(90deg,#5b9cff,#2b6cff);color:#071233}
   .admin-table .btn.icon-only:focus-visible{outline:3px solid rgba(255,100,100,0.16);outline-offset:2px}
-  /* Style the right-hand value (actual cell content) */
+  
   .admin-table tbody td span.value{display:inline-block;width:56%;text-align:right;color:var(--muted)}
   .admin-table tbody td img{max-width:64px;height:auto;border-radius:4px}
 }
 
-/* Firefox */
+
 .tab-content > div[id$="-list"]{
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.12) transparent;
 }
 
-/* Optional subtle overlay when list is scrollable: show a faint gradient at bottom */
+
 .tab-content > div[id$="-list"]:after{
   content: '';
   pointer-events: none;
   position: absolute;
 }
 
-/* Menu table container: dynamic height based on screen size
-   - Uses CSS calc() with viewport height to show more rows on larger screens
-   - Automatically adapts to available space
-*/
+
 #menu-table-container{
-  --admin-row-height: 56px; /* approximate single row height on desktop */
-  /* Dynamic calculation: use available viewport height minus header/controls (~400px overhead) */
+  --admin-row-height: 56px; 
+  
   max-height: calc(100vh - 450px);
-  min-height: calc(var(--admin-row-height) * 3); /* minimum 3 rows */
+  min-height: calc(var(--admin-row-height) * 3); 
   overflow-y: auto;
-  padding-right: 6px; /* space for scrollbar */
+  padding-right: 6px; 
   border-radius: 8px;
 }
 
-/* Ensure rows have a minimum height so the calculation is consistent */
+
 .admin-table tbody tr{
   min-height: var(--admin-row-height);
 }
 
-/* Responsive adjustments for different screen sizes */
 
-/* Large screens (>1440px) - show more content */
+
+
 @media (min-width: 1440px) {
   #menu-table-container {
     max-height: calc(100vh - 400px);
   }
 }
 
-/* Medium to large screens (1024px - 1440px) */
+
 @media (min-width: 1024px) and (max-width: 1440px) {
   #menu-table-container {
     max-height: calc(100vh - 420px);
   }
 }
 
-/* Tablets (768px - 1024px) */
+
 @media (min-width: 768px) and (max-width: 1024px) {
   #menu-table-container {
     max-height: calc(100vh - 480px);
   }
 }
 
-/* Small screens/Mobile - cards are taller, reduce visible rows */
+
 @media (max-width: 768px) {
   #menu-table-container { 
     --admin-row-height: 110px;
@@ -1185,14 +1180,14 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Ultra-small screens */
+
 @media (max-width: 520px) {
   #menu-table-container {
     max-height: calc(100vh - 550px);
   }
 }
 
-/* Landscape orientation - maximize vertical space */
+
 @media (max-height: 700px) and (orientation: landscape) {
   #menu-table-container {
     max-height: calc(100vh - 350px);
@@ -1200,20 +1195,18 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Scrollbar styling for the menu table container */
+
 #menu-table-container::-webkit-scrollbar{ width:10px }
 #menu-table-container::-webkit-scrollbar-track{ background:transparent }
 #menu-table-container::-webkit-scrollbar-thumb{ background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border-radius:10px; border:2px solid rgba(0,0,0,0.15) }
 #menu-table-container::-webkit-scrollbar-thumb:hover{ background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08)); }
 
-/* Firefox scrollbar colors for the menu table container */
+
 #menu-table-container{ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent }
 
-/* ========================================
-   STATISTICS TAB - MODERN RESPONSIVE DESIGN
-   ======================================== */
 
-/* Stats Header */
+
+
 .stats-header {
   display: flex;
   justify-content: space-between;
@@ -1263,7 +1256,7 @@ input, textarea, .commande-card, .admin-table{
   box-shadow: 0 8px 20px rgba(74,144,226,0.3);
 }
 
-/* KPI Cards Grid */
+
 .stats-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
@@ -1354,7 +1347,7 @@ input, textarea, .commande-card, .admin-table{
   content: '↘';
 }
 
-/* Charts Grid */
+
 .stats-charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
@@ -1409,7 +1402,7 @@ input, textarea, .commande-card, .admin-table{
 
 .stats-chart-container {
   position: relative;
-  height: clamp(250px, 30vh, 400px); /* Dynamic height: min 250px, max 400px, ideal 30% viewport */
+  height: clamp(250px, 30vh, 400px); 
 }
 
 .stats-chart-doughnut {
@@ -1421,7 +1414,7 @@ input, textarea, .commande-card, .admin-table{
 }
 
 .stats-chart-doughnut canvas {
-  max-width: min(200px, 35vw); /* Responsive: smaller on narrow screens */
+  max-width: min(200px, 35vw); 
   max-height: min(200px, 35vh);
 }
 
@@ -1458,7 +1451,7 @@ input, textarea, .commande-card, .admin-table{
   color: #fff;
 }
 
-/* Products Section */
+
 .stats-products-section {
   margin-bottom: 2rem;
 }
@@ -1472,9 +1465,9 @@ input, textarea, .commande-card, .admin-table{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
   gap: 1rem;
-  max-height: clamp(450px, 45vh, 700px); /* Dynamic height for products grid */
+  max-height: clamp(450px, 45vh, 700px); 
   overflow-y: auto;
-  padding-right: 6px; /* Space for scrollbar */
+  padding-right: 6px; 
 }
 
 .stat-product-card {
@@ -1521,7 +1514,7 @@ input, textarea, .commande-card, .admin-table{
   color: var(--muted);
 }
 
-/* Activity Section */
+
 .stats-activity-section {
   margin-bottom: 2rem;
 }
@@ -1536,7 +1529,7 @@ input, textarea, .commande-card, .admin-table{
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.06);
-  max-height: clamp(400px, 40vh, 600px); /* Dynamic height for activity table */
+  max-height: clamp(400px, 40vh, 600px); 
   overflow-y: auto;
 }
 
@@ -1613,7 +1606,7 @@ input, textarea, .commande-card, .admin-table{
   font-style: italic;
 }
 
-/* Mobile Optimizations */
+
 @media (max-width: 768px) {
   .stats-header {
     flex-direction: column;
@@ -1711,7 +1704,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* ============ Alert Banners ============ */
+
 .stats-alert {
   display: flex;
   align-items: flex-start;
@@ -1775,7 +1768,7 @@ input, textarea, .commande-card, .admin-table{
   color: #0c5460;
 }
 
-/* ============ Location Stats ============ */
+
 .stats-locations-section {
   margin-top: 2rem;
 }
@@ -1891,7 +1884,7 @@ input, textarea, .commande-card, .admin-table{
   font-weight: 600;
 }
 
-/* ============ Customer Insights ============ */
+
 .stats-customers-section {
   margin-top: 2rem;
 }
@@ -1933,7 +1926,7 @@ input, textarea, .commande-card, .admin-table{
   border-radius: 10px;
   border: 1px solid var(--border-color);
   overflow: hidden;
-  max-height: clamp(400px, 40vh, 600px); /* Dynamic height for customers table */
+  max-height: clamp(400px, 40vh, 600px); 
   overflow-y: auto;
 }
 
@@ -2011,7 +2004,7 @@ input, textarea, .commande-card, .admin-table{
   text-align: right;
 }
 
-/* ============ Year-over-Year Section ============ */
+
 .stats-yoy-section {
   margin-top: 2rem;
 }
@@ -2022,7 +2015,7 @@ input, textarea, .commande-card, .admin-table{
   font-size: 1.1rem;
 }
 
-/* ============ Product Trend Modal ============ */
+
 .stats-modal {
   position: fixed;
   top: 0;
@@ -2103,10 +2096,10 @@ input, textarea, .commande-card, .admin-table{
 }
 
 .stats-modal-body canvas {
-  max-height: clamp(300px, 50vh, 600px); /* Dynamic: adapts from 300px to 600px based on viewport */
+  max-height: clamp(300px, 50vh, 600px); 
 }
 
-/* Product cards clickable styling */
+
 .stat-product-card {
   cursor: pointer;
   user-select: none;
@@ -2121,9 +2114,7 @@ input, textarea, .commande-card, .admin-table{
   transform: translateX(2px);
 }
 
-/* ============================================
-   EMAIL TEMPLATES EDITOR
-   ============================================ */
+
 .email-templates-container {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -2450,7 +2441,7 @@ input, textarea, .commande-card, .admin-table{
   color: #74b9ff;
 }
 
-/* Responsive for email templates */
+
 @media (max-width: 1024px) {
   .email-templates-container {
     grid-template-columns: 250px 1fr;
@@ -2521,9 +2512,9 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* ============ Additional Responsive Enhancements ============ */
 
-/* Ultra-wide screens (>1920px) - Better use of space */
+
+
 @media (min-width: 1920px) {
   .admin-dashboard-card {
     max-width: 1920px;
@@ -2549,7 +2540,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Large tablets and small laptops (1024px - 1440px) */
+
 @media (min-width: 1024px) and (max-width: 1440px) {
   .admin-sidebar {
     width: 240px;
@@ -2564,7 +2555,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Medium tablets (768px - 1024px) - Optimize for touch */
+
 @media (min-width: 768px) and (max-width: 1024px) {
   .stats-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -2579,7 +2570,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Small tablets (520px - 768px) - Balanced layout */
+
 @media (min-width: 520px) and (max-width: 768px) {
   .stats-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -2601,7 +2592,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Container queries support (if available) */
+
 @supports (container-type: inline-size) {
   .admin-main {
     container-type: inline-size;
@@ -2627,7 +2618,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Landscape orientation optimization */
+
 @media (max-width: 1024px) and (orientation: landscape) and (max-height: 600px) {
   .admin-sidebar {
     width: 220px;
@@ -2655,7 +2646,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* High DPI screens - Improve text rendering */
+
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   body.admin-bg {
     -webkit-font-smoothing: antialiased;
@@ -2664,7 +2655,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Reduce motion for accessibility */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -2680,7 +2671,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Dark mode support (if system preferences change) */
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0a0b0c;
@@ -2689,7 +2680,7 @@ input, textarea, .commande-card, .admin-table{
   }
 }
 
-/* Print styles */
+
 @media print {
   .admin-sidebar,
   .admin-mobile-header,

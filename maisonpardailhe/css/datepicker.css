@@ -1,4 +1,4 @@
-/* Minimal datepicker styles for Click & Collect */
+
 .mp-datepicker {
   position: absolute;
   background: #111;
@@ -29,7 +29,7 @@
   border-radius:4px;
   background: transparent;
   color: #ddd;
-  cursor: default; /* title is not interactive */
+  cursor: default; 
 }
 .mp-datepicker .mp-title:hover { background: transparent; }
 .mp-datepicker .mp-grid { display:grid; grid-template-columns: repeat(7, 1fr); gap:4px }
@@ -41,7 +41,7 @@
 .mp-datepicker .mp-day.selected { background:#c62828;color:#fff }
 .mp-datepicker .mp-footer { margin-top:6px;text-align:right }
 .mp-datepicker .mp-footer button { background:transparent;border:0;color:#ddd;cursor:pointer }
-/* chooser styles */
+
 .mp-chooser { display:flex; gap:6px; align-items:center; }
 .mp-chooser select { background:transparent; color:#ddd; border:1px solid rgba(255,255,255,0.06); padding:4px; border-radius:4px }
 .mp-chooser button.mp-go { background:#c62828; color:#fff; border:0; padding:4px 8px; border-radius:4px; cursor:pointer }

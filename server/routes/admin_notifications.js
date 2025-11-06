@@ -23,7 +23,6 @@ async function saveNotifications(list) {
   await fs.writeFile(NOTIF_FILE, JSON.stringify(list, null, 2), 'utf8');
 }
 
-// GET /api/admin/notifications - list (protected)
 router.get('/', auth, async (req, res, next) => {
   try {
     const list = await loadNotifications();
@@ -31,7 +30,6 @@ router.get('/', auth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// PUT /api/admin/notifications/:id/read - mark read
 router.put('/:id/read', auth, async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -47,7 +45,6 @@ router.put('/:id/read', auth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// DELETE /api/admin/notifications/:id - remove
 router.delete('/:id', auth, async (req, res, next) => {
   try {
     const id = req.params.id;

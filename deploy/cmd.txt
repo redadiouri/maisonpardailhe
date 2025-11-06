@@ -1,1 +1,1 @@
-pwsh ./deploy/build-and-push.ps1 -Username mehdimp4 -Repo maisonpardailhe-server -Tag v1.0.0 -ContextPath server
+pwsh ./deploy/build-and-push.ps1 -Username mehdimp4 -Repo maisonpardailhe-server -Tag v1.0.2 -ContextPath server

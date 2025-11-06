@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// Seed script to insert menu items into stock table idempotently.
-// Usage: node server/scripts/seed_stock.js
 
 const Stock = require('../models/stock');
-// db not required here; Stock model manages DB interactions
 
 const ITEMS = [
   { name: "Pâté en croûte Maison", reference: 'PATE-CROUTE', quantity: 20, image_url: '', available: true },
@@ -23,13 +20,11 @@ const ITEMS = [
 async function upsertItem(item) {
   const existing = await Stock.getByReference(item.reference);
   if (existing) {
-    // update quantity and availability, but don't overwrite name if it's present
-    const update = {
+        const update = {
       quantity: item.quantity,
       available: item.available,
     };
-    // set name if existing name is empty
-    if (!existing.name && item.name) update.name = item.name;
+        if (!existing.name && item.name) update.name = item.name;
     await Stock.update(existing.id, update);
     return { action: 'updated', id: existing.id };
   } else {

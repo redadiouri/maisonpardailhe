@@ -1,21 +1,9 @@
-/**
- * WebP Helper - Utilitaire pour charger automatiquement les images WebP
- * avec fallback PNG/JPEG pour les navigateurs non compatibles
- * 
- * Usage:
- *   <picture>
- *     <source srcset="img/optimized/logo.webp" type="image/webp">
- *     <img src="img/logo.png" alt="Logo" loading="lazy">
- *   </picture>
- * 
- * OU utiliser le helper automatique qui convertit les <img> en <picture>
- */
+
 
 (function() {
   'use strict';
 
-  // Détection du support WebP
-  function checkWebPSupport() {
+    function checkWebPSupport() {
     return new Promise((resolve) => {
       const webp = new Image();
       webp.onload = webp.onerror = () => resolve(webp.height === 2);
@@ -23,8 +11,7 @@
     });
   }
 
-  // Convertir automatiquement les images avec attribut data-webp
-  async function convertImagesToWebP() {
+    async function convertImagesToWebP() {
     const supportsWebP = await checkWebPSupport();
     if (!supportsWebP) return;
 
@@ -47,8 +34,7 @@
     });
   }
 
-  // Auto-exécution au chargement du DOM
-  if (document.readyState === 'loading') {
+    if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', convertImagesToWebP);
   } else {
     convertImagesToWebP();

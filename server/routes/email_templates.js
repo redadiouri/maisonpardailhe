@@ -28,7 +28,6 @@ const TEMPLATE_INFO = {
   }
 };
 
-// Liste tous les templates
 router.get('/', async (req, res) => {
   try {
     const files = await fs.readdir(TEMPLATES_DIR);
@@ -46,12 +45,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Récupère un template spécifique
 router.get('/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     
-    // Validation du nom de fichier (sécurité)
     if (!filename.endsWith('.html') || filename.includes('..') || filename.includes('/')) {
       return res.status(400).json({ error: 'Nom de fichier invalide' });
     }
@@ -73,13 +70,11 @@ router.get('/:filename', async (req, res) => {
   }
 });
 
-// Met à jour un template
 router.put('/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     const { content } = req.body;
 
-    // Validation
     if (!filename.endsWith('.html') || filename.includes('..') || filename.includes('/')) {
       return res.status(400).json({ error: 'Nom de fichier invalide' });
     }
@@ -88,7 +83,6 @@ router.put('/:filename', async (req, res) => {
       return res.status(400).json({ error: 'Contenu invalide' });
     }
 
-    // Sauvegarde de backup avant modification
     const filePath = path.join(TEMPLATES_DIR, filename);
     const backupPath = path.join(TEMPLATES_DIR, `${filename}.backup`);
     
@@ -99,7 +93,6 @@ router.put('/:filename', async (req, res) => {
       req.log.warn({ err }, 'Could not create backup');
     }
 
-    // Écriture du nouveau contenu
     await fs.writeFile(filePath, content, 'utf8');
     
     req.log.info({ filename }, 'Email template updated');

@@ -4,8 +4,7 @@ const { sendCommandeEmail } = require('../utils/email');
 
 const Commande = {
   create: async (data) => {
-    // Ensure date_retrait is normalized to YYYY-MM-DD when possible
-    const date_retrait = (data && data.date_retrait) ? String(data.date_retrait) : null;
+        const date_retrait = (data && data.date_retrait) ? String(data.date_retrait) : null;
     const { normalizeToYMD } = require('../utils/dates');
     const dateYMD = normalizeToYMD(date_retrait) || date_retrait;
     const [result] = await db.execute(
@@ -26,8 +25,7 @@ const Commande = {
       `UPDATE commandes SET statut = ?, raison_refus = ? WHERE id = ?`,
       [statut, raison_refus, id]
     );
-    // If the update succeeded, attempt to notify the customer depending on status
-    try {
+        try {
       if (result.affectedRows > 0) {
         const commande = await (async () => {
           const [rows] = await db.execute(`SELECT * FROM commandes WHERE id = ?`, [id]);
@@ -35,16 +33,14 @@ const Commande = {
         })();
         if (commande) {
           if (statut === 'en_cours') {
-            // Order is now in processing
-            try { await sendCommandeEmail('acceptation', commande); } catch (e) { logger.error('Failed to send acceptation email for commande %s: %o', id, e && (e.stack || e)); }
+                        try { await sendCommandeEmail('acceptation', commande); } catch (e) { logger.error('Failed to send acceptation email for commande %s: %o', id, e && (e.stack || e)); }
           } else if (statut === 'refusée') {
             try { await sendCommandeEmail('refus', commande, { raison: raison_refus }); } catch (e) { logger.error('Failed to send refusal email for commande %s: %o', id, e && (e.stack || e)); }
           }
         }
       }
     } catch (e) {
-      // Non-fatal: log and continue
-      logger.error('Error while attempting to notify customer for commande %s: %o', id, e && (e.stack || e));
+            logger.error('Error while attempting to notify customer for commande %s: %o', id, e && (e.stack || e));
     }
     return result.affectedRows;
   },

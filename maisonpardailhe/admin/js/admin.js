@@ -1,9 +1,5 @@
-// Simple JS pour login et dashboard admin
-// Use a relative API base so the admin UI works behind proxies / in production
-// (was hardcoded to http://localhost:3001 previously which breaks non-local deployments)
 const apiBase = '/api/admin';
 
-// CSRF token helper: fetches and caches token from server (session-based csurf)
 async function getCsrfToken() {
   try {
     if (window._csrfToken) return window._csrfToken;
@@ -17,14 +13,10 @@ async function getCsrfToken() {
   }
 }
 
-// Preload menus into a cache for name lookup when rendering commandes
 async function preloadMenus() {
   try {
     if (window._menusCache) return window._menusCache;
-      // For the admin UI, request the admin endpoint so we receive all menus
-      // (visible and hidden). The public `/api/menus` only returns visible items
-      // which breaks name lookup for commands referencing hidden items.
-      const res = await fetch('/api/admin/menus', { credentials: 'include' });
+                        const res = await fetch('/api/admin/menus', { credentials: 'include' });
     if (!res.ok) return window._menusCache = new Map();
     const menus = await res.json();
     const map = new Map();
@@ -56,22 +48,17 @@ function renderProduitHtml(rawProduit) {
       return `<div class="product-list">${parts.join('<br>')}</div>`;
     }
   } catch (e) {
-    // not JSON – fall through
-  }
-  // fallback: return raw string escaped simply
-  return `<div class="product-list">${String(rawProduit)}</div>`;
+      }
+    return `<div class="product-list">${String(rawProduit)}</div>`;
 }
 
-// Login
 if (document.getElementById('loginForm')) {
-  // Afficher/masquer le mot de passe (avec icônes SVG)
-  const pwdInput = document.getElementById('loginPassword');
+    const pwdInput = document.getElementById('loginPassword');
   const togglePwd = document.getElementById('togglePwd');
   const eyeOpenSVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7z" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const eyeSlashSVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l20 20" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.58 10.58a3 3 0 004.24 4.24" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 5c-1.73 0-3.33.35-4.78.98" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12c-1.73 3.89-6 7-11 7-1.25 0-2.45-.18-3.58-.52" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   if (togglePwd && pwdInput) {
-    // initial icon
-    togglePwd.innerHTML = eyeOpenSVG;
+        togglePwd.innerHTML = eyeOpenSVG;
     togglePwd.onclick = () => {
       const isPassword = pwdInput.type === 'password';
       pwdInput.type = isPassword ? 'text' : 'password';
@@ -114,18 +101,15 @@ if (document.getElementById('loginForm')) {
   });
 }
 
-// Stats refresh interval handle (set when stats tab is active)
 let statsIntervalId = null;
 let ordersChart = null;
 let statusChart = null;
 let adminLastStats = null;
 
-// Animation shake pour erreur
 const style = document.createElement('style');
 style.innerHTML = `@keyframes shake { 0%{transform:translateX(0);} 25%{transform:translateX(-5px);} 50%{transform:translateX(5px);} 75%{transform:translateX(-5px);} 100%{transform:translateX(0);} }`;
 document.head.appendChild(style);
 
-// countdown and badge styles
 const cdStyle = document.createElement('style');
 cdStyle.innerHTML = `
 .countdown { font-weight:700; }
@@ -137,7 +121,6 @@ cdStyle.innerHTML = `
 `;
 document.head.appendChild(cdStyle);
 
-// cell edit styles (badge / spinner / success / rollback / modified)
 const cellEditStyle = document.createElement('style');
 cellEditStyle.innerHTML = `
 .cell-badge { display:inline-block; margin-left:8px; padding:2px 6px; border-radius:10px; font-size:0.75rem; background:#eee; color:#333; }
@@ -153,7 +136,6 @@ cellEditStyle.innerHTML = `
 `;
 document.head.appendChild(cellEditStyle);
 
-// Debug helper: use console.debug when ADMIN_DEBUG is enabled
 function adminDebug(...args) {
   try {
     const enabledGlobal = (typeof window !== 'undefined' && window.ADMIN_DEBUG === true);
@@ -162,14 +144,12 @@ function adminDebug(...args) {
       if (console && typeof console.debug === 'function') console.debug(...args);
       else if (console && typeof console.log === 'function') console.log(...args);
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {  }
 }
 
-// Simple confirm modal helper. Returns a Promise<boolean>.
 function showConfirmModal(title, message) {
   return new Promise((resolve) => {
-    // create overlay
-    let overlay = document.getElementById('confirm-modal-overlay');
+        let overlay = document.getElementById('confirm-modal-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'confirm-modal-overlay';
@@ -204,11 +184,9 @@ function showConfirmModal(title, message) {
 
       cancelBtn.addEventListener('click', () => { overlay.remove(); resolve(false); });
       okBtn.addEventListener('click', () => { overlay.remove(); resolve(true); });
-      // close on overlay click outside box
-      overlay.addEventListener('click', (ev) => { if (ev.target === overlay) { overlay.remove(); resolve(false); } });
+            overlay.addEventListener('click', (ev) => { if (ev.target === overlay) { overlay.remove(); resolve(false); } });
     } else {
-      // overlay exists: reuse
-      const ok = overlay.querySelector('.btn.primary');
+            const ok = overlay.querySelector('.btn.primary');
       const cancel = overlay.querySelector('.btn.ghost');
       overlay.querySelector('h3').textContent = title || 'Confirmer';
       overlay.querySelector('p').textContent = message || '';
@@ -220,7 +198,6 @@ function showConfirmModal(title, message) {
   });
 }
 
-// Prompt-like modal to collect a short text reason from the admin. Returns Promise<string|null>
 function showReasonModal(title, message, placeholder) {
   return new Promise((resolve) => {
     let overlay = document.getElementById('reason-modal-overlay');
@@ -264,8 +241,7 @@ function showReasonModal(title, message, placeholder) {
       cancelBtn.addEventListener('click', () => { overlay.remove(); resolve(null); });
       okBtn.addEventListener('click', () => { const v = (ta.value || '').trim(); overlay.remove(); resolve(v || null); });
       overlay.addEventListener('click', (ev) => { if (ev.target === overlay) { overlay.remove(); resolve(null); } });
-      // focus textarea
-      setTimeout(()=>{ try{ ta.focus(); }catch(e){} }, 10);
+            setTimeout(()=>{ try{ ta.focus(); }catch(e){} }, 10);
     } else {
       const ta = overlay.querySelector('textarea');
       overlay.querySelector('h3').textContent = title || 'Raison du refus';
@@ -282,7 +258,6 @@ function showReasonModal(title, message, placeholder) {
   });
 }
 
-// Simple informational modal to display HTML content (read-only). Returns Promise<void> when closed.
 function showInfoModal(title, htmlContent) {
   return new Promise((resolve) => {
     let overlay = document.getElementById('info-modal-overlay');
@@ -322,8 +297,7 @@ function showInfoModal(title, htmlContent) {
 
       closeBtn.addEventListener('click', () => { overlay.remove(); resolve(); });
       overlay.addEventListener('click', (ev) => { if (ev.target === overlay) { overlay.remove(); resolve(); } });
-      // set html content
-      content.innerHTML = htmlContent || '';
+            content.innerHTML = htmlContent || '';
     } else {
       overlay.querySelector('h3').textContent = title || '';
       overlay.querySelector('.info-modal-content').innerHTML = htmlContent || '';
@@ -332,7 +306,6 @@ function showInfoModal(title, htmlContent) {
   });
 }
 
-// Simple alert modal (OK) that mimics a blocking alert but non-blocking in async code.
 function showAlertModal(title, message) {
   return new Promise((resolve) => {
     const html = `<div style="padding:12px 0;">${String(message || '')}</div>`;
@@ -340,12 +313,10 @@ function showAlertModal(title, message) {
   });
 }
 
-// Small toast helper
 function showToast(message, options = {}) {
   try {
     const duration = options.duration || 3000;
-    const type = options.type || 'success'; // 'success' | 'error' | 'info'
-    let container = document.getElementById('toast-container');
+    const type = options.type || 'success';     let container = document.getElementById('toast-container');
     if (!container) {
       container = document.createElement('div');
       container.id = 'toast-container';
@@ -365,8 +336,7 @@ function showToast(message, options = {}) {
     toast.style.transform = 'translateY(8px)';
     toast.style.transition = 'opacity 240ms ease, transform 240ms ease';
 
-    // choose icon
-    let icon = '';
+        let icon = '';
     if (type === 'success') {
       icon = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     } else if (type === 'error') {
@@ -378,8 +348,7 @@ function showToast(message, options = {}) {
     toast.innerHTML = icon + '<div class="toast-text">' + String(message) + '</div>';
     container.appendChild(toast);
 
-    // show
-    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
       toast.style.opacity = '1';
       toast.style.transform = 'translateY(0)';
     });
@@ -389,29 +358,24 @@ function showToast(message, options = {}) {
       toast.style.transform = 'translateY(8px)';
       setTimeout(() => { try { toast.remove(); } catch (e) {} }, 260);
     }, duration);
-  } catch (e) { /* ignore */ }
+  } catch (e) {  }
 }
 
-// Dashboard
 if (document.getElementById('logoutBtn')) {
-  // fetch current admin info and hide admin-management tab for non-primary users
-  (async function loadCurrentAdmin() {
+    (async function loadCurrentAdmin() {
     try {
       const res = await fetch(apiBase + '/me', { credentials: 'include' });
       if (!res.ok) return;
       const current = await res.json();
       window._currentAdmin = current;
-      // hide admin management tab if not primary
-      if (!current || String(current.username).toLowerCase() !== 'admin') {
+            if (!current || String(current.username).toLowerCase() !== 'admin') {
         const adminBtn = document.querySelector('.tab-btn-vertical[data-tab="admins"]');
         if (adminBtn) adminBtn.style.display = 'none';
       }
-      // hide menus tab if current admin cannot edit menus
-      if (!current || !current.can_edit_menus) {
+            if (!current || !current.can_edit_menus) {
         const menuBtn = document.querySelector('.tab-btn-vertical[data-tab="menus"]');
         if (menuBtn) menuBtn.style.display = 'none';
-        // add a notice inside the menus tab explaining why it's hidden
-        try {
+                try {
           const tabMenus = document.getElementById('tab-menus');
           if (tabMenus) {
             const banner = document.createElement('div');
@@ -424,8 +388,7 @@ if (document.getElementById('logoutBtn')) {
             banner.style.fontWeight = '600';
             banner.textContent = "Vous n\'avez pas la permission de modifier les menus. Contactez l'administrateur principal pour obtenir l'accès.";
             tabMenus.insertBefore(banner, tabMenus.firstChild);
-            // also disable the add form if present
-            const form = document.getElementById('menu-form');
+                        const form = document.getElementById('menu-form');
             if (form) {
               Array.from(form.elements || []).forEach(el => el.disabled = true);
               const addBtn = form.querySelector('button[type="submit"]');
@@ -433,35 +396,26 @@ if (document.getElementById('logoutBtn')) {
             }
           }
         } catch (e) {}
-        // if saved active tab is menus or admins, clear it so restoreActiveTab won't reactivate a hidden tab
-        try {
+                try {
           const saved = localStorage.getItem('admin.activeTab');
           if (saved === 'menus' || saved === 'admins') localStorage.removeItem('admin.activeTab');
         } catch (e) {}
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {  }
   })();
 
-  // Also perform an initial background refresh of stats so the data is available
-  // immediately when the dashboard loads (useful if admin doesn't click the tab).
-  // We call loadStats() once here; the periodic refresh is still started only
-  // when the stats tab is explicitly activated (see tab activation code).
-  try {
+          try {
     if (typeof loadStats === 'function') {
-      // fire-and-forget; failures are handled inside loadStats
-      loadStats().catch(() => {});
+            loadStats().catch(() => {});
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {  }
   document.getElementById('logoutBtn').onclick = async () => {
     const _csrf = await getCsrfToken();
     await fetch(apiBase + '/logout', { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
     window.location.href = '/admin/login';
   };
 
-  // ============================================
-  // Mobile Menu Toggle
-  // ============================================
-  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
   const mobileLogout = document.getElementById('mobile-logout');
   const sidebar = document.getElementById('admin-sidebar');
   const overlay = document.getElementById('sidebar-overlay');
@@ -493,13 +447,9 @@ if (document.getElementById('logoutBtn')) {
     overlay.addEventListener('click', closeMobileMenu);
   }
 
-  // ============================================
-  // Desktop Sidebar Toggle (Collapsible)
-  // ============================================
-  const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle');
   
-  // Load sidebar state from localStorage
-  const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
   if (sidebarCollapsed && sidebar) {
     sidebar.classList.add('collapsed');
   }
@@ -511,15 +461,13 @@ if (document.getElementById('logoutBtn')) {
         const isCollapsed = sidebar.classList.contains('collapsed');
         localStorage.setItem('sidebarCollapsed', isCollapsed);
         
-        // Update button title
-        sidebarToggleBtn.setAttribute('title', isCollapsed ? 'Développer le menu' : 'Réduire le menu');
+                sidebarToggleBtn.setAttribute('title', isCollapsed ? 'Développer le menu' : 'Réduire le menu');
         sidebarToggleBtn.setAttribute('aria-label', isCollapsed ? 'Développer le menu' : 'Réduire le menu');
       }
     });
   }
   
-  // Add tooltip data attributes to tabs for collapsed state
-  const tabButtons = document.querySelectorAll('.tab-btn-vertical');
+    const tabButtons = document.querySelectorAll('.tab-btn-vertical');
   tabButtons.forEach(btn => {
     const label = btn.querySelector('.tab-label');
     if (label) {
@@ -538,18 +486,13 @@ if (document.getElementById('logoutBtn')) {
     });
   }
 
-  // ============================================
-  // Tabs
-  // ============================================
-  document.querySelectorAll('.tab-btn-vertical').forEach(btn => {
+        document.querySelectorAll('.tab-btn-vertical').forEach(btn => {
     btn.onclick = () => {
       const tabName = btn.dataset.tab;
       
-      // Close mobile menu after tab selection
-      closeMobileMenu();
+            closeMobileMenu();
       
-      // activation helper
-      const activate = (name) => {
+            const activate = (name) => {
         document.querySelectorAll('.tab-btn-vertical').forEach(b => {
           b.classList.remove('active');
           b.setAttribute('aria-selected', 'false');
@@ -568,39 +511,33 @@ if (document.getElementById('logoutBtn')) {
           animateCards(listId);
         }, 80);
         try { localStorage.setItem('admin.activeTab', name); } catch (e) {}
-        // If the stockage, menus or stats tab is activated, load the corresponding data
-        try {
+                try {
           if (name === 'stockage' && typeof loadStock === 'function') loadStock();
           if (name === 'menus' && typeof loadMenus === 'function') loadMenus();
           if (name === 'admins' && typeof loadAdmins === 'function') loadAdmins();
           if (name === 'notifications' && typeof loadNotifications === 'function') loadNotifications();
           if (name === 'emails' && typeof initEmailTemplatesTab === 'function') {
-            // Initialize email templates tab (loads templates on first activation)
-            const emailsTab = document.querySelector('[data-tab="emails"]');
+                        const emailsTab = document.querySelector('[data-tab="emails"]');
             if (emailsTab && emailsTab._emailsInitialized !== true) {
               initEmailTemplatesTab();
               emailsTab._emailsInitialized = true;
             }
           }
           if (name === 'stats' && typeof loadStats === 'function') {
-            // Initialize stats controls (period selector)
-            if (typeof initStatsControls === 'function') initStatsControls();
-            // start immediate load and refresh while stats tab is visible
-            loadStats();
+                        if (typeof initStatsControls === 'function') initStatsControls();
+                        loadStats();
             if (statsIntervalId) clearInterval(statsIntervalId);
             statsIntervalId = setInterval(loadStats, 60 * 1000);
           } else {
             if (statsIntervalId) { clearInterval(statsIntervalId); statsIntervalId = null; }
           }
-          // if leaving admins tab, nothing special to stop
-        } catch (e) { /* ignore */ }
+                  } catch (e) {  }
       };
       activate(tabName);
     };
   });
 
-  // Restore last active tab from localStorage (keeps dashboard on same tab after reload)
-  (function restoreActiveTab() {
+    (function restoreActiveTab() {
     try {
       const saved = localStorage.getItem('admin.activeTab');
       if (saved) {
@@ -611,13 +548,11 @@ if (document.getElementById('logoutBtn')) {
         }
       }
     } catch (e) {}
-    // fallback: ensure default first tab is active
-    const first = document.querySelector('.tab-btn-vertical');
+        const first = document.querySelector('.tab-btn-vertical');
     if (first) first.click();
   })();
 
-  // Inline editing for menus: double-click to edit cells in-place, commit on Enter/blur, cancel on Escape.
-  (function wireMenusInline(){
+    (function wireMenusInline(){
     const PENDING = new Map();
     const DEBOUNCE_MS = 1200;
     const SUCCESS_MS = 1000;
@@ -636,8 +571,7 @@ if (document.getElementById('logoutBtn')) {
     }
 
     document.addEventListener('dblclick', (e) => {
-      // block inline editing when user lacks permission
-      if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) {
+            if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) {
         try { showToast("Permission refusée: vous ne pouvez pas modifier les menus.", { type: 'error', duration: 2500 }); } catch (e) {}
         return;
       }
@@ -678,23 +612,19 @@ if (document.getElementById('logoutBtn')) {
         else if (field === 'price_cents') newVal = Math.round((Number(input.value) || 0) * 100);
         else newVal = String(input.value || '').trim();
 
-        // simple validation
-  if (field === 'name' && !newVal) { showAlertModal('Validation', 'Le nom ne peut pas être vide.'); input.focus(); return; }
+          if (field === 'name' && !newVal) { showAlertModal('Validation', 'Le nom ne peut pas être vide.'); input.focus(); return; }
   if (field === 'price_cents' && newVal < 0) { showAlertModal('Validation', 'Prix invalide'); input.focus(); return; }
 
-        // unchanged
-        if (String(newVal) === String(item[field] ?? '')) { cancel(); return; }
+                if (String(newVal) === String(item[field] ?? '')) { cancel(); return; }
 
         const key = `${id}:${field}`;
         const origValue = item[field];
         const origText = original;
 
-        // optimistic update
-        item[field] = newVal;
+                item[field] = newVal;
         window._adminMenuItems = (window._adminMenuItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
         td.removeAttribute('data-editing');
-        // display value (format price)
-        if (field === 'price_cents') td.textContent = (item.is_quote ? 'Sur devis' : ((Number(item.price_cents||0)/100).toFixed(2)+'€'));
+                if (field === 'price_cents') td.textContent = (item.is_quote ? 'Sur devis' : ((Number(item.price_cents||0)/100).toFixed(2)+'€'));
         else if (field === 'available' || field === 'visible_on_menu' || field === 'is_quote') td.textContent = item[field] ? 'Oui' : 'Non';
         else td.textContent = String(item[field]);
 
@@ -721,15 +651,13 @@ if (document.getElementById('logoutBtn')) {
             const _csrf = await getCsrfToken();
             const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, credentials:'include', body: JSON.stringify(body) });
             if (!res.ok) throw new Error('save-failed');
-            // success
-            if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+                        if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
             const success = document.createElement('span'); success.className = 'cell-success'; success.textContent = '✔'; td.appendChild(success);
             delete td.dataset.scheduled; PENDING.delete(key);
             if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
             setTimeout(()=>{ if (success && success.parentNode) success.parentNode.removeChild(success); }, SUCCESS_MS);
           } catch (err) {
-            // rollback
-            item[field] = origValue; window._adminMenuItems = (window._adminMenuItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
+                        item[field] = origValue; window._adminMenuItems = (window._adminMenuItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
             if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
             delete td.dataset.scheduled; td.textContent = origText; td.classList.add('cell-rollback'); setTimeout(()=> td.classList.remove('cell-rollback'), 700);
             PENDING.delete(key);
@@ -747,8 +675,7 @@ if (document.getElementById('logoutBtn')) {
     });
   })();
 
-  // Menus management (admin)
-  async function loadMenus() {
+    async function loadMenus() {
     const container = document.querySelector('#tab-menus');
     if (!container) return;
     const tbody = document.querySelector('#menu-table tbody');
@@ -763,8 +690,7 @@ if (document.getElementById('logoutBtn')) {
     }
   }
 
-  // Admins management
-  async function loadAdmins() {
+    async function loadAdmins() {
     const container = document.querySelector('#tab-admins');
     if (!container) return;
     const tbody = document.querySelector('#admin-table tbody');
@@ -779,8 +705,7 @@ if (document.getElementById('logoutBtn')) {
     }
   }
 
-  // Notifications (admin)
-  async function loadNotifications() {
+    async function loadNotifications() {
     const container = document.querySelector('#tab-notifications');
     if (!container) return;
     const listEl = document.getElementById('notifications-list');
@@ -792,8 +717,7 @@ if (document.getElementById('logoutBtn')) {
       if (!res.ok) throw new Error('Failed');
       const items = await res.json();
       renderNotificationsList(items);
-      // update badge count for unread
-      const unread = (items || []).filter(i => !i.read).length;
+            const unread = (items || []).filter(i => !i.read).length;
       const badge = document.getElementById('badge-notifs');
       if (badge) badge.textContent = unread ? String(unread) : '';
     } catch (e) {
@@ -847,8 +771,7 @@ if (document.getElementById('logoutBtn')) {
     listEl.appendChild(ul);
   }
 
-  // small escaping helpers
-  function escapeHtml(s) { if (s === undefined || s === null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+    function escapeHtml(s) { if (s === undefined || s === null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function escapeAttr(s) { return (s === undefined || s === null) ? '' : String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 
@@ -873,7 +796,7 @@ if (document.getElementById('logoutBtn')) {
     });
   }
 
-  // wire admin create form
+  
   (function wireAdminUI(){
     const form = document.getElementById('admin-create-form');
     const refresh = document.getElementById('admin-refresh');
@@ -932,7 +855,6 @@ if (document.getElementById('logoutBtn')) {
   <td data-label="Disponible" data-field="available"><span class="value">${it.available ? 'Oui' : 'Non'}</span></td>
   <td data-label="Visible" data-field="visible_on_menu"><span class="value">${it.visible_on_menu ? 'Oui' : 'Non'}</span></td>
         <td data-label="Actions">
-          <!-- Edit removed: inline editing available via double-click. Delete is icon-only for compactness -->
           <button class="btn small icon-only danger" data-action="delete-menu" data-id="${it.id}" title="Supprimer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11v6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -942,8 +864,7 @@ if (document.getElementById('logoutBtn')) {
     });
   }
 
-  // wire menu form and actions
-  (function wireMenuUI(){
+    (function wireMenuUI(){
     const form = document.getElementById('menu-form');
     const search = document.getElementById('menu-search');
     const refresh = document.getElementById('menu-refresh');
@@ -962,8 +883,7 @@ if (document.getElementById('logoutBtn')) {
   if (!name) { showAlertModal('Validation', 'Nom requis'); return; }
   if (price < 0) { showAlertModal('Validation', 'Prix invalide'); return; }
         try {
-          // Do not send `slug` — server generates it automatically from `name`.
-          const body = { name, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
+                    const body = { name, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
           const _csrf = await getCsrfToken();
           const res = await fetch(apiBase + '/menus', { method: 'POST', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify(body), credentials:'include' });
           if (!res.ok) throw new Error('err');
@@ -987,8 +907,7 @@ if (document.getElementById('logoutBtn')) {
       const id = btn.dataset.id;
   if (action === 'delete-menu') {
   if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { showAlertModal('Permission', 'Permission refusée'); return; }
-        // show a nicer confirmation modal
-        const confirmed = await showConfirmModal('Supprimer ce menu ?', 'Cette action supprimera définitivement ce menu. Voulez-vous continuer ?');
+                const confirmed = await showConfirmModal('Supprimer ce menu ?', 'Cette action supprimera définitivement ce menu. Voulez-vous continuer ?');
         if (!confirmed) return;
         try {
           const _csrf = await getCsrfToken();
@@ -998,10 +917,8 @@ if (document.getElementById('logoutBtn')) {
           showToast('Menu supprimé', { duration: 3000 });
   } catch (e) { showAlertModal('Erreur', 'Erreur suppression'); }
       }
-      // toggle admin permission
-      if (action === 'toggle-perm') {
-        const checkbox = btn; // input element
-        const newVal = !!checkbox.checked;
+            if (action === 'toggle-perm') {
+        const checkbox = btn;         const newVal = !!checkbox.checked;
         try {
           const _csrf = await getCsrfToken();
           const res = await fetch(apiBase + '/admins/' + id, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' }, body: JSON.stringify({ can_edit_menus: newVal }) });
@@ -1009,13 +926,11 @@ if (document.getElementById('logoutBtn')) {
           showToast('Permission mise à jour', { duration: 2000 });
         } catch (e) {
           showAlertModal('Erreur', 'Erreur lors de la mise à jour des permissions');
-          // revert checkbox
-          checkbox.checked = !newVal;
+                    checkbox.checked = !newVal;
         }
       }
 
-      // delete admin
-      if (action === 'delete-admin') {
+            if (action === 'delete-admin') {
         const confirmed = await showConfirmModal('Supprimer cet administrateur ?', 'Cette action supprimera définitivement le compte administrateur. Voulez-vous continuer ?');
         if (!confirmed) return;
         try {
@@ -1033,8 +948,7 @@ if (document.getElementById('logoutBtn')) {
       }
   if (action === 'edit') {
   if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { showAlertModal('Permission', 'Permission refusée'); return; }
-        // simple inline edit: load item values into the form for editing -> on submit we'll perform create; editing not fully implemented here (could open modal)
-        const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
+                const item = (window._adminMenuItems||[]).find(x=>String(x.id)===String(id));
         if (!item) return;
   document.getElementById('menu-name').value = item.name || '';
   if (document.getElementById('menu-description')) document.getElementById('menu-description').value = item.description || '';
@@ -1043,10 +957,8 @@ if (document.getElementById('logoutBtn')) {
   document.getElementById('menu-is-quote').checked = !!item.is_quote;
   if (document.getElementById('menu-available')) document.getElementById('menu-available').checked = !!item.available;
   document.getElementById('menu-visible').checked = !!item.visible_on_menu;
-        // change form submit to perform update
-        form.dataset.editingId = id;
-        // replace submit handler to call PUT when editing
-        const submitHandler = async (ev) => {
+                form.dataset.editingId = id;
+                const submitHandler = async (ev) => {
           ev.preventDefault();
           const name = document.getElementById('menu-name').value.trim();
           const description = (document.getElementById('menu-description') && document.getElementById('menu-description').value.trim()) || '';
@@ -1056,8 +968,7 @@ if (document.getElementById('logoutBtn')) {
           const visible_on_menu = !!document.getElementById('menu-visible').checked;
           const available = !!document.getElementById('menu-available').checked;
           try {
-            // Do not include slug: server regenerates slug from name on update.
-            const body = { name, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
+                        const body = { name, description, price_cents: Math.round(price*100), is_quote, stock, visible_on_menu, available };
             const _csrf = await getCsrfToken();
             const res = await fetch(apiBase + '/menus/' + id, { method: 'PUT', headers: {'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify(body), credentials:'include' });
             if (!res.ok) throw new Error('err');
@@ -1072,18 +983,15 @@ if (document.getElementById('logoutBtn')) {
     });
   })();
 
-  // Helper function to format dates
-  function formatDateISO(d) {
+    function formatDateISO(d) {
     if (!d) return '-';
-    // ISO YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
       const dt = new Date(d + 'T00:00:00');
       if (!isNaN(dt.getTime())) {
         return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
       }
     }
-    // French DD/MM/YYYY
-    const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(d);
+        const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(d);
     if (fr) {
       const day = Number(fr[1]);
       const month = Number(fr[2]) - 1;
@@ -1093,37 +1001,30 @@ if (document.getElementById('logoutBtn')) {
         return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
       }
     }
-    // Fallback: try general Date parsing
-    try {
+        try {
       const dt = new Date(d);
       if (!isNaN(dt.getTime())) return dt.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
     } catch (e) {}
     return d;
   }
 
-  // Helper to parse combined date + time into a Date object
-  function parseDateTime(dateStr, timeStr) {
+    function parseDateTime(dateStr, timeStr) {
     if (!dateStr || !timeStr) return null;
-    // If dateStr already contains a time or timezone, try parsing directly
-    if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr) || dateStr.includes('Z')) {
+        if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr) || dateStr.includes('Z')) {
       try {
-        // create a date from dateStr then overwrite hours/minutes from timeStr
-        const base = new Date(dateStr);
+                const base = new Date(dateStr);
         if (isNaN(base.getTime())) return null;
         const [hh, mm] = timeStr.split(':').map(Number);
         base.setHours(hh, mm, 0, 0);
         return base;
-      } catch (e) { /* fallthrough */ }
+      } catch (e) {  }
     }
-    // ISO YYYY-MM-DD (with or without time)
-    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr) && /^\d{2}:\d{2}$/.test(timeStr)) {
-      // join as local time
-      const iso = `${dateStr}T${timeStr}:00`;
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr) && /^\d{2}:\d{2}$/.test(timeStr)) {
+            const iso = `${dateStr}T${timeStr}:00`;
       const d = new Date(iso);
       if (!isNaN(d.getTime())) return d;
     }
-    // French DD/MM/YYYY
-    const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr);
+        const fr = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr);
     if (fr && /^\d{2}:\d{2}$/.test(timeStr)) {
       const day = Number(fr[1]);
       const month = Number(fr[2]) - 1;
@@ -1132,15 +1033,13 @@ if (document.getElementById('logoutBtn')) {
       const d = new Date(year, month, day, hh, mm, 0);
       if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) return d;
     }
-    // fallback: try Date parse with concatenation
-    try {
+        try {
       const d = new Date(`${dateStr} ${timeStr}`);
       return isNaN(d.getTime()) ? null : d;
     } catch (e) { return null; }
   }
 
-  // Helper function to create a commande card element
-  function createCommandeCard(cmd, statut) {
+    function createCommandeCard(cmd, statut) {
     const card = document.createElement('div');
     card.className = 'commande-card';
     card.dataset.commandeId = cmd.id;
@@ -1221,11 +1120,9 @@ if (document.getElementById('logoutBtn')) {
         try {
           const res = await fetch(apiBase + `/commandes/${cmd.id}/terminer`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
           if (res.ok) {
-            // Visible log for admins: toast + console message
-            showToast('Commande marquée terminée — demande d\'envoi d\'un email de remerciement déclenchée', { type: 'success' });
+                        showToast('Commande marquée terminée — demande d\'envoi d\'un email de remerciement déclenchée', { type: 'success' });
             console.info(`📧 Email trigger requested for commande #${cmd.id}`);
-            // try to log server response body for debugging (non-blocking)
-            try { const body = await res.json().catch(()=>null); console.debug('Server response for terminer:', body); } catch(e){}
+                        try { const body = await res.json().catch(()=>null); console.debug('Server response for terminer:', body); } catch(e){}
           } else {
             showToast('Erreur lors de la finalisation de la commande', { type: 'error' });
             console.warn('Failed to mark commande as terminée', res.status);
@@ -1243,8 +1140,7 @@ if (document.getElementById('logoutBtn')) {
       noteBtn.className = 'btn ghost';
       noteBtn.onclick = () => {
         const created = cmd.date_creation ? new Date(cmd.date_creation).toLocaleString('fr-FR') : '';
-        // Build a richer HTML summary for the commande
-        const parts = [];
+                const parts = [];
         parts.push(`<div style="margin-bottom:8px;"><b>ID:</b> ${cmd.id}</div>`);
         parts.push(`<div style="margin-bottom:8px;"><b>Statut:</b> ${cmd.statut || '-'} | <b>Créé:</b> ${created || '-'}</div>`);
         if (cmd.nom_complet) parts.push(`<div style="margin-bottom:6px;"><b>Nom:</b> ${escapeHtml(cmd.nom_complet)}</div>`);
@@ -1253,8 +1149,7 @@ if (document.getElementById('logoutBtn')) {
         if (cmd.location) parts.push(`<div style="margin-bottom:6px;"><b>Lieu:</b> ${escapeHtml(cmd.location)}</div>`);
         if (cmd.date_retrait) parts.push(`<div style="margin-bottom:6px;"><b>Date retrait:</b> ${escapeHtml(cmd.date_retrait)} ${cmd.creneau ? '| Créneau: ' + escapeHtml(cmd.creneau) : ''}</div>`);
         if (cmd.precisions) parts.push(`<div style="margin-bottom:6px;"><b>Précisions:</b> ${escapeHtml(cmd.precisions)}</div>`);
-        // produit can be JSON or legacy string
-        try {
+                try {
           if (cmd.produit) {
             const p = JSON.parse(cmd.produit);
             if (Array.isArray(p)) {
@@ -1285,8 +1180,7 @@ if (document.getElementById('logoutBtn')) {
       actions.appendChild(finishBtn);
       actions.appendChild(noteBtn);
       
-      // Add countdown for en_cours orders
-      const metaDiv = card.querySelector('.meta');
+            const metaDiv = card.querySelector('.meta');
       if (metaDiv) {
         const countdownDiv = document.createElement('div');
         countdownDiv.className = 'countdown-row';
@@ -1304,8 +1198,7 @@ if (document.getElementById('logoutBtn')) {
     return card;
   }
 
-  // Add a new commande dynamically to the list (used by SSE)
-  async function addCommandeToList(cmd, statut, containerId, badgeId) {
+    async function addCommandeToList(cmd, statut, containerId, badgeId) {
     const list = document.getElementById(containerId);
     const badge = document.getElementById(badgeId);
     
@@ -1314,50 +1207,41 @@ if (document.getElementById('logoutBtn')) {
       return;
     }
     
-    // Ensure menus cache is loaded
-    try { await preloadMenus().catch(()=>{}); } catch(e) {}
+        try { await preloadMenus().catch(()=>{}); } catch(e) {}
     
-    // Check if commande already exists (prevent duplicates)
-    const existing = list.querySelector(`[data-commande-id="${cmd.id}"]`);
+        const existing = list.querySelector(`[data-commande-id="${cmd.id}"]`);
     if (existing) return;
     
-    // Remove "Aucune commande" message if present
-    const noCommandeMsg = list.querySelector('div[style*="Aucune commande"]');
+        const noCommandeMsg = list.querySelector('div[style*="Aucune commande"]');
     if (noCommandeMsg) noCommandeMsg.remove();
     
-    // Create and insert the card at the top with animation
-    const card = createCommandeCard(cmd, statut);
+        const card = createCommandeCard(cmd, statut);
     card.style.opacity = '0';
     card.style.transform = 'translateY(-10px)';
     card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
     list.insertBefore(card, list.firstChild);
     
-    // Trigger animation
-    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
       card.style.opacity = '1';
       card.style.transform = 'translateY(0)';
     });
     
-    // Update badge count
-    if (badge) {
+        if (badge) {
       const currentCount = parseInt(badge.textContent) || 0;
       badge.textContent = currentCount + 1;
     }
     
-    // Initialize countdown if this is an en_cours order
-    if (statut === 'en_cours') {
+        if (statut === 'en_cours') {
       try { 
         if (typeof updateCountdowns === 'function') updateCountdowns(); 
       } catch (e) {}
     }
     
-    // Adjust list max height
-    adjustListMaxHeight(containerId);
+        adjustListMaxHeight(containerId);
   }
 
-  // Load commandes
-  async function loadCommandes(statut, containerId, badgeId, loaderId) {
+    async function loadCommandes(statut, containerId, badgeId, loaderId) {
     const loader = document.getElementById(loaderId);
     const list = document.getElementById(containerId);
     const badge = document.getElementById(badgeId);
@@ -1367,10 +1251,8 @@ if (document.getElementById('logoutBtn')) {
     try {
       const res = await fetch(apiBase + '/commandes?statut=' + statut, { credentials: 'include' });
       loader.style.display = 'none';
-      // handle unauthorized (session expired / not logged in)
-      if (res.status === 401) {
-        // redirect to login so admin can re-authenticate
-        console.warn('Admin API returned 401 — redirecting to login');
+            if (res.status === 401) {
+                console.warn('Admin API returned 401 — redirecting to login');
         window.location.href = '/admin/login';
         return;
       }
@@ -1384,20 +1266,15 @@ if (document.getElementById('logoutBtn')) {
           return;
         }
 
-  // ensure menus cache is populated so produit names can be rendered
-  try { await preloadMenus().catch(()=>{}); } catch(e) {}
+    try { await preloadMenus().catch(()=>{}); } catch(e) {}
 
   commandes.forEach(cmd => {
-          // Use the shared createCommandeCard function
-          const card = createCommandeCard(cmd, statut);
+                    const card = createCommandeCard(cmd, statut);
           list.appendChild(card);
 
-          // countdown is handled inside createCommandeCard() to avoid duplicates
-        });
-        // After rendering, adjust max-height to show exactly 3 cards (then scroll)
-        adjustListMaxHeight(containerId);
-        // Trigger staggered reveal (now that cards are in DOM)
-        animateCards(containerId);
+                  });
+                adjustListMaxHeight(containerId);
+                animateCards(containerId);
       } else {
         list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur de chargement des commandes.</div>';
       }
@@ -1406,14 +1283,12 @@ if (document.getElementById('logoutBtn')) {
       list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur serveur.</div>';
     }
   }
-  // Admin dashboard statistics - fetch from protected endpoint and render
-  async function loadStats() {
+    async function loadStats() {
     const container = document.getElementById('tab-stats');
     if (!container) return;
     
     try {
-      // Get selected period
-      const periodSelect = document.getElementById('stats-period');
+            const periodSelect = document.getElementById('stats-period');
       const period = periodSelect ? periodSelect.value : '30';
       
       const res = await fetch(apiBase + '/stats?period=' + period, { credentials: 'include' });
@@ -1421,47 +1296,35 @@ if (document.getElementById('logoutBtn')) {
       if (!res.ok) throw new Error('Failed to load stats');
       const d = await res.json();
       
-      // Update KPI cards
-      updateKPICard('stat-total-orders', d.periodOrders || 0, d.trends?.orders);
+            updateKPICard('stat-total-orders', d.periodOrders || 0, d.trends?.orders);
       updateKPICard('stat-revenue', formatCurrency(d.period_revenue_cents || 0), d.trends?.revenue);
       updateKPICard('stat-avg-basket', formatCurrency(d.avg_basket_cents || 0), d.trends?.basket);
       
-      // Update pending orders count
-      const pendingEl = document.getElementById('stat-pending');
+            const pendingEl = document.getElementById('stat-pending');
       if (pendingEl) {
         const pending = (d.byStatus?.attente || 0) + (d.byStatus?.encours || 0);
         pendingEl.textContent = String(pending);
       }
       
-      // remember last stats for CSV export
-      adminLastStats = d;
+            adminLastStats = d;
       
-      // Render main line chart (orders + revenue)
-      renderOrdersChart(d.orders_by_day || [], d.revenue_by_day || []);
+            renderOrdersChart(d.orders_by_day || [], d.revenue_by_day || []);
       
-      // Render status doughnut chart
-      renderStatusChart(d.byStatus || {});
+            renderStatusChart(d.byStatus || {});
       
-      // Render top products
-      renderTopProducts(d.itemsSold || []);
+            renderTopProducts(d.itemsSold || []);
       
-      // Render recent activity
-      renderRecentActivity(d.recent_orders || []);
+            renderRecentActivity(d.recent_orders || []);
       
-      // Render alerts (new)
-      renderAlerts(d.alerts || []);
+            renderAlerts(d.alerts || []);
       
-      // Render location stats (new)
-      renderLocationStats(d.location_stats || {});
+            renderLocationStats(d.location_stats || {});
       
-      // Render customer insights (new)
-      renderCustomerInsights(d.customer_insights || {});
+            renderCustomerInsights(d.customer_insights || {});
       
-      // Render YoY comparison (new)
-      renderYoYComparison(d.yoy_comparison || {});
+            renderYoYComparison(d.yoy_comparison || {});
       
-      // Wire CSV export button
-      setupCSVExport(d);
+            setupCSVExport(d);
       
     } catch (e) {
       console.error('Failed to load admin stats', e);
@@ -1471,8 +1334,7 @@ if (document.getElementById('logoutBtn')) {
     }
   }
   
-  // Helper: Update KPI card with value and trend
-  function updateKPICard(elementId, value, trend) {
+    function updateKPICard(elementId, value, trend) {
     const valueEl = document.getElementById(elementId);
     if (!valueEl) return;
     valueEl.textContent = String(value);
@@ -1488,13 +1350,11 @@ if (document.getElementById('logoutBtn')) {
     }
   }
   
-  // Helper: Format currency
-  function formatCurrency(cents) {
+    function formatCurrency(cents) {
     return (Number(cents) / 100).toFixed(2) + ' €';
   }
   
-  // Render orders chart (line chart with dual axes)
-  function renderOrdersChart(ordersSeries, revenueSeries) {
+    function renderOrdersChart(ordersSeries, revenueSeries) {
     const ctxEl = document.getElementById('ordersChart');
     if (!ctxEl || typeof Chart === 'undefined') return;
     
@@ -1509,8 +1369,7 @@ if (document.getElementById('logoutBtn')) {
     
     const ordersData = ordersSeries.map(s => Number(s.count || 0));
     
-    // Align revenue data by date
-    const revenueData = ordersSeries.map(s => {
+        const revenueData = ordersSeries.map(s => {
       const r = revenueSeries.find(rr => rr.date === s.date);
       return r ? Number((r.cents || 0) / 100) : 0;
     });
@@ -1597,8 +1456,7 @@ if (document.getElementById('logoutBtn')) {
     }
   }
   
-  // Render status doughnut chart
-  function renderStatusChart(byStatus) {
+    function renderStatusChart(byStatus) {
     const ctxEl = document.getElementById('statusChart');
     const legendEl = document.getElementById('stat-by-status-list');
     if (!ctxEl || typeof Chart === 'undefined') return;
@@ -1662,8 +1520,7 @@ if (document.getElementById('logoutBtn')) {
       statusChart.update();
     }
     
-    // Render custom legend
-    if (legendEl) {
+        if (legendEl) {
       legendEl.innerHTML = labels.map((label, i) => `
         <div class="status-legend-item">
           <span class="status-legend-dot" style="background:${colors[i]}"></span>
@@ -1674,8 +1531,7 @@ if (document.getElementById('logoutBtn')) {
     }
   }
   
-  // Render top products
-  function renderTopProducts(items) {
+    function renderTopProducts(items) {
     const container = document.getElementById('stat-items-list');
     if (!container) return;
     
@@ -1684,8 +1540,7 @@ if (document.getElementById('logoutBtn')) {
       return;
     }
     
-    // Show top 8
-    const topItems = items.slice(0, 8);
+        const topItems = items.slice(0, 8);
     
     container.innerHTML = topItems.map((item, index) => `
       <div class="stat-product-card" onclick="showProductTrendModal(${item.menu_id}, '${escapeHtml(item.name || 'Menu #' + item.menu_id).replace(/'/g, "\\'")}')">
@@ -1698,8 +1553,7 @@ if (document.getElementById('logoutBtn')) {
     `).join('');
   }
   
-  // Render recent activity
-  function renderRecentActivity(orders) {
+    function renderRecentActivity(orders) {
     const container = document.getElementById('stat-recent-orders');
     if (!container) return;
     
@@ -1731,8 +1585,7 @@ if (document.getElementById('logoutBtn')) {
     }).join('');
   }
   
-  // Render alerts (warnings/dangers)
-  function renderAlerts(alerts) {
+    function renderAlerts(alerts) {
     const container = document.getElementById('stats-alerts-container');
     if (!container) return;
     
@@ -1757,8 +1610,7 @@ if (document.getElementById('logoutBtn')) {
     container.innerHTML = html;
   }
   
-  // Render location stats breakdown
-  function renderLocationStats(locationStats) {
+    function renderLocationStats(locationStats) {
     const container = document.getElementById('stat-locations');
     if (!container) return;
     
@@ -1817,15 +1669,13 @@ if (document.getElementById('logoutBtn')) {
     container.innerHTML = html || '<div class="empty-state">Aucune donnée de localisation</div>';
   }
   
-  // Render customer insights
-  function renderCustomerInsights(insights) {
+    function renderCustomerInsights(insights) {
     const overviewContainer = document.getElementById('stat-customer-overview');
     const tableContainer = document.getElementById('stat-top-customers');
     
     if (!overviewContainer || !tableContainer) return;
     
-    // Overview cards
-    const overviewHtml = `
+        const overviewHtml = `
       <div class="customer-overview-card">
         <div class="customer-overview-label">Total clients</div>
         <div class="customer-overview-value">${insights.total_customers || 0}</div>
@@ -1837,8 +1687,7 @@ if (document.getElementById('logoutBtn')) {
     `;
     overviewContainer.innerHTML = overviewHtml;
     
-    // Top customers table
-    const topCustomers = insights.top_customers || [];
+        const topCustomers = insights.top_customers || [];
     if (topCustomers.length === 0) {
       tableContainer.innerHTML = '<div class="empty-state">Aucun client</div>';
       return;
@@ -1869,11 +1718,9 @@ if (document.getElementById('logoutBtn')) {
     tableContainer.innerHTML = tableHtml;
   }
   
-  // Global variable for YoY chart
-  let yoyChart = null;
+    let yoyChart = null;
   
-  // Render Year-over-Year comparison chart
-  function renderYoYComparison(yoyData) {
+    function renderYoYComparison(yoyData) {
     const ctxEl = document.getElementById('yoyChart');
     if (!ctxEl) return;
     
@@ -1888,8 +1735,7 @@ if (document.getElementById('logoutBtn')) {
       return;
     }
     
-    // Prepare labels and datasets
-    const labels = current.map(d => d.date);
+        const labels = current.map(d => d.date);
     const currentOrders = current.map(d => d.orders);
     const previousOrders = previous.map(d => d.orders);
     
@@ -1961,19 +1807,16 @@ if (document.getElementById('logoutBtn')) {
     }
   }
   
-  // Global variable for product trend chart in modal
-  let productTrendChart = null;
+    let productTrendChart = null;
   
-  // Show product trend modal
-  window.showProductTrendModal = function(menuId, productName) {
+    window.showProductTrendModal = function(menuId, productName) {
     const modal = document.getElementById('product-trend-modal');
     const titleEl = document.getElementById('product-trend-title');
     const ctxEl = document.getElementById('productTrendChart');
     
     if (!modal || !titleEl || !ctxEl) return;
     
-    // Find product trend data from last stats
-    if (!adminLastStats || !adminLastStats.product_trends) {
+        if (!adminLastStats || !adminLastStats.product_trends) {
       showAlertModal('Erreur', 'Données de tendance produit non disponibles');
       return;
     }
@@ -1984,18 +1827,15 @@ if (document.getElementById('logoutBtn')) {
       return;
     }
     
-    // Update title
-    titleEl.textContent = `Tendance: ${productName}`;
+        titleEl.textContent = `Tendance: ${productName}`;
     
-    // Prepare chart data
-    const trend = productTrend.trend || [];
+        const trend = productTrend.trend || [];
     const labels = trend.map(d => d.date);
     const data = trend.map(d => d.qty);
     
     const ctx = ctxEl.getContext('2d');
     
-    // Destroy existing chart if any
-    if (productTrendChart) {
+        if (productTrendChart) {
       productTrendChart.destroy();
       productTrendChart = null;
     }
@@ -2040,28 +1880,24 @@ if (document.getElementById('logoutBtn')) {
       }
     });
     
-    // Show modal
-    modal.style.display = 'flex';
+        modal.style.display = 'flex';
   };
   
-  // Close product trend modal
-  window.closeProductTrendModal = function() {
+    window.closeProductTrendModal = function() {
     const modal = document.getElementById('product-trend-modal');
     if (modal) {
       modal.style.display = 'none';
     }
   };
   
-  // Close modal when clicking outside
-  window.addEventListener('click', (e) => {
+    window.addEventListener('click', (e) => {
     const modal = document.getElementById('product-trend-modal');
     if (e.target === modal) {
       window.closeProductTrendModal();
     }
   });
   
-  // Setup CSV export
-  function setupCSVExport(statsData) {
+    function setupCSVExport(statsData) {
     const btn = document.getElementById('stat-export-csv');
     if (!btn) return;
     
@@ -2072,8 +1908,7 @@ if (document.getElementById('logoutBtn')) {
         return;
       }
       
-      // Build CSV: date,orders,revenue_eur
-      const rows = [['date', 'commandes', 'ca_eur']];
+            const rows = [['date', 'commandes', 'ca_eur']];
       const ob = s.orders_by_day || [];
       const rb = s.revenue_by_day || [];
       
@@ -2099,7 +1934,7 @@ if (document.getElementById('logoutBtn')) {
     };
   }
   
-  // Wire period selector change
+  
   function initStatsControls() {
     const periodSelect = document.getElementById('stats-period');
     if (periodSelect) {
@@ -2109,10 +1944,10 @@ if (document.getElementById('logoutBtn')) {
     }
   }
   
-  // Call initStatsControls when stats tab is activated
-  // (already wired in tab activation logic below)
-  // initial load is handled when the stats tab is activated (see tab activation code)
-  // Stock management
+  
+  
+  
+  
   async function loadStock() {
     const container = document.querySelector('#tab-stockage');
     if (!container) return;
@@ -2122,7 +1957,7 @@ if (document.getElementById('logoutBtn')) {
       const res = await fetch(apiBase.replace('/admin','') + '/stock');
       if (!res.ok) throw new Error('Failed');
       const items = await res.json();
-      // store items for client-side filtering/sorting
+      
       window._adminStockItems = items;
       renderStockTable(items);
     } catch (e) {
@@ -2139,7 +1974,7 @@ if (document.getElementById('logoutBtn')) {
     }
     items.forEach(it => {
       const tr = document.createElement('tr');
-      // expose id for delegation and mark cells with field names for dblclick editing
+      
       tr.dataset.id = it.id;
       tr.innerHTML = `
         <td data-field="name">${escapeHtml(it.name)}</td>
@@ -2156,21 +1991,17 @@ if (document.getElementById('logoutBtn')) {
     });
   }
 
-  // helpers
+  
   function escapeHtml(s){ if (s==null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
   function escapeAttr(s){ return escapeHtml(s); }
 
-  // wire stock form
-  (function wireStockUI(){
+    (function wireStockUI(){
   const form = document.getElementById('stock-form');
   const search = document.getElementById('stock-search');
   const refresh = document.getElementById('stock-refresh');
 
-  // Pending sends per cell (key = `${id}:${field}`)
-  const PENDING = new Map();
-  const DEBOUNCE_MS = 2500; // wait before sending so user can undo
-  const SUCCESS_MS = 1200; // show success check for this long
-
+    const PENDING = new Map();
+  const DEBOUNCE_MS = 2500;   const SUCCESS_MS = 1200; 
   function rowPendingCount(id) {
     let c = 0;
     for (const key of PENDING.keys()) {
@@ -2201,8 +2032,7 @@ if (document.getElementById('logoutBtn')) {
     if (isNaN(quantity) || quantity < 0) { showAlertModal('Validation', 'La quantité doit être un nombre >= 0.'); document.getElementById('stock-qty').focus(); return; }
   quantity = Math.floor(quantity || 0);
         try {
-              // Always create a new product from the form (editing is done inline now)
-              const _csrf = await getCsrfToken();
+                            const _csrf = await getCsrfToken();
               const res = await fetch('/api/stock', { method: 'POST', headers:{'Content-Type':'application/json', 'X-CSRF-Token': _csrf || ''}, body: JSON.stringify({ name, reference, quantity, available }) , credentials:'include'});
               if (!res.ok) throw new Error('err');
               form.reset();
@@ -2221,14 +2051,12 @@ if (document.getElementById('logoutBtn')) {
       });
     }
 
-    // delegate actions from table
-    document.addEventListener('click', async (e)=>{
+        document.addEventListener('click', async (e)=>{
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
       const action = btn.dataset.action;
       const id = btn.dataset.id;
-      // old edit-via-form action removed; editing now happens inline by double-clicking cells
-      if (action === 'delete') {
+            if (action === 'delete') {
         const confirmedDelete = await showConfirmModal('Supprimer ce produit ?', 'Voulez-vous supprimer ce produit ?');
         if (!confirmedDelete) return;
         try {
@@ -2250,10 +2078,8 @@ if (document.getElementById('logoutBtn')) {
       }
     });
 
-  // old cancelEdit button removed — no-op
-
-    // Inline editing: double-click a cell to edit in-place. Commit on Enter/blur, cancel on Escape.
-    document.addEventListener('dblclick', (e) => {
+  
+        document.addEventListener('dblclick', (e) => {
       const td = e.target.closest && e.target.closest('td[data-field]');
       if (!td) return;
       const tr = td.closest && td.closest('tr');
@@ -2262,13 +2088,11 @@ if (document.getElementById('logoutBtn')) {
       const item = (window._adminStockItems||[]).find(x=>String(x.id)===String(id));
       if (!item) return;
       const field = td.dataset.field;
-      // prevent starting another editor on the same cell
-      if (td.dataset.editing === '1') return;
+            if (td.dataset.editing === '1') return;
       td.dataset.editing = '1';
       const original = td.textContent;
 
-      // create appropriate input
-      let input;
+            let input;
       if (field === 'available') {
         input = document.createElement('input');
         input.type = 'checkbox';
@@ -2285,25 +2109,20 @@ if (document.getElementById('logoutBtn')) {
       }
       input.style.width = '100%';
       input.style.boxSizing = 'border-box';
-      // replace cell content with input
-      td.innerHTML = '';
+            td.innerHTML = '';
       td.appendChild(input);
-      // helper to cancel
-      const cancel = () => {
+            const cancel = () => {
         td.removeAttribute('data-editing');
         td.textContent = original;
       };
-      // commit changes with debounce + undo + optimistic UI and rollback on failure
-      const commit = () => {
+            const commit = () => {
         if (td.dataset.editing !== '1') return;
-        if (td.dataset.scheduled === '1') return; // already scheduled
-        let newVal;
+        if (td.dataset.scheduled === '1') return;         let newVal;
         if (field === 'available') newVal = !!input.checked;
         else if (field === 'quantity') newVal = Number(input.value);
         else newVal = String(input.value || '').trim();
 
-        // Client-side validation
-        if (field === 'name') {
+                if (field === 'name') {
           if (!newVal) { showAlertModal('Validation', 'Le nom ne peut pas être vide.'); input.focus(); return; }
           if (newVal.length > 255) { showAlertModal('Validation', 'Le nom est trop long (max 255 caractères).'); input.focus(); return; }
         }
@@ -2315,8 +2134,7 @@ if (document.getElementById('logoutBtn')) {
           newVal = Math.floor(newVal);
         }
 
-        // if unchanged, just cancel editor
-        if (String(newVal) === String(item[field] ?? '')) {
+                if (String(newVal) === String(item[field] ?? '')) {
           cancel();
           return;
         }
@@ -2325,32 +2143,27 @@ if (document.getElementById('logoutBtn')) {
         const origValue = item[field];
         const origText = original;
 
-        // optimistic update locally
-        item[field] = newVal;
+                item[field] = newVal;
         window._adminStockItems = (window._adminStockItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
         td.removeAttribute('data-editing');
         td.textContent = (field === 'available') ? (newVal ? 'Oui' : 'Non') : String(newVal);
 
-        // create badge with spinner + undo link
-        const badge = document.createElement('span');
+                const badge = document.createElement('span');
         badge.className = 'cell-badge pending';
         badge.innerHTML = '<span class="cell-spinner"></span><span class="cell-undo">Annuler</span>';
         td.appendChild(badge);
         td.dataset.scheduled = '1';
-        // mark row as modified
-        const tr = td.closest('tr');
+                const tr = td.closest('tr');
         if (tr) { tr.dataset.modified = '1'; setRowModified(tr, true); }
 
-        // undo handler
-        const doUndo = () => {
+                const doUndo = () => {
           const p = PENDING.get(key);
           if (p) {
             if (p.timer) clearTimeout(p.timer);
             if (p.controller) try { p.controller.abort(); } catch (e) {}
             PENDING.delete(key);
           }
-          // rollback visually
-          item[field] = origValue;
+                    item[field] = origValue;
           window._adminStockItems = (window._adminStockItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
           if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
           td.textContent = origText;
@@ -2361,42 +2174,34 @@ if (document.getElementById('logoutBtn')) {
         const undoEl = badge.querySelector('.cell-undo');
         if (undoEl) undoEl.addEventListener('click', (ev)=>{ ev.stopPropagation(); doUndo(); });
 
-        // schedule network send after debounce to allow undo
-        const timer = setTimeout(async () => {
-          // replace timer entry with one including controller
-          const controller = new AbortController();
+                const timer = setTimeout(async () => {
+                    const controller = new AbortController();
           PENDING.set(key, { timer: null, controller, badge, td, origValue, origText });
           try {
             const body = {}; body[field] = newVal;
             const _csrf = await getCsrfToken();
             const res = await fetch('/api/stock/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf || '' }, credentials: 'include', body: JSON.stringify(body), signal: controller.signal });
             if (!res.ok) throw new Error('save-failed');
-            // success: show checkmark briefly
-            if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
+                        if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
             const success = document.createElement('span');
             success.className = 'cell-success';
             success.textContent = '✔';
             td.appendChild(success);
             delete td.dataset.scheduled;
             PENDING.delete(key);
-            // update row modified state
-            if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
+                        if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
             setTimeout(()=>{ if (success && success.parentNode) success.parentNode.removeChild(success); }, SUCCESS_MS);
           } catch (err) {
-            // if aborted by undo, do nothing (undo already cleaned up)
-            const p = PENDING.get(key);
+                        const p = PENDING.get(key);
             if (p && p.controller && p.controller.signal && p.controller.signal.aborted) {
-              // already handled by undo
-              return;
+                            return;
             }
-            // rollback
-            item[field] = origValue;
+                        item[field] = origValue;
             window._adminStockItems = (window._adminStockItems || []).map(it => (String(it.id) === String(item.id) ? item : it));
             if (badge && badge.parentNode) badge.parentNode.removeChild(badge);
             delete td.dataset.scheduled;
             td.textContent = origText;
-            // visual rollback animation
-            td.classList.add('cell-rollback');
+                        td.classList.add('cell-rollback');
             setTimeout(()=> td.classList.remove('cell-rollback'), 700);
             PENDING.delete(key);
             if (tr && rowPendingCount(id) === 0) { tr.dataset.modified = '0'; setRowModified(tr, false); }
@@ -2404,22 +2209,17 @@ if (document.getElementById('logoutBtn')) {
           }
         }, DEBOUNCE_MS);
 
-        // store pending info
-        PENDING.set(key, { timer, controller: null, badge, td, origValue, origText });
+                PENDING.set(key, { timer, controller: null, badge, td, origValue, origText });
       };
 
-      // keyboard handlers
-      input.addEventListener('keydown', (ev) => {
+            input.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
         else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
       });
-      // commit on blur (gives time for click events on checkboxes)
-      input.addEventListener('blur', () => { setTimeout(commit, 150); });
-      // focus the input
-      try { input.focus(); if (input.select) input.select(); } catch (e) {}
+            input.addEventListener('blur', () => { setTimeout(commit, 150); });
+            try { input.focus(); if (input.select) input.select(); } catch (e) {}
     });
-    // simple column sort by clicking headers
-    document.querySelectorAll('#stock-table thead th[data-sort]').forEach(th=>{
+        document.querySelectorAll('#stock-table thead th[data-sort]').forEach(th=>{
       th.style.cursor='pointer';
       th.addEventListener('click', ()=>{
         const key = th.dataset.sort;
@@ -2441,72 +2241,58 @@ if (document.getElementById('logoutBtn')) {
     });
 
   })();
-  // helper: measure card and set max-height so exactly 3 cards are visible
-  function adjustListMaxHeight(containerId) {
+    function adjustListMaxHeight(containerId) {
     const list = document.getElementById(containerId);
     if (!list) return;
-    // find first card
-    const first = list.querySelector('.commande-card');
+        const first = list.querySelector('.commande-card');
     if (!first) {
       list.style.maxHeight = 'none';
       list.style.overflow = 'visible';
       return;
     }
-    // measure height including margin
-    const cardRect = first.getBoundingClientRect();
+        const cardRect = first.getBoundingClientRect();
     const style = window.getComputedStyle(first);
     const marginBottom = parseFloat(style.marginBottom) || 12;
-    // If measured height is 0 (element may be in a collapsed container), try computed height or fallback
-    let cardHeight = Math.ceil(cardRect.height);
+        let cardHeight = Math.ceil(cardRect.height);
     if (cardHeight < 6) {
       const computedH = parseFloat(style.height) || 0;
-      cardHeight = Math.ceil(computedH) || 120; // fallback to 120px if we can't measure
-    }
+      cardHeight = Math.ceil(computedH) || 120;     }
     const visibleCount = 3;
     const total = cardHeight * visibleCount + marginBottom * (visibleCount - 1);
     list.style.maxHeight = total + 'px';
     list.style.overflow = (list.children.length > visibleCount) ? 'auto' : 'visible';
   }
 
-  // stagger reveal animation for cards inside a list
-  function animateCards(containerId) {
+    function animateCards(containerId) {
     const list = document.getElementById(containerId);
     if (!list) return;
     const cards = Array.from(list.querySelectorAll('.commande-card'));
     if (!cards.length) return;
-    // clear previous shows
-    cards.forEach(c => {
+        cards.forEach(c => {
       c.classList.remove('show');
       c.style.transitionDelay = '0ms';
     });
-    // add with stagger
-    cards.forEach((c, i) => {
-      const delay = i * 80; // ms
-      c.style.transitionDelay = delay + 'ms';
-      // ensure class addition happens after a tick
-      setTimeout(() => c.classList.add('show'), 10 + delay);
+        cards.forEach((c, i) => {
+      const delay = i * 80;       c.style.transitionDelay = delay + 'ms';
+            setTimeout(() => c.classList.add('show'), 10 + delay);
     });
   }
 
   loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
   loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
 
-  // ==================== SSE for real-time order updates ====================
-  let eventSource = null;
+    let eventSource = null;
   let notificationSound = null;
   let sseReconnectAttempts = 0;
   const MAX_SSE_RECONNECT_ATTEMPTS = 3;
   let sseWorking = false;
   let fallbackPollingInterval = null;
 
-  // Fallback: poll for new orders if SSE doesn't work
-  function startFallbackPolling() {
-    if (fallbackPollingInterval) return; // Already polling
-    
+    function startFallbackPolling() {
+    if (fallbackPollingInterval) return;     
     let lastCommandeId = 0;
     
-    // Get the highest commande ID currently displayed
-    const existingCards = document.querySelectorAll('[data-commande-id]');
+        const existingCards = document.querySelectorAll('[data-commande-id]');
     existingCards.forEach(card => {
       const id = parseInt(card.dataset.commandeId);
       if (id > lastCommandeId) lastCommandeId = id;
@@ -2514,46 +2300,38 @@ if (document.getElementById('logoutBtn')) {
     
     fallbackPollingInterval = setInterval(async () => {
       try {
-        // Only check if we're on the "en_attente" tab
-        const attenteTab = document.getElementById('tab-attente');
+                const attenteTab = document.getElementById('tab-attente');
         if (!attenteTab || !attenteTab.classList.contains('active')) return;
         
-        // Fetch recent orders
-        const res = await fetch(apiBase + '/commandes?statut=en_attente', { credentials: 'include' });
+                const res = await fetch(apiBase + '/commandes?statut=en_attente', { credentials: 'include' });
         if (!res.ok) return;
         
         const commandes = await res.json();
         
-        // Check for new orders (ID higher than last known)
-        const newCommandes = commandes.filter(cmd => cmd.id > lastCommandeId);
+                const newCommandes = commandes.filter(cmd => cmd.id > lastCommandeId);
         
         if (newCommandes.length > 0) {
-          // Sort by ID ascending to add oldest first
-          newCommandes.sort((a, b) => a.id - b.id);
+                    newCommandes.sort((a, b) => a.id - b.id);
           
           for (const cmd of newCommandes) {
             const existing = document.querySelector(`[data-commande-id="${cmd.id}"]`);
             if (!existing) {
               await addCommandeToList(cmd, 'en_attente', 'attente-list', 'badge-attente');
               
-              // Play notification sound
-              if (notificationSound) {
+                            if (notificationSound) {
                 try { notificationSound.play(); } catch (e) {}
               }
               
-              // Show visual notification
-              showOrderNotification(cmd);
+                            showOrderNotification(cmd);
               
-              // Update last ID
-              if (cmd.id > lastCommandeId) lastCommandeId = cmd.id;
+                            if (cmd.id > lastCommandeId) lastCommandeId = cmd.id;
             }
           }
         }
       } catch (e) {
         console.error('❌ Polling error:', e);
       }
-    }, 5000); // Poll every 5 seconds
-  }
+    }, 5000);   }
 
   function stopFallbackPolling() {
     if (fallbackPollingInterval) {
@@ -2562,11 +2340,9 @@ if (document.getElementById('logoutBtn')) {
     }
   }
 
-  // Preload notification sound (using Web Audio API for better control)
-  function initNotificationSound() {
+    function initNotificationSound() {
     try {
-      // Create a simple notification beep using Web Audio API
-      notificationSound = {
+            notificationSound = {
         play: function() {
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           const oscillator = audioContext.createOscillator();
@@ -2575,8 +2351,7 @@ if (document.getElementById('logoutBtn')) {
           oscillator.connect(gainNode);
           gainNode.connect(audioContext.destination);
           
-          // Two-tone beep: 800Hz then 1000Hz
-          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
           oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.15);
           
           gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
@@ -2591,8 +2366,7 @@ if (document.getElementById('logoutBtn')) {
     }
   }
 
-  // Initialize SSE connection for real-time updates
-  function setupSSE() {
+    function setupSSE() {
     if (eventSource) {
       try {
         eventSource.close();
@@ -2603,10 +2377,8 @@ if (document.getElementById('logoutBtn')) {
       eventSource = new EventSource('/api/admin/commandes/stream');
 
       eventSource.onopen = function() {
-        sseReconnectAttempts = 0; // Reset counter on successful connection
-        sseWorking = true;
-        stopFallbackPolling(); // Stop polling if SSE works
-      };
+        sseReconnectAttempts = 0;         sseWorking = true;
+        stopFallbackPolling();       };
 
       eventSource.onmessage = function(event) {
         try {
@@ -2615,8 +2387,7 @@ if (document.getElementById('logoutBtn')) {
           if (message.type === 'connected') return;
           
           if (message.type === 'new_order') {
-            // Play notification sound
-            if (notificationSound) {
+                        if (notificationSound) {
               try {
                 notificationSound.play();
               } catch (e) {
@@ -2624,11 +2395,9 @@ if (document.getElementById('logoutBtn')) {
               }
             }
             
-            // Show visual notification
-            showOrderNotification(message.data);
+                        showOrderNotification(message.data);
             
-            // Add the new order dynamically to the top of the "en_attente" list
-            addCommandeToList(message.data, 'en_attente', 'attente-list', 'badge-attente')
+                        addCommandeToList(message.data, 'en_attente', 'attente-list', 'badge-attente')
               .catch(err => console.error('❌ Error adding order to list:', err));
           }
         } catch (e) {
@@ -2644,11 +2413,9 @@ if (document.getElementById('logoutBtn')) {
           eventSource.close();
         } catch (e) {}
         
-        // Only attempt to reconnect if we haven't exceeded max attempts
-        if (sseReconnectAttempts < MAX_SSE_RECONNECT_ATTEMPTS) {
+                if (sseReconnectAttempts < MAX_SSE_RECONNECT_ATTEMPTS) {
           sseReconnectAttempts++;
-          const delay = Math.min(5000 * sseReconnectAttempts, 15000); // Exponential backoff, max 15s
-          setTimeout(() => {
+          const delay = Math.min(5000 * sseReconnectAttempts, 15000);           setTimeout(() => {
             setupSSE();
           }, delay);
         }
@@ -2658,10 +2425,8 @@ if (document.getElementById('logoutBtn')) {
     }
   }
 
-  // Show a visual notification for new orders
-  function showOrderNotification(commande) {
-    // Create notification element
-    const notification = document.createElement('div');
+    function showOrderNotification(commande) {
+        const notification = document.createElement('div');
     notification.className = 'order-notification';
     notification.style.cssText = `
       position: fixed;
@@ -2706,8 +2471,7 @@ if (document.getElementById('logoutBtn')) {
     
     document.body.appendChild(notification);
     
-    // Add slide-in animation
-    const style = document.createElement('style');
+        const style = document.createElement('style');
     style.textContent = `
       @keyframes slideInRight {
         from { transform: translateX(400px); opacity: 0; }
@@ -2720,8 +2484,7 @@ if (document.getElementById('logoutBtn')) {
     `;
     document.head.appendChild(style);
     
-    // Remove after 5 seconds
-    setTimeout(() => {
+        setTimeout(() => {
       notification.style.animation = 'slideOutRight 0.3s ease-in';
       setTimeout(() => {
         if (notification.parentNode) {
@@ -2731,18 +2494,13 @@ if (document.getElementById('logoutBtn')) {
     }, 5000);
   }
 
-  // Initialize sound and SSE
-  initNotificationSound();
+    initNotificationSound();
   
-  // Start polling immediately as primary method
-  // (SSE will stop it if it works)
-  startFallbackPolling();
+      startFallbackPolling();
   
-  // Try SSE in parallel
-  setupSSE();
+    setupSSE();
 
-  // Clean up on page unload
-  window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', () => {
     if (eventSource) {
       eventSource.close();
     }
@@ -2750,10 +2508,8 @@ if (document.getElementById('logoutBtn')) {
       clearInterval(autoRefreshInterval);
     }
   });
-  // ==================== End SSE setup ====================
-
-  // ==================== Simple auto-refresh fallback ====================
-  let autoRefreshInterval = null;
+  
+    let autoRefreshInterval = null;
   let lastKnownOrderIds = new Set();
 
   function checkForNewOrdersSimple() {
@@ -2790,11 +2546,9 @@ if (document.getElementById('logoutBtn')) {
     autoRefreshInterval = setInterval(checkForNewOrdersSimple, 3000);
   }
 
-  // Start auto-refresh
-  initAutoRefresh();
+    initAutoRefresh();
 
-  // Re-init when switching to attente tab
-  document.querySelectorAll('.tab-btn-vertical').forEach(btn => {
+    document.querySelectorAll('.tab-btn-vertical').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.tab === 'attente') {
         setTimeout(() => {
@@ -2807,51 +2561,36 @@ if (document.getElementById('logoutBtn')) {
       }
     });
   });
-  // ==================== End auto-refresh ====================
-
-  // re-adjust on resize (cards may wrap/change height)
-  window.addEventListener('resize', function () {
+  
+    window.addEventListener('resize', function () {
     adjustListMaxHeight('attente-list');
     adjustListMaxHeight('encours-list');
   });
 
-  // Device detection: adjust layout / list height based on device resolution
-  // This sets a CSS variable --commande-card-height that controls how many cards are visible
-  // and adds a body class (device-mobile / device-tablet / device-desktop) for further styling.
-  let _deviceResizeTimer = null;
+        let _deviceResizeTimer = null;
   function detectDeviceAndApplyLayout() {
     try {
       const w = window.innerWidth || document.documentElement.clientWidth;
       const h = window.innerHeight || document.documentElement.clientHeight;
       let mode = 'desktop';
-      let cardHeight = '420px'; // default (desktop shows ~3 cards)
-
-      // Heuristics (can be adjusted):
-      // mobile: up to 520px
-      // tablet: 521 - 1024px
-      // desktop: >1024px
-      if (w <= 520) {
+      let cardHeight = '420px'; 
+                              if (w <= 520) {
         mode = 'mobile';
         cardHeight = '360px';
       } else if (w <= 1024) {
         mode = 'tablet';
-        // On tablets we want to show only one card at a time (user request)
-        cardHeight = getComputedStyle(document.documentElement).getPropertyValue('--commande-card-height') || '260px';
-        // ensure we have a sensible default
-        if (!cardHeight || cardHeight.trim() === '') cardHeight = '260px';
+                cardHeight = getComputedStyle(document.documentElement).getPropertyValue('--commande-card-height') || '260px';
+                if (!cardHeight || cardHeight.trim() === '') cardHeight = '260px';
       } else {
         mode = 'desktop';
         cardHeight = '640px';
       }
 
-  // CSS variable --commande-card-height is set via CSS media queries; no inline override here
-
-      // Toggle body classes
-      document.body.classList.remove('device-mobile', 'device-tablet', 'device-desktop');
+  
+            document.body.classList.remove('device-mobile', 'device-tablet', 'device-desktop');
       document.body.classList.add('device-' + mode);
 
-      // Recalculate list heights after layout change
-      adjustListMaxHeight('attente-list');
+            adjustListMaxHeight('attente-list');
       adjustListMaxHeight('encours-list');
       animateCards('attente-list');
       animateCards('encours-list');
@@ -2861,24 +2600,20 @@ if (document.getElementById('logoutBtn')) {
     }
   }
 
-  // Debounced resize handler
-  window.addEventListener('resize', function () {
+    window.addEventListener('resize', function () {
     if (_deviceResizeTimer) clearTimeout(_deviceResizeTimer);
     _deviceResizeTimer = setTimeout(() => {
       detectDeviceAndApplyLayout();
     }, 150);
   });
 
-  // Also respond to orientation changes on mobile/tablet
-  window.addEventListener('orientationchange', function () {
+    window.addEventListener('orientationchange', function () {
     setTimeout(detectDeviceAndApplyLayout, 200);
   });
 
-  // Run once on load
-  try { detectDeviceAndApplyLayout(); } catch (e) {}
+    try { detectDeviceAndApplyLayout(); } catch (e) {}
 
-  // Countdown updater: refresh all .countdown elements every second
-  function formatRemaining(ms) {
+    function formatRemaining(ms) {
     if (ms <= 0) return 'Heure dépassée';
     const total = Math.floor(ms / 1000);
     const days = Math.floor(total / 86400);
@@ -2903,8 +2638,7 @@ if (document.getElementById('logoutBtn')) {
       }
       const diff = target - now;
       n.textContent = formatRemaining(diff);
-      // manage classes and badge
-      n.classList.remove('countdown--expired', 'countdown--warning');
+            n.classList.remove('countdown--expired', 'countdown--warning');
       let badge = n.nextElementSibling;
       if (!badge || !badge.classList.contains('countdown-badge')) {
         badge = document.createElement('span');
@@ -2929,23 +2663,19 @@ if (document.getElementById('logoutBtn')) {
     return nodes.length;
   }
 
-  // Adaptive scheduler: reduce update frequency when many countdowns exist
-  let countdownTimer = null;
+    let countdownTimer = null;
   function scheduleUpdate() {
     if (countdownTimer) clearTimeout(countdownTimer);
     const count = updateCountdowns();
     let delay = 1000;
     if (count > 30) delay = 5000;
     else if (count > 10) delay = 2000;
-    // Debug: log chosen frequency and number of countdowns (filterable)
-    try { adminDebug(`[countdown] timers=${count} nextUpdate=${delay}ms`); } catch (e) {}
+        try { adminDebug(`[countdown] timers=${count} nextUpdate=${delay}ms`); } catch (e) {}
     countdownTimer = setTimeout(scheduleUpdate, delay);
   }
-  // start the adaptive updater
-  scheduleUpdate();
+    scheduleUpdate();
 
-  // Pause updates when the page is hidden to save CPU; resume when visible again
-  document.addEventListener('visibilitychange', () => {
+    document.addEventListener('visibilitychange', () => {
     try {
       if (document.hidden) {
         if (countdownTimer) {
@@ -2953,15 +2683,13 @@ if (document.getElementById('logoutBtn')) {
           countdownTimer = null;
         }
       } else {
-        // when tab becomes visible again, refresh immediately and restart scheduler
-        updateCountdowns();
+                updateCountdowns();
         scheduleUpdate();
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {  }
   });
 
-  // Change password UI handling
-  const toggleChangePwd = document.getElementById('toggleChangePwd');
+    const toggleChangePwd = document.getElementById('toggleChangePwd');
   const changePwdForm = document.getElementById('changePwdForm');
   const cancelChangePwd = document.getElementById('cancelChangePwd');
   const changePwdMsg = document.getElementById('changePwdMsg');
@@ -3011,8 +2739,7 @@ if (document.getElementById('logoutBtn')) {
         if (res.ok) {
           changePwdMsg.style.color = '#0a0';
           changePwdMsg.textContent = data.message || 'Mot de passe mis à jour.';
-          // reset form
-          changePwdForm.reset();
+                    changePwdForm.reset();
           setTimeout(() => setFormVisible(false), 1200);
         } else {
           changePwdMsg.textContent = data.message || 'Erreur lors de la mise à jour.';
@@ -3026,9 +2753,6 @@ if (document.getElementById('logoutBtn')) {
   }
 }
 
-// ============================================
-// EMAIL TEMPLATES EDITOR
-// ============================================
 function initEmailTemplatesTab() {
   let templates = [];
   let currentTemplate = null;
@@ -3046,8 +2770,7 @@ function initEmailTemplatesTab() {
   const restoreBtn = document.getElementById('email-restore-btn');
   const statusDiv = document.getElementById('email-editor-status');
   
-  // Tab switching (visual vs preview vs code)
-  const tabBtns = document.querySelectorAll('.email-tab-btn');
+    const tabBtns = document.querySelectorAll('.email-tab-btn');
   const visualMode = document.getElementById('email-visual-mode');
   const previewMode = document.getElementById('email-preview-mode');
   const codeMode = document.getElementById('email-code-mode');
@@ -3059,23 +2782,20 @@ function initEmailTemplatesTab() {
       btn.classList.add('active');
       
       if (mode === 'visual') {
-        // Sync HTML to visual editor
-        if (htmlEditor.value) {
+                if (htmlEditor.value) {
           visualEditor.innerHTML = extractBodyContent(htmlEditor.value);
         }
         visualMode.classList.add('active');
         previewMode.classList.remove('active');
         codeMode.classList.remove('active');
       } else if (mode === 'preview') {
-        // Sync visual to HTML before preview
-        syncVisualToHtml();
+                syncVisualToHtml();
         visualMode.classList.remove('active');
         previewMode.classList.add('active');
         codeMode.classList.remove('active');
         updatePreview();
       } else if (mode === 'code') {
-        // Sync visual to HTML before showing code
-        syncVisualToHtml();
+                syncVisualToHtml();
         visualMode.classList.remove('active');
         previewMode.classList.remove('active');
         codeMode.classList.add('active');
@@ -3083,8 +2803,7 @@ function initEmailTemplatesTab() {
     });
   });
   
-  // Visual editor toolbar
-  const toolbar = document.querySelector('.email-visual-toolbar');
+    const toolbar = document.querySelector('.email-visual-toolbar');
   if (toolbar) {
     toolbar.addEventListener('click', (e) => {
       const btn = e.target.closest('.toolbar-btn');
@@ -3107,8 +2826,7 @@ function initEmailTemplatesTab() {
       visualEditor.focus();
     });
     
-    // Handle select dropdowns
-    toolbar.addEventListener('change', (e) => {
+        toolbar.addEventListener('change', (e) => {
       const select = e.target.closest('.toolbar-select');
       if (!select) return;
       
@@ -3123,8 +2841,7 @@ function initEmailTemplatesTab() {
     });
   }
   
-  // Show variable insertion modal
-  function showVariableModal() {
+    function showVariableModal() {
     if (!currentTemplate || !currentTemplate.variables) return;
     
     const modal = document.createElement('div');
@@ -3169,8 +2886,7 @@ function initEmailTemplatesTab() {
     };
   }
   
-  // Extract body content from full HTML
-  function extractBodyContent(html) {
+    function extractBodyContent(html) {
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
     if (bodyMatch) {
       return bodyMatch[1];
@@ -3178,15 +2894,13 @@ function initEmailTemplatesTab() {
     return html;
   }
   
-  // Sync visual editor content to HTML editor
-  function syncVisualToHtml() {
+    function syncVisualToHtml() {
     if (!currentTemplate) return;
     
     const bodyContent = visualEditor.innerHTML;
     const fullHtml = htmlEditor.value;
     
-    // Replace body content in full HTML
-    const newHtml = fullHtml.replace(
+        const newHtml = fullHtml.replace(
       /(<body[^>]*>)([\s\S]*)(<\/body>)/i,
       `$1${bodyContent}$3`
     );
@@ -3194,8 +2908,7 @@ function initEmailTemplatesTab() {
     htmlEditor.value = newHtml;
   }
   
-  // Load templates list
-  async function loadTemplates() {
+    async function loadTemplates() {
     try {
       templatesList.innerHTML = '<div class="loader" style="margin:2rem auto;"></div>';
       const token = await getCsrfToken();
@@ -3220,8 +2933,7 @@ function initEmailTemplatesTab() {
     }
   }
   
-  // Render templates sidebar
-  function renderTemplatesList() {
+    function renderTemplatesList() {
     if (!templates.length) {
       templatesList.innerHTML = '<p style="color:var(--muted); text-align:center;">Aucun template trouvé</p>';
       return;
@@ -3235,8 +2947,7 @@ function initEmailTemplatesTab() {
       </div>
     `).join('');
     
-    // Click handlers
-    templatesList.querySelectorAll('.email-template-item').forEach(item => {
+        templatesList.querySelectorAll('.email-template-item').forEach(item => {
       item.addEventListener('click', () => {
         const filename = item.dataset.filename;
         loadTemplate(filename);
@@ -3244,8 +2955,7 @@ function initEmailTemplatesTab() {
     });
   }
   
-  // Load a specific template
-  async function loadTemplate(filename) {
+    async function loadTemplate(filename) {
     try {
       const token = await getCsrfToken();
       const res = await fetch(`/api/admin/email-templates/${filename}`, {
@@ -3257,15 +2967,13 @@ function initEmailTemplatesTab() {
       
       currentTemplate = await res.json();
       renderEditor();
-      renderTemplatesList(); // Update active state
-    } catch (err) {
+      renderTemplatesList();     } catch (err) {
       console.error('Error loading template:', err);
       showStatus('Erreur lors du chargement du template', 'error');
     }
   }
   
-  // Render the editor with current template
-  function renderEditor() {
+    function renderEditor() {
     if (!currentTemplate) {
       editorEmpty.style.display = 'flex';
       editor.style.display = 'none';
@@ -3279,11 +2987,9 @@ function initEmailTemplatesTab() {
     editorDescription.textContent = currentTemplate.description || '';
     htmlEditor.value = currentTemplate.content || '';
     
-    // Initialize visual editor with body content
-    visualEditor.innerHTML = extractBodyContent(currentTemplate.content || '');
+        visualEditor.innerHTML = extractBodyContent(currentTemplate.content || '');
     
-    // Render variables
-    if (currentTemplate.variables && currentTemplate.variables.length) {
+        if (currentTemplate.variables && currentTemplate.variables.length) {
       variablesList.innerHTML = currentTemplate.variables.map(v => 
         `<code class="email-variable-tag">{{${v}}}</code>`
       ).join('');
@@ -3291,16 +2997,13 @@ function initEmailTemplatesTab() {
       variablesList.innerHTML = '<p style="color:var(--muted);">Aucune variable disponible</p>';
     }
     
-    // Reset status
-    statusDiv.textContent = '';
+        statusDiv.textContent = '';
     statusDiv.className = 'email-editor-status';
     
-    // Switch to visual mode (first tab)
-    tabBtns[0].click();
+        tabBtns[0].click();
   }
   
-  // Update preview iframe
-  function updatePreview() {
+    function updatePreview() {
     if (!currentTemplate) return;
     
     const html = htmlEditor.value;
@@ -3310,12 +3013,10 @@ function initEmailTemplatesTab() {
     doc.close();
   }
   
-  // Save template
-  saveBtn.addEventListener('click', async () => {
+    saveBtn.addEventListener('click', async () => {
     if (!currentTemplate) return;
     
-    // Sync visual editor to HTML before saving
-    syncVisualToHtml();
+        syncVisualToHtml();
     
     const content = htmlEditor.value;
     
@@ -3345,8 +3046,7 @@ function initEmailTemplatesTab() {
       
       showStatus('✓ Template enregistré avec succès', 'success');
       
-      // Reload template to get updated content
-      setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
+            setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
     } catch (err) {
       console.error('Error saving template:', err);
       showStatus('Erreur lors de l\'enregistrement: ' + err.message, 'error');
@@ -3355,8 +3055,7 @@ function initEmailTemplatesTab() {
     }
   });
   
-  // Restore template from backup
-  restoreBtn.addEventListener('click', async () => {
+    restoreBtn.addEventListener('click', async () => {
     if (!currentTemplate) return;
     
     if (!confirm(`Êtes-vous sûr de vouloir restaurer le template "${currentTemplate.name}" depuis la dernière sauvegarde ?`)) {
@@ -3380,8 +3079,7 @@ function initEmailTemplatesTab() {
       
       showStatus('✓ Template restauré avec succès', 'success');
       
-      // Reload template
-      setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
+            setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
     } catch (err) {
       console.error('Error restoring template:', err);
       showStatus('Erreur lors de la restauration: ' + err.message, 'error');
@@ -3390,8 +3088,7 @@ function initEmailTemplatesTab() {
     }
   });
   
-  // Show status message
-  function showStatus(message, type = 'info') {
+    function showStatus(message, type = 'info') {
     statusDiv.textContent = message;
     statusDiv.className = `email-editor-status ${type}`;
     
@@ -3403,7 +3100,6 @@ function initEmailTemplatesTab() {
     }
   }
   
-  // Load templates immediately when initialized
-  loadTemplates();
+    loadTemplates();
 }
 

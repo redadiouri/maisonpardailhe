@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Menu = require('../models/menu');
 
-// Public: get visible menus
 router.get('/', async (req, res) => {
   try {
     const items = await Menu.getAll(true);

@@ -1,23 +1,15 @@
 #!/usr/bin/env node
-/*
-  Simple DB backup script using the `mysqldump` npm package.
-  Usage: set env vars (DB_*) and optionally BACKUP_DIR then run:
-    node scripts/db_backup.js
-  The script writes a timestamped SQL dump to BACKUP_DIR (default: ./backups)
-*/
+
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 const { spawn } = require('child_process');
 
-// Try to load the optional mysqldump npm package. If it's not installed,
-// we'll fallback to calling the system `mysqldump` binary (must be available in PATH).
 let mysqldumpPkg = null;
 try {
   mysqldumpPkg = require('mysqldump');
 } catch (e) {
-  // package not installed — will use CLI fallback
-}
+  }
 
 const DB_HOST = process.env.DB_HOST || '127.0.0.1';
 const DB_USER = process.env.DB_USER || 'root';
@@ -37,8 +29,7 @@ async function run() {
     console.log(`Writing backup to ${filename}`);
 
     if (mysqldumpPkg) {
-      // Use the npm package if available
-      await mysqldumpPkg({
+            await mysqldumpPkg({
         connection: {
           host: DB_HOST,
           user: DB_USER,
@@ -49,8 +40,7 @@ async function run() {
       });
       console.log('Backup complete (via mysqldump npm package)');
     } else {
-      // Fallback: call the system mysqldump CLI
-      await new Promise((resolve, reject) => {
+            await new Promise((resolve, reject) => {
         const args = [
           `-h${DB_HOST}`,
           `-u${DB_USER}`,

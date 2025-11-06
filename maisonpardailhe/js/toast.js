@@ -1,21 +1,11 @@
-/**
- * Toast Notification System
- * Système de notifications élégant pour Maison Pardailhé
- * Usage:
- *   showToast('Commande enregistrée !', 'success');
- *   showToast('Erreur lors de l\'envoi', 'error');
- *   showToast('Information importante', 'info');
- *   showToast('Attention !', 'warning');
- */
+
 
 (function() {
   'use strict';
 
-  // Container pour les toasts
-  let toastContainer = null;
+    let toastContainer = null;
 
-  // Types de toast disponibles
-  const TOAST_TYPES = {
+    const TOAST_TYPES = {
     success: {
       icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
       color: '#10b981',
@@ -38,9 +28,7 @@
     }
   };
 
-  /**
-   * Initialise le container de toasts
-   */
+  
   function initToastContainer() {
     if (toastContainer) return;
     
@@ -60,8 +48,7 @@
       max-width: 420px;
     `;
     
-    // Responsive: centrer en bas sur mobile
-    const mediaQuery = window.matchMedia('(max-width: 640px)');
+        const mediaQuery = window.matchMedia('(max-width: 640px)');
     if (mediaQuery.matches) {
       toastContainer.style.cssText += `
         top: auto;
@@ -75,12 +62,7 @@
     document.body.appendChild(toastContainer);
   }
 
-  /**
-   * Crée et affiche un toast
-   * @param {string} message - Message à afficher
-   * @param {string} type - Type: 'success', 'error', 'warning', 'info'
-   * @param {number} duration - Durée en ms (défaut: 4000)
-   */
+  
   function showToast(message, type = 'info', duration = 4000) {
     initToastContainer();
     
@@ -107,8 +89,7 @@
       max-width: 420px;
     `;
     
-    // Icône
-    const iconWrapper = document.createElement('div');
+        const iconWrapper = document.createElement('div');
     iconWrapper.style.cssText = `
       flex-shrink: 0;
       width: 32px;
@@ -122,8 +103,7 @@
     `;
     iconWrapper.innerHTML = config.icon;
     
-    // Contenu
-    const content = document.createElement('div');
+        const content = document.createElement('div');
     content.style.cssText = `
       flex: 1;
       font-size: 0.95rem;
@@ -134,8 +114,7 @@
     `;
     content.textContent = message;
     
-    // Bouton fermer
-    const closeBtn = document.createElement('button');
+        const closeBtn = document.createElement('button');
     closeBtn.setAttribute('aria-label', 'Fermer la notification');
     closeBtn.style.cssText = `
       background: none;
@@ -160,8 +139,7 @@
     toast.appendChild(content);
     toast.appendChild(closeBtn);
     
-    // Fonction de suppression
-    function removeToast() {
+        function removeToast() {
       toast.style.transform = 'translateX(400px)';
       toast.style.opacity = '0';
       setTimeout(() => {
@@ -171,16 +149,14 @@
       }, 300);
     }
     
-    // Events
-    closeBtn.onclick = (e) => {
+        closeBtn.onclick = (e) => {
       e.stopPropagation();
       removeToast();
     };
     
     toast.onclick = removeToast;
     
-    // Hover pour mettre en pause
-    let autoRemoveTimer;
+        let autoRemoveTimer;
     toast.onmouseenter = () => {
       if (autoRemoveTimer) clearTimeout(autoRemoveTimer);
       toast.style.transform = 'translateX(0) scale(1.02)';
@@ -191,26 +167,21 @@
       autoRemoveTimer = setTimeout(removeToast, 2000);
     };
     
-    // Ajouter au container
-    toastContainer.appendChild(toast);
+        toastContainer.appendChild(toast);
     
-    // Animation d'entrée
-    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
       toast.style.transform = 'translateX(0)';
       toast.style.opacity = '1';
     });
     
-    // Auto-suppression
-    if (duration > 0) {
+        if (duration > 0) {
       autoRemoveTimer = setTimeout(removeToast, duration);
     }
     
     return toast;
   }
 
-  /**
-   * Raccourcis pour les types courants
-   */
+  
   window.showToast = showToast;
   window.toast = {
     success: (msg, duration) => showToast(msg, 'success', duration),

@@ -26,8 +26,6 @@ async function saveNotifications(list) {
   await fs.writeFile(NOTIF_FILE, JSON.stringify(list, null, 2), 'utf8');
 }
 
-// Public endpoint: create a notification from contact form
-// POST /api/notifications
 router.post('/', async (req, res, next) => {
   try {
     const { fullname, email, subject, message } = req.body || {};
@@ -40,8 +38,7 @@ router.post('/', async (req, res, next) => {
     list.unshift(notif);
     await saveNotifications(list);
 
-    // send an email to admin (best-effort)
-    const adminTo = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || process.env.FROM_ADDRESS || null;
+        const adminTo = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || process.env.FROM_ADDRESS || null;
     let emailResult = null;
     if (!adminTo) {
       logger.warn('No admin email configured for notifications (set ADMIN_NOTIFICATION_EMAIL or FROM_ADDRESS)');
@@ -49,8 +46,7 @@ router.post('/', async (req, res, next) => {
       const html = `<p>Nouveau message de contact</p><ul><li><strong>Nom:</strong> ${escapeHtml(fullname)}</li><li><strong>Email:</strong> ${escapeHtml(email)}</li><li><strong>Objet:</strong> ${escapeHtml(subject || '')}</li></ul><p>${escapeHtml(message)}</p>`;
       const text = `Nouveau message de contact\nNom: ${fullname}\nEmail: ${email}\nObjet: ${subject || ''}\n---\n${message}`;
       try {
-        // await the result so we can log preview URLs in dev and surface errors
-        emailResult = await emailer.sendMail({ to: adminTo, subject: `Contact: ${subject || 'Nouveau message'}`, html, text });
+                emailResult = await emailer.sendMail({ to: adminTo, subject: `Contact: ${subject || 'Nouveau message'}`, html, text });
         if (emailResult && emailResult.previewUrl) {
           logger.info({ previewUrl: emailResult.previewUrl }, 'Notification email sent (preview available)');
         } else if (emailResult && emailResult.ok) {
@@ -69,7 +65,6 @@ router.post('/', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Helper to escape HTML when building email
 function escapeHtml(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
