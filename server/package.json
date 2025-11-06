@@ -15,7 +15,11 @@
     "db:backup": "node scripts/db_backup.js",
     "images:optimize": "node scripts/images_optimize.js",
     "css:minify": "npx cleancss -o ../maisonpardailhe/css/style.min.css ../maisonpardailhe/css/style.css && npx cleancss -o ../maisonpardailhe/css/datepicker.min.css ../maisonpardailhe/css/datepicker.css && npx cleancss -o ../maisonpardailhe/admin/css/admin-clean.min.css ../maisonpardailhe/admin/css/admin-clean.css",
-    "build": "npm run images:optimize && npm run css:minify"
+    "build": "npm run images:optimize && npm run css:minify",
+    "benchmark": "node scripts/benchmark.js",
+    "benchmark:load": "node scripts/benchmark-load.js",
+    "benchmark:api": "node scripts/benchmark-api.js",
+    "benchmark:all": "npm run benchmark && npm run benchmark:api"
   },
   "keywords": [],
   "author": "",
