@@ -100,7 +100,7 @@ if (document.getElementById('loginForm')) {
       loader.style.display = 'none';
       document.getElementById('loginBtn').disabled = false;
       if (res.ok) {
-        window.location.href = 'dashboard.html';
+        window.location.href = '/admin/dashboard';
       } else {
         errorDiv.textContent = 'Identifiants invalides.';
         errorDiv.style.display = 'block';
@@ -117,6 +117,7 @@ if (document.getElementById('loginForm')) {
 // Stats refresh interval handle (set when stats tab is active)
 let statsIntervalId = null;
 let ordersChart = null;
+let statusChart = null;
 let adminLastStats = null;
 
 // Animation shake pour erreur
@@ -402,12 +403,12 @@ if (document.getElementById('logoutBtn')) {
       window._currentAdmin = current;
       // hide admin management tab if not primary
       if (!current || String(current.username).toLowerCase() !== 'admin') {
-        const adminBtn = document.querySelector('.tab-btn[data-tab="admins"]');
+        const adminBtn = document.querySelector('.tab-btn-vertical[data-tab="admins"]');
         if (adminBtn) adminBtn.style.display = 'none';
       }
       // hide menus tab if current admin cannot edit menus
       if (!current || !current.can_edit_menus) {
-        const menuBtn = document.querySelector('.tab-btn[data-tab="menus"]');
+        const menuBtn = document.querySelector('.tab-btn-vertical[data-tab="menus"]');
         if (menuBtn) menuBtn.style.display = 'none';
         // add a notice inside the menus tab explaining why it's hidden
         try {
@@ -454,19 +455,111 @@ if (document.getElementById('logoutBtn')) {
   document.getElementById('logoutBtn').onclick = async () => {
     const _csrf = await getCsrfToken();
     await fetch(apiBase + '/logout', { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
-    window.location.href = 'login.html';
+    window.location.href = '/admin/login';
   };
 
+  // ============================================
+  // Mobile Menu Toggle
+  // ============================================
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const mobileLogout = document.getElementById('mobile-logout');
+  const sidebar = document.getElementById('admin-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const body = document.body;
+
+  function openMobileMenu() {
+    body.classList.add('sidebar-open');
+    overlay.classList.add('active');
+    sidebar.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeMobileMenu() {
+    body.classList.remove('sidebar-open');
+    overlay.classList.remove('active');
+    sidebar.setAttribute('aria-hidden', 'true');
+  }
+
+  if (mobileMenuToggle) {
+    mobileMenuToggle.addEventListener('click', () => {
+      if (body.classList.contains('sidebar-open')) {
+        closeMobileMenu();
+      } else {
+        openMobileMenu();
+      }
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeMobileMenu);
+  }
+
+  // ============================================
+  // Desktop Sidebar Toggle (Collapsible)
+  // ============================================
+  const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+  
+  // Load sidebar state from localStorage
+  const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+  if (sidebarCollapsed && sidebar) {
+    sidebar.classList.add('collapsed');
+  }
+  
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.addEventListener('click', () => {
+      if (sidebar) {
+        sidebar.classList.toggle('collapsed');
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+        
+        // Update button title
+        sidebarToggleBtn.setAttribute('title', isCollapsed ? 'Développer le menu' : 'Réduire le menu');
+        sidebarToggleBtn.setAttribute('aria-label', isCollapsed ? 'Développer le menu' : 'Réduire le menu');
+      }
+    });
+  }
+  
+  // Add tooltip data attributes to tabs for collapsed state
+  const tabButtons = document.querySelectorAll('.tab-btn-vertical');
+  tabButtons.forEach(btn => {
+    const label = btn.querySelector('.tab-label');
+    if (label) {
+      btn.setAttribute('data-tooltip', label.textContent.trim());
+    }
+  });
+
+  if (mobileLogout) {
+    mobileLogout.addEventListener('click', async () => {
+      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        try {
+          await fetch(apiBase + '/logout', { method: 'POST', credentials: 'include' });
+        } catch (e) {}
+        window.location.href = '/admin/login';
+      }
+    });
+  }
+
+  // ============================================
   // Tabs
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  // ============================================
+  document.querySelectorAll('.tab-btn-vertical').forEach(btn => {
     btn.onclick = () => {
       const tabName = btn.dataset.tab;
+      
+      // Close mobile menu after tab selection
+      closeMobileMenu();
+      
       // activation helper
       const activate = (name) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-btn-vertical').forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        const targetBtn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
-        if (targetBtn) targetBtn.classList.add('active');
+        const targetBtn = document.querySelector(`.tab-btn-vertical[data-tab="${name}"]`);
+        if (targetBtn) {
+          targetBtn.classList.add('active');
+          targetBtn.setAttribute('aria-selected', 'true');
+        }
         const target = document.getElementById('tab-' + name);
         if (target) target.classList.add('active');
         const listId = (name === 'attente') ? 'attente-list' : 'encours-list';
@@ -481,7 +574,17 @@ if (document.getElementById('logoutBtn')) {
           if (name === 'menus' && typeof loadMenus === 'function') loadMenus();
           if (name === 'admins' && typeof loadAdmins === 'function') loadAdmins();
           if (name === 'notifications' && typeof loadNotifications === 'function') loadNotifications();
+          if (name === 'emails' && typeof initEmailTemplatesTab === 'function') {
+            // Initialize email templates tab (loads templates on first activation)
+            const emailsTab = document.querySelector('[data-tab="emails"]');
+            if (emailsTab && emailsTab._emailsInitialized !== true) {
+              initEmailTemplatesTab();
+              emailsTab._emailsInitialized = true;
+            }
+          }
           if (name === 'stats' && typeof loadStats === 'function') {
+            // Initialize stats controls (period selector)
+            if (typeof initStatsControls === 'function') initStatsControls();
             // start immediate load and refresh while stats tab is visible
             loadStats();
             if (statsIntervalId) clearInterval(statsIntervalId);
@@ -501,7 +604,7 @@ if (document.getElementById('logoutBtn')) {
     try {
       const saved = localStorage.getItem('admin.activeTab');
       if (saved) {
-        const btn = document.querySelector(`.tab-btn[data-tab="${saved}"]`);
+        const btn = document.querySelector(`.tab-btn-vertical[data-tab="${saved}"]`);
         if (btn) {
           btn.click();
           return;
@@ -509,7 +612,7 @@ if (document.getElementById('logoutBtn')) {
       }
     } catch (e) {}
     // fallback: ensure default first tab is active
-    const first = document.querySelector('.tab-btn');
+    const first = document.querySelector('.tab-btn-vertical');
     if (first) first.click();
   })();
 
@@ -667,7 +770,7 @@ if (document.getElementById('logoutBtn')) {
     const tbody = document.querySelector('#admin-table tbody');
     try {
       const res = await fetch(apiBase + '/admins', { credentials: 'include' });
-      if (res.status === 401) { window.location.href = 'login.html'; return; }
+      if (res.status === 401) { window.location.href = '/admin/login'; return; }
       if (!res.ok) throw new Error('Failed');
       const admins = await res.json();
       renderAdminsTable(admins);
@@ -685,7 +788,7 @@ if (document.getElementById('logoutBtn')) {
     if (loader) loader.style.display = 'block';
     try {
       const res = await fetch('/api/admin/notifications', { credentials: 'include' });
-      if (res.status === 401) { window.location.href = 'login.html'; return; }
+      if (res.status === 401) { window.location.href = '/admin/login'; return; }
       if (!res.ok) throw new Error('Failed');
       const items = await res.json();
       renderNotificationsList(items);
@@ -794,7 +897,7 @@ if (document.getElementById('logoutBtn')) {
             credentials: 'include',
             body: JSON.stringify({ username, password, can_edit_menus: canEditMenus })
           });
-          if (res.status === 401) { window.location.href = 'login.html'; return; }
+          if (res.status === 401) { window.location.href = '/admin/login'; return; }
           if (res.status === 409) { showAlertModal('Erreur', 'Nom d\'utilisateur déjà existant.'); return; }
           if (!res.ok) throw new Error('err');
           form.reset();
@@ -1203,8 +1306,6 @@ if (document.getElementById('logoutBtn')) {
 
   // Add a new commande dynamically to the list (used by SSE)
   async function addCommandeToList(cmd, statut, containerId, badgeId) {
-    console.log('🔧 addCommandeToList called with:', { cmd, statut, containerId, badgeId }); // DEBUG
-    
     const list = document.getElementById(containerId);
     const badge = document.getElementById(badgeId);
     
@@ -1213,49 +1314,35 @@ if (document.getElementById('logoutBtn')) {
       return;
     }
     
-    console.log('✅ List element found:', list);
-    
     // Ensure menus cache is loaded
     try { await preloadMenus().catch(()=>{}); } catch(e) {}
     
     // Check if commande already exists (prevent duplicates)
     const existing = list.querySelector(`[data-commande-id="${cmd.id}"]`);
-    if (existing) {
-      console.log('⚠️ Commande already in list, skipping duplicate. ID:', cmd.id);
-      return;
-    }
-    
-    console.log('✅ No duplicate found, proceeding...');
+    if (existing) return;
     
     // Remove "Aucune commande" message if present
     const noCommandeMsg = list.querySelector('div[style*="Aucune commande"]');
-    if (noCommandeMsg) {
-      console.log('🗑️ Removing "Aucune commande" message');
-      noCommandeMsg.remove();
-    }
+    if (noCommandeMsg) noCommandeMsg.remove();
     
     // Create and insert the card at the top with animation
-    console.log('🎨 Creating commande card...');
     const card = createCommandeCard(cmd, statut);
     card.style.opacity = '0';
     card.style.transform = 'translateY(-10px)';
     card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
-    console.log('📌 Inserting card at top of list...');
     list.insertBefore(card, list.firstChild);
     
     // Trigger animation
     requestAnimationFrame(() => {
       card.style.opacity = '1';
       card.style.transform = 'translateY(0)';
-      console.log('✨ Animation triggered');
     });
     
     // Update badge count
     if (badge) {
       const currentCount = parseInt(badge.textContent) || 0;
       badge.textContent = currentCount + 1;
-      console.log('🔢 Badge updated:', currentCount, '->', currentCount + 1);
     }
     
     // Initialize countdown if this is an en_cours order
@@ -1267,7 +1354,6 @@ if (document.getElementById('logoutBtn')) {
     
     // Adjust list max height
     adjustListMaxHeight(containerId);
-    console.log('✅ addCommandeToList completed successfully!');
   }
 
   // Load commandes
@@ -1285,7 +1371,7 @@ if (document.getElementById('logoutBtn')) {
       if (res.status === 401) {
         // redirect to login so admin can re-authenticate
         console.warn('Admin API returned 401 — redirecting to login');
-        window.location.href = 'login.html';
+        window.location.href = '/admin/login';
         return;
       }
 
@@ -1322,134 +1408,709 @@ if (document.getElementById('logoutBtn')) {
   }
   // Admin dashboard statistics - fetch from protected endpoint and render
   async function loadStats() {
-    // The stats tab container is `tab-stats` in the HTML. Older code looked for
-    // a non-existent `admin-stats` id which caused loadStats to be a no-op.
     const container = document.getElementById('tab-stats');
     if (!container) return;
+    
     try {
-      const res = await fetch(apiBase + '/stats', { credentials: 'include' });
-      if (res.status === 401) { window.location.href = 'login.html'; return; }
+      // Get selected period
+      const periodSelect = document.getElementById('stats-period');
+      const period = periodSelect ? periodSelect.value : '30';
+      
+      const res = await fetch(apiBase + '/stats?period=' + period, { credentials: 'include' });
+      if (res.status === 401) { window.location.href = '/admin/login'; return; }
       if (!res.ok) throw new Error('Failed to load stats');
       const d = await res.json();
-      const totalEl = document.getElementById('stat-total-orders');
-      const last30El = document.getElementById('stat-last30');
-      const byStatusEl = document.getElementById('stat-by-status');
-      const revenueEl = document.getElementById('stat-revenue');
-      if (totalEl) totalEl.textContent = String(d.totalOrders || 0);
-      if (last30El) last30El.textContent = String(d.last30 || 0);
-      if (byStatusEl) {
-        byStatusEl.innerHTML = '';
-        if (d.byStatus && Object.keys(d.byStatus).length > 0) {
-          for (const k of Object.keys(d.byStatus)) {
-            const div = document.createElement('div');
-            div.style.marginBottom = '4px';
-            div.textContent = `${k}: ${d.byStatus[k]}`;
-            byStatusEl.appendChild(div);
-          }
-        } else {
-          byStatusEl.textContent = '-';
-        }
+      
+      // Update KPI cards
+      updateKPICard('stat-total-orders', d.periodOrders || 0, d.trends?.orders);
+      updateKPICard('stat-revenue', formatCurrency(d.period_revenue_cents || 0), d.trends?.revenue);
+      updateKPICard('stat-avg-basket', formatCurrency(d.avg_basket_cents || 0), d.trends?.basket);
+      
+      // Update pending orders count
+      const pendingEl = document.getElementById('stat-pending');
+      if (pendingEl) {
+        const pending = (d.byStatus?.attente || 0) + (d.byStatus?.encours || 0);
+        pendingEl.textContent = String(pending);
       }
-      if (revenueEl) revenueEl.textContent = d.total_revenue_cents ? (Number(d.total_revenue_cents)/100).toFixed(2) + ' €' : '0.00 €';
+      
       // remember last stats for CSV export
       adminLastStats = d;
-      // render orders-by-day chart if available
-      try {
-        const ordersSeries = (d.orders_by_day && Array.isArray(d.orders_by_day)) ? d.orders_by_day : [];
-        const revenueSeries = (d.revenue_by_day && Array.isArray(d.revenue_by_day)) ? d.revenue_by_day : [];
-        const labels = ordersSeries.map(s => {
-          try { const dt = new Date(s.date); return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }); } catch(e){ return s.date; }
-        });
-        const ordersData = ordersSeries.map(s => Number(s.count || 0));
-        // align revenue data by date (server returns ordered arrays but align defensively)
-        const revenueData = ordersSeries.map(s => {
-          const r = revenueSeries.find(rr => rr.date === s.date);
-          return r ? Number((r.cents || 0) / 100) : 0;
-        });
-        const ctxEl = document.getElementById('ordersChart');
-        if (ctxEl && typeof Chart !== 'undefined') {
-          const ctx = ctxEl.getContext('2d');
-          if (!ordersChart) {
-            ordersChart = new Chart(ctx, {
-              type: 'line',
-              data: {
-                labels,
-                datasets: [
-                  { label: 'Commandes', data: ordersData, fill: true, borderColor: '#36a2eb', backgroundColor: 'rgba(54,162,235,0.12)', tension: 0.3, yAxisID: 'y' },
-                  { label: 'CA (€)', data: revenueData, fill: false, borderColor: '#ff9f40', backgroundColor: 'rgba(255,159,64,0.08)', tension: 0.3, yAxisID: 'y1' }
-                ]
-              },
-              options: {
-                responsive: true,
-                plugins: { legend: { display: true } },
-                scales: {
-                  x: { grid: { display: false } },
-                  y: { beginAtZero: true, position: 'left', ticks: { precision:0 } },
-                  y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { callback: v => Number(v).toFixed(2) + ' €' } }
-                },
-                interaction: { mode: 'index', intersect: false }
-              }
-            });
-          } else {
-            ordersChart.data.labels = labels;
-            ordersChart.data.datasets[0].data = ordersData;
-            ordersChart.data.datasets[1].data = revenueData;
-            ordersChart.update();
-          }
-        }
-        // render itemsSold list
-        const itemsList = document.getElementById('stat-items-list');
-        if (itemsList) {
-          if (d.itemsSold && d.itemsSold.length > 0) {
-            itemsList.innerHTML = d.itemsSold.map(it => `<div>${it.name || ('#'+it.menu_id)}: ${it.qty} pcs</div>`).join('');
-          } else {
-            itemsList.textContent = 'Aucun item analysable (formats legacy présents)';
-          }
-        }
-      } catch (e) { console.error('chart render error', e); }
-      // wire CSV export button
-      try {
-        const btn = document.getElementById('stat-export-csv');
-        if (btn) {
-          btn.onclick = () => {
-            const s = adminLastStats || d;
-            if (!s) { showAlertModal('Erreur', 'Aucune donnée disponible pour export.'); return; }
-            // build CSV: date,orders,revenue_eur
-            const rows = [['date','orders','revenue_eur']];
-            const ob = s.orders_by_day || [];
-            const rb = s.revenue_by_day || [];
-            for (let i = 0; i < ob.length; i++) {
-              const date = ob[i].date;
-              const ordersVal = ob[i].count || 0;
-              const rObj = rb.find(x => x.date === date);
-              const revenueVal = rObj ? ((rObj.cents || 0) / 100).toFixed(2) : '0.00';
-              rows.push([date, String(ordersVal), String(revenueVal)]);
-            }
-            const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const fname = 'stats-' + (new Date().toISOString().slice(0,10)) + '.csv';
-            a.download = fname;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-          };
-        }
-      } catch (e) { console.error('CSV export bind failed', e); }
+      
+      // Render main line chart (orders + revenue)
+      renderOrdersChart(d.orders_by_day || [], d.revenue_by_day || []);
+      
+      // Render status doughnut chart
+      renderStatusChart(d.byStatus || {});
+      
+      // Render top products
+      renderTopProducts(d.itemsSold || []);
+      
+      // Render recent activity
+      renderRecentActivity(d.recent_orders || []);
+      
+      // Render alerts (new)
+      renderAlerts(d.alerts || []);
+      
+      // Render location stats (new)
+      renderLocationStats(d.location_stats || {});
+      
+      // Render customer insights (new)
+      renderCustomerInsights(d.customer_insights || {});
+      
+      // Render YoY comparison (new)
+      renderYoYComparison(d.yoy_comparison || {});
+      
+      // Wire CSV export button
+      setupCSVExport(d);
+      
     } catch (e) {
       console.error('Failed to load admin stats', e);
-      // Surface an inline error message in the stats tab so the admin sees a
-      // clear failure instead of an empty panel.
-      try {
-        if (container) {
-          container.innerHTML = `<div class="empty">Erreur lors du chargement des statistiques. Vérifiez la console pour plus d'informations.</div>`;
-        }
-      } catch (e2) { /* ignore */ }
+      if (container) {
+        container.innerHTML = `<div class="empty-state">Erreur lors du chargement des statistiques. Vérifiez la console pour plus d'informations.</div>`;
+      }
     }
   }
+  
+  // Helper: Update KPI card with value and trend
+  function updateKPICard(elementId, value, trend) {
+    const valueEl = document.getElementById(elementId);
+    if (!valueEl) return;
+    valueEl.textContent = String(value);
+    
+    const trendEl = document.getElementById(elementId + '-trend');
+    if (trendEl && trend !== null && trend !== undefined) {
+      const trendNum = parseFloat(trend);
+      const isPositive = trendNum >= 0;
+      trendEl.className = 'stat-trend ' + (isPositive ? 'positive' : 'negative');
+      trendEl.textContent = (isPositive ? '+' : '') + trend + '%';
+    } else if (trendEl) {
+      trendEl.textContent = '';
+    }
+  }
+  
+  // Helper: Format currency
+  function formatCurrency(cents) {
+    return (Number(cents) / 100).toFixed(2) + ' €';
+  }
+  
+  // Render orders chart (line chart with dual axes)
+  function renderOrdersChart(ordersSeries, revenueSeries) {
+    const ctxEl = document.getElementById('ordersChart');
+    if (!ctxEl || typeof Chart === 'undefined') return;
+    
+    const labels = ordersSeries.map(s => {
+      try {
+        const dt = new Date(s.date);
+        return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      } catch(e) {
+        return s.date;
+      }
+    });
+    
+    const ordersData = ordersSeries.map(s => Number(s.count || 0));
+    
+    // Align revenue data by date
+    const revenueData = ordersSeries.map(s => {
+      const r = revenueSeries.find(rr => rr.date === s.date);
+      return r ? Number((r.cents || 0) / 100) : 0;
+    });
+    
+    const ctx = ctxEl.getContext('2d');
+    
+    if (!ordersChart) {
+      ordersChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Commandes',
+              data: ordersData,
+              fill: true,
+              borderColor: '#36a2eb',
+              backgroundColor: 'rgba(54,162,235,0.12)',
+              tension: 0.4,
+              yAxisID: 'y',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'CA (€)',
+              data: revenueData,
+              fill: false,
+              borderColor: '#ff9f40',
+              backgroundColor: 'rgba(255,159,64,0.08)',
+              tension: 0.4,
+              yAxisID: 'y1',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false, color: 'rgba(255,255,255,0.05)' },
+              ticks: { color: '#bdbfc1', maxRotation: 45, minRotation: 0 }
+            },
+            y: {
+              beginAtZero: true,
+              position: 'left',
+              ticks: { precision: 0, color: '#bdbfc1' },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              grid: { display: false },
+              ticks: {
+                callback: v => (Number(v).toFixed(0)) + '€',
+                color: '#bdbfc1'
+              }
+            }
+          },
+          interaction: { mode: 'index', intersect: false }
+        }
+      });
+    } else {
+      ordersChart.data.labels = labels;
+      ordersChart.data.datasets[0].data = ordersData;
+      ordersChart.data.datasets[1].data = revenueData;
+      ordersChart.update();
+    }
+  }
+  
+  // Render status doughnut chart
+  function renderStatusChart(byStatus) {
+    const ctxEl = document.getElementById('statusChart');
+    const legendEl = document.getElementById('stat-by-status-list');
+    if (!ctxEl || typeof Chart === 'undefined') return;
+    
+    const statusLabels = {
+      'attente': 'En attente',
+      'encours': 'En cours',
+      'terminee': 'Terminée',
+      'refusee': 'Refusée'
+    };
+    
+    const statusColors = {
+      'attente': '#f1c40f',
+      'encours': '#3498db',
+      'terminee': '#2ecc71',
+      'refusee': '#e74c3c'
+    };
+    
+    const labels = [];
+    const data = [];
+    const colors = [];
+    
+    for (const [key, count] of Object.entries(byStatus)) {
+      labels.push(statusLabels[key] || key);
+      data.push(count);
+      colors.push(statusColors[key] || '#95a5a6');
+    }
+    
+    const ctx = ctxEl.getContext('2d');
+    
+    if (!statusChart) {
+      statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: colors,
+            borderWidth: 2,
+            borderColor: '#1b1d1e'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              titleColor: '#fff',
+              bodyColor: '#fff'
+            }
+          }
+        }
+      });
+    } else {
+      statusChart.data.labels = labels;
+      statusChart.data.datasets[0].data = data;
+      statusChart.data.datasets[0].backgroundColor = colors;
+      statusChart.update();
+    }
+    
+    // Render custom legend
+    if (legendEl) {
+      legendEl.innerHTML = labels.map((label, i) => `
+        <div class="status-legend-item">
+          <span class="status-legend-dot" style="background:${colors[i]}"></span>
+          <span class="status-legend-label">${label}</span>
+          <span class="status-legend-value">${data[i]}</span>
+        </div>
+      `).join('');
+    }
+  }
+  
+  // Render top products
+  function renderTopProducts(items) {
+    const container = document.getElementById('stat-items-list');
+    if (!container) return;
+    
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="empty-state">Aucun produit vendu sur cette période</div>';
+      return;
+    }
+    
+    // Show top 8
+    const topItems = items.slice(0, 8);
+    
+    container.innerHTML = topItems.map((item, index) => `
+      <div class="stat-product-card" onclick="showProductTrendModal(${item.menu_id}, '${escapeHtml(item.name || 'Menu #' + item.menu_id).replace(/'/g, "\\'")}')">
+        <div class="stat-product-rank">${index + 1}</div>
+        <div class="stat-product-info">
+          <div class="stat-product-name">${escapeHtml(item.name || 'Menu #' + item.menu_id)}</div>
+          <div class="stat-product-qty">${item.qty} unités vendues</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // Render recent activity
+  function renderRecentActivity(orders) {
+    const container = document.getElementById('stat-recent-orders');
+    if (!container) return;
+    
+    if (!orders || orders.length === 0) {
+      container.innerHTML = '<div class="empty-state">Aucune commande récente</div>';
+      return;
+    }
+    
+    container.innerHTML = orders.map(order => {
+      const date = order.date ? new Date(order.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '-';
+      const amount = formatCurrency(order.total_cents || 0);
+      const statusClass = 'status-' + (order.statut || 'attente');
+      const statusLabels = {
+        'attente': 'En attente',
+        'encours': 'En cours',
+        'terminee': 'Terminée',
+        'refusee': 'Refusée'
+      };
+      const statusLabel = statusLabels[order.statut] || order.statut;
+      
+      return `
+        <div class="activity-row">
+          <div class="activity-date">${date}</div>
+          <div class="activity-customer">${escapeHtml(order.customer)}</div>
+          <div class="activity-amount">${amount}</div>
+          <div class="activity-status ${statusClass}">${statusLabel}</div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  // Render alerts (warnings/dangers)
+  function renderAlerts(alerts) {
+    const container = document.getElementById('stats-alerts-container');
+    if (!container) return;
+    
+    if (!alerts || alerts.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    const html = alerts.map(alert => {
+      const icon = alert.type === 'danger' ? '🚨' : '⚠️';
+      return `
+        <div class="stats-alert alert-${alert.type}">
+          <div class="stats-alert-icon">${icon}</div>
+          <div class="stats-alert-content">
+            <div class="stats-alert-title">${alert.title}</div>
+            <div class="stats-alert-message">${alert.message}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    container.innerHTML = html;
+  }
+  
+  // Render location stats breakdown
+  function renderLocationStats(locationStats) {
+    const container = document.getElementById('stat-locations');
+    if (!container) return;
+    
+    const locations = [
+      { 
+        key: 'roquettes', 
+        name: 'Roquettes', 
+        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' 
+      },
+      { 
+        key: 'victor_hugo', 
+        name: 'Victor Hugo (Toulouse)', 
+        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>' 
+      },
+      { 
+        key: 'other', 
+        name: 'Autres', 
+        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' 
+      }
+    ];
+    
+    const totalOrders = Object.values(locationStats).reduce((sum, loc) => sum + (loc.orders || 0), 0);
+    const totalRevenue = Object.values(locationStats).reduce((sum, loc) => sum + (loc.revenue || 0), 0);
+    
+    const html = locations.map(loc => {
+      const data = locationStats[loc.key] || { orders: 0, revenue: 0 };
+      const ordersPct = totalOrders > 0 ? Math.round((data.orders / totalOrders) * 100) : 0;
+      const revenuePct = totalRevenue > 0 ? Math.round((data.revenue / totalRevenue) * 100) : 0;
+      
+      return `
+        <div class="location-stat-card">
+          <div class="location-header">
+            <span class="location-icon">${loc.icon}</span>
+            <span class="location-name">${loc.name}</span>
+          </div>
+          <div class="location-metrics">
+            <div class="location-metric">
+              <span class="location-metric-label">Commandes</span>
+              <span class="location-metric-value">
+                ${data.orders}
+                <span class="location-percentage">${ordersPct}%</span>
+              </span>
+            </div>
+            <div class="location-metric">
+              <span class="location-metric-label">Chiffre d'affaires</span>
+              <span class="location-metric-value revenue">
+                ${formatCurrency(data.revenue)}
+                <span class="location-percentage">${revenuePct}%</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    container.innerHTML = html || '<div class="empty-state">Aucune donnée de localisation</div>';
+  }
+  
+  // Render customer insights
+  function renderCustomerInsights(insights) {
+    const overviewContainer = document.getElementById('stat-customer-overview');
+    const tableContainer = document.getElementById('stat-top-customers');
+    
+    if (!overviewContainer || !tableContainer) return;
+    
+    // Overview cards
+    const overviewHtml = `
+      <div class="customer-overview-card">
+        <div class="customer-overview-label">Total clients</div>
+        <div class="customer-overview-value">${insights.total_customers || 0}</div>
+      </div>
+      <div class="customer-overview-card">
+        <div class="customer-overview-label">Clients réguliers</div>
+        <div class="customer-overview-value">${insights.regular_customers || 0}</div>
+      </div>
+    `;
+    overviewContainer.innerHTML = overviewHtml;
+    
+    // Top customers table
+    const topCustomers = insights.top_customers || [];
+    if (topCustomers.length === 0) {
+      tableContainer.innerHTML = '<div class="empty-state">Aucun client</div>';
+      return;
+    }
+    
+    const tableHtml = `
+      <div class="customer-row header">
+        <span>Client</span>
+        <span>Téléphone</span>
+        <span>Commandes</span>
+        <span>Total dépensé</span>
+        <span>Panier moyen</span>
+      </div>
+      ${topCustomers.map(customer => `
+        <div class="customer-row">
+          <span class="customer-name">
+            ${customer.name}
+            ${customer.orders >= 3 ? '<span class="customer-badge regular">Régulier</span>' : ''}
+          </span>
+          <span class="customer-phone">${customer.phone}</span>
+          <span class="customer-orders">${customer.orders}</span>
+          <span class="customer-spent">${formatCurrency(customer.total_spent)}</span>
+          <span class="customer-avg">${formatCurrency(customer.avg_basket)}</span>
+        </div>
+      `).join('')}
+    `;
+    
+    tableContainer.innerHTML = tableHtml;
+  }
+  
+  // Global variable for YoY chart
+  let yoyChart = null;
+  
+  // Render Year-over-Year comparison chart
+  function renderYoYComparison(yoyData) {
+    const ctxEl = document.getElementById('yoyChart');
+    if (!ctxEl) return;
+    
+    const current = yoyData.current || [];
+    const previous = yoyData.previous || [];
+    
+    if (current.length === 0 && previous.length === 0) {
+      const parent = ctxEl.parentElement;
+      if (parent) {
+        parent.innerHTML = '<div class="empty-state">Pas encore de données pour comparaison année sur année</div>';
+      }
+      return;
+    }
+    
+    // Prepare labels and datasets
+    const labels = current.map(d => d.date);
+    const currentOrders = current.map(d => d.orders);
+    const previousOrders = previous.map(d => d.orders);
+    
+    const ctx = ctxEl.getContext('2d');
+    
+    if (!yoyChart) {
+      yoyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Année en cours',
+              data: currentOrders,
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              borderWidth: 2,
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Année précédente',
+              data: previousOrders,
+              borderColor: '#94a3b8',
+              backgroundColor: 'rgba(148, 163, 184, 0.1)',
+              borderWidth: 2,
+              tension: 0.4,
+              fill: true,
+              borderDash: [5, 5]
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: { color: '#e0e0e0', font: { size: 12 } }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              titleColor: '#fff',
+              bodyColor: '#fff'
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#2c2f33', drawBorder: false },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#2c2f33', drawBorder: false },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            }
+          }
+        }
+      });
+    } else {
+      yoyChart.data.labels = labels;
+      yoyChart.data.datasets[0].data = currentOrders;
+      yoyChart.data.datasets[1].data = previousOrders;
+      yoyChart.update();
+    }
+  }
+  
+  // Global variable for product trend chart in modal
+  let productTrendChart = null;
+  
+  // Show product trend modal
+  window.showProductTrendModal = function(menuId, productName) {
+    const modal = document.getElementById('product-trend-modal');
+    const titleEl = document.getElementById('product-trend-title');
+    const ctxEl = document.getElementById('productTrendChart');
+    
+    if (!modal || !titleEl || !ctxEl) return;
+    
+    // Find product trend data from last stats
+    if (!adminLastStats || !adminLastStats.product_trends) {
+      showAlertModal('Erreur', 'Données de tendance produit non disponibles');
+      return;
+    }
+    
+    const productTrend = adminLastStats.product_trends.find(p => p.menu_id === menuId);
+    if (!productTrend) {
+      showAlertModal('Erreur', 'Tendance non trouvée pour ce produit');
+      return;
+    }
+    
+    // Update title
+    titleEl.textContent = `Tendance: ${productName}`;
+    
+    // Prepare chart data
+    const trend = productTrend.trend || [];
+    const labels = trend.map(d => d.date);
+    const data = trend.map(d => d.qty);
+    
+    const ctx = ctxEl.getContext('2d');
+    
+    // Destroy existing chart if any
+    if (productTrendChart) {
+      productTrendChart.destroy();
+      productTrendChart = null;
+    }
+    
+    productTrendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Quantité vendue',
+          data,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            padding: 12,
+            titleColor: '#fff',
+            bodyColor: '#fff'
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: '#2c2f33', drawBorder: false },
+            ticks: { color: '#94a3b8', font: { size: 11 } }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#2c2f33', drawBorder: false },
+            ticks: { color: '#94a3b8', font: { size: 11 }, stepSize: 1 }
+          }
+        }
+      }
+    });
+    
+    // Show modal
+    modal.style.display = 'flex';
+  };
+  
+  // Close product trend modal
+  window.closeProductTrendModal = function() {
+    const modal = document.getElementById('product-trend-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  };
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (e) => {
+    const modal = document.getElementById('product-trend-modal');
+    if (e.target === modal) {
+      window.closeProductTrendModal();
+    }
+  });
+  
+  // Setup CSV export
+  function setupCSVExport(statsData) {
+    const btn = document.getElementById('stat-export-csv');
+    if (!btn) return;
+    
+    btn.onclick = () => {
+      const s = adminLastStats || statsData;
+      if (!s) {
+        showAlertModal('Erreur', 'Aucune donnée disponible pour export.');
+        return;
+      }
+      
+      // Build CSV: date,orders,revenue_eur
+      const rows = [['date', 'commandes', 'ca_eur']];
+      const ob = s.orders_by_day || [];
+      const rb = s.revenue_by_day || [];
+      
+      for (let i = 0; i < ob.length; i++) {
+        const date = ob[i].date;
+        const ordersVal = ob[i].count || 0;
+        const rObj = rb.find(x => x.date === date);
+        const revenueVal = rObj ? ((rObj.cents || 0) / 100).toFixed(2) : '0.00';
+        rows.push([date, String(ordersVal), String(revenueVal)]);
+      }
+      
+      const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const fname = 'stats-' + (new Date().toISOString().slice(0, 10)) + '.csv';
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+  }
+  
+  // Wire period selector change
+  function initStatsControls() {
+    const periodSelect = document.getElementById('stats-period');
+    if (periodSelect) {
+      periodSelect.addEventListener('change', () => {
+        loadStats();
+      });
+    }
+  }
+  
+  // Call initStatsControls when stats tab is activated
+  // (already wired in tab activation logic below)
   // initial load is handled when the stats tab is activated (see tab activation code)
   // Stock management
   async function loadStock() {
@@ -1840,12 +2501,8 @@ if (document.getElementById('logoutBtn')) {
 
   // Fallback: poll for new orders if SSE doesn't work
   function startFallbackPolling() {
-    if (fallbackPollingInterval) {
-      console.log('⚠️ Polling already active, skipping...');
-      return; // Already polling
-    }
+    if (fallbackPollingInterval) return; // Already polling
     
-    console.log('🔄 Starting fallback polling (every 5 seconds)...');
     let lastCommandeId = 0;
     
     // Get the highest commande ID currently displayed
@@ -1854,8 +2511,6 @@ if (document.getElementById('logoutBtn')) {
       const id = parseInt(card.dataset.commandeId);
       if (id > lastCommandeId) lastCommandeId = id;
     });
-    
-    console.log('📊 Last commande ID:', lastCommandeId);
     
     fallbackPollingInterval = setInterval(async () => {
       try {
@@ -1873,15 +2528,12 @@ if (document.getElementById('logoutBtn')) {
         const newCommandes = commandes.filter(cmd => cmd.id > lastCommandeId);
         
         if (newCommandes.length > 0) {
-          console.log(`🆕 ${newCommandes.length} new order(s) detected via polling`);
-          
           // Sort by ID ascending to add oldest first
           newCommandes.sort((a, b) => a.id - b.id);
           
           for (const cmd of newCommandes) {
             const existing = document.querySelector(`[data-commande-id="${cmd.id}"]`);
             if (!existing) {
-              console.log('� Adding order #' + cmd.id);
               await addCommandeToList(cmd, 'en_attente', 'attente-list', 'badge-attente');
               
               // Play notification sound
@@ -1901,15 +2553,12 @@ if (document.getElementById('logoutBtn')) {
         console.error('❌ Polling error:', e);
       }
     }, 5000); // Poll every 5 seconds
-    
-    console.log('✅ Fallback polling started');
   }
 
   function stopFallbackPolling() {
     if (fallbackPollingInterval) {
       clearInterval(fallbackPollingInterval);
       fallbackPollingInterval = null;
-      console.log('⏹️ Fallback polling stopped');
     }
   }
 
@@ -1954,26 +2603,18 @@ if (document.getElementById('logoutBtn')) {
       eventSource = new EventSource('/api/admin/commandes/stream');
 
       eventSource.onopen = function() {
-        console.log('✅ SSE connection established');
         sseReconnectAttempts = 0; // Reset counter on successful connection
         sseWorking = true;
         stopFallbackPolling(); // Stop polling if SSE works
       };
 
       eventSource.onmessage = function(event) {
-        console.log('📨 SSE message received:', event.data); // DEBUG
         try {
           const message = JSON.parse(event.data);
-          console.log('📦 Parsed message:', message); // DEBUG
           
-          if (message.type === 'connected') {
-            console.log('✅ SSE connected successfully');
-            return;
-          }
+          if (message.type === 'connected') return;
           
           if (message.type === 'new_order') {
-            console.log('🆕 New order received via SSE:', message.data);
-            
             // Play notification sound
             if (notificationSound) {
               try {
@@ -1987,9 +2628,7 @@ if (document.getElementById('logoutBtn')) {
             showOrderNotification(message.data);
             
             // Add the new order dynamically to the top of the "en_attente" list
-            console.log('➕ Calling addCommandeToList...'); // DEBUG
             addCommandeToList(message.data, 'en_attente', 'attente-list', 'badge-attente')
-              .then(() => console.log('✅ Order added to list'))
               .catch(err => console.error('❌ Error adding order to list:', err));
           }
         } catch (e) {
@@ -2009,13 +2648,9 @@ if (document.getElementById('logoutBtn')) {
         if (sseReconnectAttempts < MAX_SSE_RECONNECT_ATTEMPTS) {
           sseReconnectAttempts++;
           const delay = Math.min(5000 * sseReconnectAttempts, 15000); // Exponential backoff, max 15s
-          console.log(`⏳ Attempting to reconnect SSE in ${delay/1000}s (attempt ${sseReconnectAttempts}/${MAX_SSE_RECONNECT_ATTEMPTS})...`);
           setTimeout(() => {
             setupSSE();
           }, delay);
-        } else {
-          console.warn('⚠️ SSE max reconnection attempts reached. Continuing with polling mode.');
-          // Don't show toast anymore since polling is already active
         }
       };
     } catch (e) {
@@ -2130,13 +2765,11 @@ if (document.getElementById('logoutBtn')) {
       .then(async cmds => {
         const newOnes = cmds.filter(c => !lastKnownOrderIds.has(c.id));
         if (newOnes.length > 0) {
-          console.log(`🆕 ${newOnes.length} nouvelle(s) commande(s)`);
           newOnes.sort((a,b) => a.id - b.id);
           
           for (const cmd of newOnes) {
             lastKnownOrderIds.add(cmd.id);
             if (!document.querySelector(`[data-commande-id="${cmd.id}"]`)) {
-              console.log(`✅ Ajout commande #${cmd.id}`);
               await addCommandeToList(cmd, 'en_attente', 'attente-list', 'badge-attente');
               if (notificationSound) try { notificationSound.play(); } catch(e) {}
               showOrderNotification(cmd);
@@ -2153,17 +2786,15 @@ if (document.getElementById('logoutBtn')) {
       const id = parseInt(card.dataset.commandeId);
       if (id) lastKnownOrderIds.add(id);
     });
-    console.log(`📊 ${lastKnownOrderIds.size} commande(s) initiale(s)`);
     checkForNewOrdersSimple();
     autoRefreshInterval = setInterval(checkForNewOrdersSimple, 3000);
-    console.log('🔄 Auto-refresh activé (3s)');
   }
 
   // Start auto-refresh
   initAutoRefresh();
 
   // Re-init when switching to attente tab
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  document.querySelectorAll('.tab-btn-vertical').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.tab === 'attente') {
         setTimeout(() => {
@@ -2394,3 +3025,385 @@ if (document.getElementById('logoutBtn')) {
     });
   }
 }
+
+// ============================================
+// EMAIL TEMPLATES EDITOR
+// ============================================
+function initEmailTemplatesTab() {
+  let templates = [];
+  let currentTemplate = null;
+  
+  const templatesList = document.getElementById('email-templates-list');
+  const editorEmpty = document.getElementById('email-editor-empty');
+  const editor = document.getElementById('email-editor');
+  const editorTitle = document.getElementById('email-editor-title');
+  const editorDescription = document.getElementById('email-editor-description');
+  const variablesList = document.getElementById('email-variables-list');
+  const htmlEditor = document.getElementById('email-html-editor');
+  const visualEditor = document.getElementById('email-visual-editor');
+  const previewFrame = document.getElementById('email-preview-frame');
+  const saveBtn = document.getElementById('email-save-btn');
+  const restoreBtn = document.getElementById('email-restore-btn');
+  const statusDiv = document.getElementById('email-editor-status');
+  
+  // Tab switching (visual vs preview vs code)
+  const tabBtns = document.querySelectorAll('.email-tab-btn');
+  const visualMode = document.getElementById('email-visual-mode');
+  const previewMode = document.getElementById('email-preview-mode');
+  const codeMode = document.getElementById('email-code-mode');
+  
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.mode;
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      if (mode === 'visual') {
+        // Sync HTML to visual editor
+        if (htmlEditor.value) {
+          visualEditor.innerHTML = extractBodyContent(htmlEditor.value);
+        }
+        visualMode.classList.add('active');
+        previewMode.classList.remove('active');
+        codeMode.classList.remove('active');
+      } else if (mode === 'preview') {
+        // Sync visual to HTML before preview
+        syncVisualToHtml();
+        visualMode.classList.remove('active');
+        previewMode.classList.add('active');
+        codeMode.classList.remove('active');
+        updatePreview();
+      } else if (mode === 'code') {
+        // Sync visual to HTML before showing code
+        syncVisualToHtml();
+        visualMode.classList.remove('active');
+        previewMode.classList.remove('active');
+        codeMode.classList.add('active');
+      }
+    });
+  });
+  
+  // Visual editor toolbar
+  const toolbar = document.querySelector('.email-visual-toolbar');
+  if (toolbar) {
+    toolbar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.toolbar-btn');
+      if (!btn) return;
+      
+      e.preventDefault();
+      const command = btn.dataset.command;
+      
+      if (command === 'createLink') {
+        const url = prompt('URL du lien:');
+        if (url) {
+          document.execCommand('createLink', false, url);
+        }
+      } else if (command === 'insertVariable') {
+        showVariableModal();
+      } else {
+        document.execCommand(command, false, null);
+      }
+      
+      visualEditor.focus();
+    });
+    
+    // Handle select dropdowns
+    toolbar.addEventListener('change', (e) => {
+      const select = e.target.closest('.toolbar-select');
+      if (!select) return;
+      
+      const command = select.dataset.command;
+      const value = select.value;
+      
+      if (value) {
+        document.execCommand(command, false, value);
+        select.value = '';
+        visualEditor.focus();
+      }
+    });
+  }
+  
+  // Show variable insertion modal
+  function showVariableModal() {
+    if (!currentTemplate || !currentTemplate.variables) return;
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;';
+    
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--card);padding:1.5rem;border-radius:8px;max-width:500px;width:90%;';
+    
+    const title = document.createElement('h3');
+    title.textContent = 'Insérer une variable';
+    title.style.marginTop = '0';
+    
+    const list = document.createElement('div');
+    list.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;margin:1rem 0;';
+    
+    currentTemplate.variables.forEach(varName => {
+      const btn = document.createElement('button');
+      btn.textContent = `{{${varName}}}`;
+      btn.className = 'btn';
+      btn.style.cssText = 'text-align:left;font-family:monospace;';
+      btn.onclick = () => {
+        document.execCommand('insertHTML', false, `<span style="background:#fff3cd;padding:2px 4px;border-radius:3px;font-family:monospace;">{{${varName}}}</span>`);
+        modal.remove();
+        visualEditor.focus();
+      };
+      list.appendChild(btn);
+    });
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Annuler';
+    cancelBtn.className = 'btn ghost';
+    cancelBtn.onclick = () => modal.remove();
+    
+    box.appendChild(title);
+    box.appendChild(list);
+    box.appendChild(cancelBtn);
+    modal.appendChild(box);
+    document.body.appendChild(modal);
+    
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.remove();
+    };
+  }
+  
+  // Extract body content from full HTML
+  function extractBodyContent(html) {
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    if (bodyMatch) {
+      return bodyMatch[1];
+    }
+    return html;
+  }
+  
+  // Sync visual editor content to HTML editor
+  function syncVisualToHtml() {
+    if (!currentTemplate) return;
+    
+    const bodyContent = visualEditor.innerHTML;
+    const fullHtml = htmlEditor.value;
+    
+    // Replace body content in full HTML
+    const newHtml = fullHtml.replace(
+      /(<body[^>]*>)([\s\S]*)(<\/body>)/i,
+      `$1${bodyContent}$3`
+    );
+    
+    htmlEditor.value = newHtml;
+  }
+  
+  // Load templates list
+  async function loadTemplates() {
+    try {
+      templatesList.innerHTML = '<div class="loader" style="margin:2rem auto;"></div>';
+      const token = await getCsrfToken();
+      const res = await fetch('/api/admin/email-templates', {
+        credentials: 'include',
+        headers: token ? { 'csrf-token': token } : {}
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Failed to load templates:', res.status, errorText);
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+      
+      const data = await res.json();
+      templates = data.templates || [];
+      renderTemplatesList();
+    } catch (err) {
+      console.error('Error loading templates:', err);
+      templatesList.innerHTML = `<p style="color:#ff6b6b; text-align:center; padding:1rem;">❌ Erreur: ${err.message}</p>`;
+      showStatus('Erreur lors du chargement des templates: ' + err.message, 'error');
+    }
+  }
+  
+  // Render templates sidebar
+  function renderTemplatesList() {
+    if (!templates.length) {
+      templatesList.innerHTML = '<p style="color:var(--muted); text-align:center;">Aucun template trouvé</p>';
+      return;
+    }
+    
+    templatesList.innerHTML = templates.map(t => `
+      <div class="email-template-item ${currentTemplate && currentTemplate.filename === t.filename ? 'active' : ''}" 
+           data-filename="${t.filename}">
+        <h4>${t.name || t.filename}</h4>
+        <p>${t.description || ''}</p>
+      </div>
+    `).join('');
+    
+    // Click handlers
+    templatesList.querySelectorAll('.email-template-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const filename = item.dataset.filename;
+        loadTemplate(filename);
+      });
+    });
+  }
+  
+  // Load a specific template
+  async function loadTemplate(filename) {
+    try {
+      const token = await getCsrfToken();
+      const res = await fetch(`/api/admin/email-templates/${filename}`, {
+        credentials: 'include',
+        headers: token ? { 'csrf-token': token } : {}
+      });
+      
+      if (!res.ok) throw new Error('Failed to load template');
+      
+      currentTemplate = await res.json();
+      renderEditor();
+      renderTemplatesList(); // Update active state
+    } catch (err) {
+      console.error('Error loading template:', err);
+      showStatus('Erreur lors du chargement du template', 'error');
+    }
+  }
+  
+  // Render the editor with current template
+  function renderEditor() {
+    if (!currentTemplate) {
+      editorEmpty.style.display = 'flex';
+      editor.style.display = 'none';
+      return;
+    }
+    
+    editorEmpty.style.display = 'none';
+    editor.style.display = 'flex';
+    
+    editorTitle.textContent = currentTemplate.name || currentTemplate.filename;
+    editorDescription.textContent = currentTemplate.description || '';
+    htmlEditor.value = currentTemplate.content || '';
+    
+    // Initialize visual editor with body content
+    visualEditor.innerHTML = extractBodyContent(currentTemplate.content || '');
+    
+    // Render variables
+    if (currentTemplate.variables && currentTemplate.variables.length) {
+      variablesList.innerHTML = currentTemplate.variables.map(v => 
+        `<code class="email-variable-tag">{{${v}}}</code>`
+      ).join('');
+    } else {
+      variablesList.innerHTML = '<p style="color:var(--muted);">Aucune variable disponible</p>';
+    }
+    
+    // Reset status
+    statusDiv.textContent = '';
+    statusDiv.className = 'email-editor-status';
+    
+    // Switch to visual mode (first tab)
+    tabBtns[0].click();
+  }
+  
+  // Update preview iframe
+  function updatePreview() {
+    if (!currentTemplate) return;
+    
+    const html = htmlEditor.value;
+    const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+  }
+  
+  // Save template
+  saveBtn.addEventListener('click', async () => {
+    if (!currentTemplate) return;
+    
+    // Sync visual editor to HTML before saving
+    syncVisualToHtml();
+    
+    const content = htmlEditor.value;
+    
+    if (!content.trim()) {
+      showStatus('Le contenu ne peut pas être vide', 'error');
+      return;
+    }
+    
+    try {
+      saveBtn.disabled = true;
+      showStatus('Enregistrement...', 'info');
+      
+      const token = await getCsrfToken();
+      const res = await fetch(`/api/admin/email-templates/${currentTemplate.filename}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'csrf-token': token } : {})
+        },
+        body: JSON.stringify({ content })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      
+      showStatus('✓ Template enregistré avec succès', 'success');
+      
+      // Reload template to get updated content
+      setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
+    } catch (err) {
+      console.error('Error saving template:', err);
+      showStatus('Erreur lors de l\'enregistrement: ' + err.message, 'error');
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+  
+  // Restore template from backup
+  restoreBtn.addEventListener('click', async () => {
+    if (!currentTemplate) return;
+    
+    if (!confirm(`Êtes-vous sûr de vouloir restaurer le template "${currentTemplate.name}" depuis la dernière sauvegarde ?`)) {
+      return;
+    }
+    
+    try {
+      restoreBtn.disabled = true;
+      showStatus('Restauration...', 'info');
+      
+      const token = await getCsrfToken();
+      const res = await fetch(`/api/admin/email-templates/${currentTemplate.filename}/restore`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: token ? { 'csrf-token': token } : {}
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to restore');
+      
+      showStatus('✓ Template restauré avec succès', 'success');
+      
+      // Reload template
+      setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
+    } catch (err) {
+      console.error('Error restoring template:', err);
+      showStatus('Erreur lors de la restauration: ' + err.message, 'error');
+    } finally {
+      restoreBtn.disabled = false;
+    }
+  });
+  
+  // Show status message
+  function showStatus(message, type = 'info') {
+    statusDiv.textContent = message;
+    statusDiv.className = `email-editor-status ${type}`;
+    
+    if (type === 'success') {
+      setTimeout(() => {
+        statusDiv.textContent = '';
+        statusDiv.className = 'email-editor-status';
+      }, 3000);
+    }
+  }
+  
+  // Load templates immediately when initialized
+  loadTemplates();
+}
+

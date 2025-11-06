@@ -67,8 +67,8 @@
     if (opts && typeof opts.onNavigate === 'function') opts.onNavigate(year, month);
 
     // navigation handlers
-    prev.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ ev.currentTarget && ev.currentTarget.focus(); }catch(e){}; console.log('mp-datepicker: prev clicked', { year, month }); const m = month-1<0 ? 11 : month-1; const y = month-1<0 ? year-1 : year; createCalendar(container, y, m, opts); });
-    next.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ ev.currentTarget && ev.currentTarget.focus(); }catch(e){}; console.log('mp-datepicker: next clicked', { year, month }); const m = month+1>11 ? 0 : month+1; const y = month+1>11 ? year+1 : year; createCalendar(container, y, m, opts); });
+    prev.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ ev.currentTarget && ev.currentTarget.focus(); }catch(e){}; const m = month-1<0 ? 11 : month-1; const y = month-1<0 ? year-1 : year; createCalendar(container, y, m, opts); });
+    next.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ ev.currentTarget && ev.currentTarget.focus(); }catch(e){}; const m = month+1>11 ? 0 : month+1; const y = month+1>11 ? year+1 : year; createCalendar(container, y, m, opts); });
 
     header.tabIndex = 0;
     header.addEventListener('keydown', (ev)=>{

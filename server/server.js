@@ -49,19 +49,19 @@ app.use(helmet({
   // Allow 'unsafe-inline' for scripts to support existing inline scripts used
   // by the static frontend. This is a pragmatic relaxation — for production
   // you may prefer nonces or script-hashing for tighter security.
-  scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
+  scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://maps.gstatic.com', "'unsafe-inline'"],
   // Allow loading styles from the CDN used for flatpickr. Keep 'unsafe-inline'
   // to support inline styles used by some components (kept from previous config).
-  styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
+  styleSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
   // Some browsers report violations against 'style-src-elem' when it is not
   // explicitly set; define it as well to include the CDN so <link> elements
   // can load external stylesheets like flatpickr.min.css.
-  "styleSrcElem": ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:'],
+  "styleSrcElem": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://*.googleapis.com', 'https://*.gstatic.com'],
   // Allow connecting to the CDN used by the admin dashboard (Chart.js source maps)
-  connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+  connectSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com'],
   // Allow embedding Google Maps iframes on the public site
-  frameSrc: ["'self'", 'https://www.google.com', 'https://maps.google.com', 'https://www.google.com/maps', 'https://maps.gstatic.com'],
+  frameSrc: ["'self'", 'https://www.google.com', 'https://maps.google.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"]
@@ -241,9 +241,9 @@ app.get('/api/csrf-token', (req, res) => {
 app.get(['/admin', '/admin/'], (req, res) => {
   // If admin session exists, go directly to dashboard, otherwise to login
   if (req.session && req.session.admin) {
-    return res.redirect(302, '/admin/dashboard.html');
+    return res.redirect(302, '/admin/dashboard');
   }
-  return res.redirect(302, '/admin/login.html');
+  return res.redirect(302, '/admin/login');
 });
 // Serve static files with conservative caching headers to improve frontend performance.
 // HTML files are served with no-cache to allow immediate updates; assets (CSS/JS/img) get a longer max-age.
@@ -268,6 +268,15 @@ function setStaticHeaders(res, filePath) {
   }
 }
 
+// Redirect URLs with .html extension to clean URLs (before static middleware)
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html')) {
+    const cleanPath = req.path.replace(/\.html$/, '');
+    return res.redirect(301, cleanPath + (req.url.includes('?') ? '?' + req.url.split('?')[1] : ''));
+  }
+  next();
+});
+
 // Redirect requests that explicitly include `index.html` to the clean path.
 // Example: /index.html -> / , /accueil/index.html -> /accueil
 // Do not redirect admin pages (keep /admin/index.html intact).
@@ -285,19 +294,8 @@ app.use((req, res, next) => {
   return next();
 });
 
-// Serve the main site with caching middleware
-app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
-// Serve the admin static folder (the admin UI is static HTML/JS too)
-app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
-
-// Support friendly URLs for the static site.
-// Serve `index.html` for the root, and redirect other friendly routes to
-// the root with a fragment (e.g. /menu -> /#menu) so the client-side JS can
-// display the correct section without exposing `index.html` in the URL.
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../maisonpardailhe/index.html'));
-});
-
+// Support friendly URLs for the static site - BEFORE static middleware
+// Serve `index.html` for the root, and map clean routes to their HTML files
 const routeToFile = {
   '/': 'index.html',
   '/accueil': 'index.html',
@@ -305,7 +303,9 @@ const routeToFile = {
   '/contact': 'contact.html',
   '/commande': 'commande.html',
   '/services': 'services.html',
-  '/identite': 'identite.html'
+  '/identite': 'identite.html',
+  '/admin/login': 'admin/login.html',
+  '/admin/dashboard': 'admin/dashboard.html'
 };
 
 Object.keys(routeToFile).forEach(route => {
@@ -315,19 +315,14 @@ Object.keys(routeToFile).forEach(route => {
   });
 });
 
+// Serve the main site with caching middleware - AFTER clean URL routes
+app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
+// Serve the admin static folder (the admin UI is static HTML/JS too)
+app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
+
 // Route handlers are required lazily when running the server to avoid heavy
 // module initialization during tests (which may otherwise import DB-heavy code).
-
-// Global error handler to avoid crashing on DB errors and to return 500
-app.use((err, req, res, next) => {
-  // Handle CSRF errors specifically
-  if (err && err.code === 'EBADCSRFTOKEN') {
-    logger.warn('CSRF token validation failed: %o', err && (err.message || err));
-    if (!res.headersSent) return res.status(403).json({ message: 'Invalid CSRF token' });
-  }
-  logger.error('Unhandled error: %o', err && (err.stack || err));
-  if (!res.headersSent) res.status(500).json({ message: 'Internal server error' });
-});
+// NOTE: 404 handler is defined AFTER mounting API routes (see bottom of this file)
 
 // Prevent the process from exiting on unhandled promise rejections during dev
 process.on('unhandledRejection', (reason, promise) => {
@@ -381,6 +376,8 @@ if (require.main === module) {
   const schedulesRoutes = require('./routes/schedules');
   const notificationsRoutes = require('./routes/notifications');
   const adminNotificationsRoutes = require('./routes/admin_notifications');
+  const emailTemplatesRoutes = require('./routes/email_templates');
+  const requireAuth = require('./middleware/auth');
 
   // Small HTML escaper used by the minimal server-side recap page and notifications
   function escapeHtml(s) {
@@ -401,6 +398,7 @@ if (require.main === module) {
   app.use('/api/admin', adminRoutes);
   app.use('/api/menus', menusRoutes);
   app.use('/api/admin/menus', adminMenusRoutes);
+  app.use('/api/admin/email-templates', requireAuth, emailTemplatesRoutes);
   app.use('/unsubscribe', unsubscribeRoutes);
   app.use('/api/schedules', schedulesRoutes);
 
@@ -411,7 +409,31 @@ if (require.main === module) {
     // Redirect to the static SPA recap page which will fetch the data client-side.
     const id = Number(req.params.id || 0);
     if (!id) return res.status(400).send('ID invalide');
-    return res.redirect(302, `/commande.html?id=${encodeURIComponent(id)}`);
+    return res.redirect(302, `/commande?id=${encodeURIComponent(id)}`);
+  });
+
+  // 404 handler - MUST be after all other routes (especially API routes)
+  app.use((req, res, next) => {
+    // Only serve 404.html for GET requests to non-API routes
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      return res.status(404).sendFile(path.join(__dirname, '../maisonpardailhe/404.html'));
+    }
+    // For API routes, return JSON 404
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    next();
+  });
+
+  // Global error handler to avoid crashing on DB errors and to return 500
+  app.use((err, req, res, next) => {
+    // Handle CSRF errors specifically
+    if (err && err.code === 'EBADCSRFTOKEN') {
+      logger.warn('CSRF token validation failed: %o', err && (err.message || err));
+      if (!res.headersSent) return res.status(403).json({ message: 'Invalid CSRF token' });
+    }
+    logger.error('Unhandled error: %o', err && (err.stack || err));
+    if (!res.headersSent) res.status(500).json({ message: 'Internal server error' });
   });
 
   logStartupInfo();

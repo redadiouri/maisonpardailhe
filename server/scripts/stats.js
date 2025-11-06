@@ -36,14 +36,17 @@ async function main() {
 
   const [all] = await db.query('SELECT id, produit, statut, date_creation FROM commandes ORDER BY date_creation DESC');
 
-  const totalOrders = all.length;
+  // Ne compter que les commandes acceptées (en_cours ou terminée)
+  const accepted = all.filter(c => c.statut === 'en_cours' || c.statut === 'terminée');
+
+  const totalOrders = accepted.length;
   const byStatus = {};
   let last30 = 0;
   const now = new Date();
   const itemsSold = new Map();
   let revenueCents = 0;
 
-  for (const c of all) {
+  for (const c of accepted) {
     byStatus[c.statut] = (byStatus[c.statut] || 0) + 1;
     const created = new Date(c.date_creation);
     if ((now - created) / (1000 * 60 * 60 * 24) <= 30) last30++;
@@ -62,9 +65,9 @@ async function main() {
     }
   }
 
-  console.log('--- Statistiques commandes ---');
-  console.log('Total commandes:', totalOrders);
-  console.log('Commandes (30 derniers jours):', last30);
+  console.log('--- Statistiques commandes (acceptées uniquement) ---');
+  console.log('Total commandes acceptées:', totalOrders);
+  console.log('Commandes acceptées (30 derniers jours):', last30);
   console.log('Par statut:');
   for (const k of Object.keys(byStatus)) console.log(`  ${k}: ${byStatus[k]}`);
 

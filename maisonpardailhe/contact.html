@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact – Maison Pardailhe</title>
     <meta name="description" content="Contactez Maison Pardailhé pour commandes, devis traiteur ou ateliers. Réponse sous 24 heures." />
-    <link rel="canonical" href="/contact" />
+    <link rel="canonical" href="https://maisonpardailhe.fr/contact" />
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Contact – Maison Pardailhe" />
     <meta property="og:description" content="Contactez Maison Pardailhé pour commandes, devis traiteur et réservations." />
-    <meta property="og:image" content="img/roquettes.png" />
-    <meta property="og:url" content="/contact" />
+    <meta property="og:image" content="https://maisonpardailhe.fr/img/roquettes.png" />
+    <meta property="og:url" content="https://maisonpardailhe.fr/contact" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Maison Pardailhé" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="icon" href="/img/logo.png" />
@@ -22,7 +24,33 @@
 
     <link rel="manifest" href="/manifest.json">
 
+    <!-- Optimisation polices -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      "mainEntity": {
+        "@type": "LocalBusiness",
+        "name": "Maison Pardailhé",
+        "telephone": "+33562480229",
+        "email": "maisonpardailhe@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Place de la République",
+          "addressLocality": "Roquettes",
+          "postalCode": "31120",
+          "addressCountry": "FR"
+        }
+      }
+    }
+    </script>
 </head>
 <body>
     <header>

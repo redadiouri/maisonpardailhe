@@ -1,10 +1,40 @@
-Monitorer les performances :
+4. Admin Dashboard 📊
+a) Statistiques avancées
 
-Installer UptimeRobot pour uptime
-Activer Google Analytics
-Prochaines étapes (optionnel) :
+Graphiques de ventes par période
+Produits les plus vendus
+Horaires de pic
+b) Export de données
 
-CDN (CloudFlare)
-Service Worker (PWA)
-Critical CSS inline
-HTTP/2 Server Push
+Export Excel/CSV des commandes
+Rapports PDF
+c) Gestion des stocks en temps réel
+
+Alertes de stock bas
+Prévisions basées sur l'historique
+5. Sécurité 🔒
+a) Rate limiting plus strict
+
+b) CSP (Content Security Policy)
+
+c) Validation côté serveur renforcée
+
+Validation Joi/Zod pour tous les inputs
+Sanitization HTML
+6. Code Quality 🧹
+a) Tests automatisés
+
+b) Documentation API
+
+Swagger/OpenAPI pour l'API
+JSDoc pour les fonctions importantes
+c) Monitoring
+
+7. Accessibilité (A11y) ♿
+a) Améliorer ARIA
+
+b) Focus visible
+
+c) Contraste des couleurs
+
+Vérifier WCAG AA compliance

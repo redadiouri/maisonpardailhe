@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notre identité – Maison Pardailhe</title>
     <meta name="description" content="Maison Pardailhé — notre histoire, notre équipe et nos récompenses. Artisan charcutier engagé pour le terroir occitan." />
-    <link rel="canonical" href="/identite" />
+    <link rel="canonical" href="https://maisonpardailhe.fr/identite" />
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Notre identité – Maison Pardailhe" />
     <meta property="og:description" content="Notre équipe, notre histoire et nos récompenses — découvrez la Maison Pardailhé." />
-    <meta property="og:image" content="img/lequipe.png" />
-    <meta property="og:url" content="/identite" />
+    <meta property="og:image" content="https://maisonpardailhe.fr/img/lequipe.png" />
+    <meta property="og:url" content="https://maisonpardailhe.fr/identite" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Maison Pardailhé" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="icon" href="/img/logo.png" />
@@ -21,7 +23,31 @@
     <meta name="robots" content="index,follow" />
     <link rel="manifest" href="/manifest.json">
 
+    <!-- Optimisation polices -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "mainEntity": {
+        "@type": "LocalBusiness",
+        "name": "Maison Pardailhé",
+        "description": "Artisan charcutier-traiteur depuis plusieurs générations, spécialiste du pâté en croûte médaillé",
+        "foundingDate": "1950",
+        "founder": {
+          "@type": "Person",
+          "name": "Famille Pardailhé"
+        },
+        "award": "Médaille d'or - Pâté en croûte Haut-Garonnais"
+      }
+    }
+    </script>
 </head>
 <body>
     <header>
@@ -62,8 +88,8 @@
                     <p class="section-subtitle">Créée en 2021, la Maison Pardailhé a repris une boutique emblématique de Roquettes. Laboratoire rénové, recettes transmises et nouvelles inspirations : nous façonnons une charcuterie artisanale fidèle au terroir occitan.</p>
                     <p>Chaque jour, Carole, Jacques, Philippe et Louis vous accueillent avec la même énergie : partager leur savoir-faire, vous conseiller sur les accords et imaginer des créations qui subliment vos tables.</p>
                     <div class="cta-group" style="margin-top:2rem;">
-                        <a class="btn" href="menu.html">Découvrir nos spécialités</a>
-                        <a class="btn btn-outline" href="services.html">Voir nos prestations</a>
+                        <a class="btn" href="/menu">Découvrir nos spécialités</a>
+                        <a class="btn btn-outline" href="/services">Voir nos prestations</a>
                     </div>
                 </div>
                     <div class="identity-media">

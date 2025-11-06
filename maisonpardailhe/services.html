@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Services – Maison Pardailhe</title>
     <meta name="description" content="Traiteur événementiel, mariages, réceptions et services sur-mesure par Maison Pardailhé. Demandez un devis personnalisé." />
-    <link rel="canonical" href="/services" />
+    <link rel="canonical" href="https://maisonpardailhe.fr/services" />
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Services – Maison Pardailhe" />
     <meta property="og:description" content="Traiteur événementiel et services sur-mesure — mariages, entreprises et livraisons." />
-    <meta property="og:image" content="img/mariage.png" />
-    <meta property="og:url" content="/services" />
+    <meta property="og:image" content="https://maisonpardailhe.fr/img/mariage.png" />
+    <meta property="og:url" content="https://maisonpardailhe.fr/services" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Maison Pardailhé" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="icon" href="/img/logo.png" />
@@ -21,7 +23,52 @@
     <meta name="robots" content="index,follow" />
     <link rel="manifest" href="/manifest.json">
 
+    <!-- Optimisation polices -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "serviceType": "Traiteur événementiel",
+      "provider": {
+        "@type": "LocalBusiness",
+        "name": "Maison Pardailhé",
+        "url": "https://maisonpardailhe.fr"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Toulouse"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Services traiteur",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Mariages & réceptions",
+              "description": "Buffets et menus sur-mesure pour vos événements privés"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Événements d'entreprise",
+              "description": "Cocktails et plateaux pour vos événements professionnels"
+            }
+          }
+        ]
+      }
+    }
+    </script>
 </head>
 <body>
     <header>
@@ -148,7 +195,7 @@
                 </div>
                 <div class="services-cta__actions">
                     <a class="btn btn-outline" href="tel:+33562480229">Appeler la Maison</a>
-                    <a class="btn" href="contact.html">Planifier un rendez-vous</a>
+                    <a class="btn" href="/contact">Planifier un rendez-vous</a>
                 </div>
             </div>
         </section>

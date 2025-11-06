@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Panel Admin - Maison Pardailhé</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="css/admin-clean.css">
@@ -10,39 +10,149 @@
 <body class="admin-bg">
   <div class="admin-dashboard-wrapper">
     <div class="admin-dashboard-card">
-      <aside class="admin-sidebar">
-        <h1>Panel Admin</h1>
-        <div class="admin-tabs-vertical">
-          <button class="tab-btn tab-btn-vertical active" data-tab="attente">Commandes en attente <span id="badge-attente" class="badge"></span></button>
-          <button class="tab-btn tab-btn-vertical" data-tab="encours">Commandes en cours <span id="badge-encours" class="badge"></span></button>
-          <button class="tab-btn tab-btn-vertical" data-tab="notifications">Notifications <span id="badge-notifs" class="badge"></span></button>
-          <button class="tab-btn tab-btn-vertical" data-tab="menus">Menus</button>
-          <button class="tab-btn tab-btn-vertical" data-tab="admins">Administrateurs</button>
-          <button class="tab-btn tab-btn-vertical" data-tab="stats">Statistiques</button>
-        </div>
-        <button id="logoutBtn" class="logout-btn">Déconnexion</button>
+      
+      <!-- Mobile Header -->
+      <div class="admin-mobile-header">
+        <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Toggle menu">
+          <span class="hamburger-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+        <h1 class="mobile-title">Panel Admin</h1>
+        <button id="mobile-logout" class="mobile-logout-btn" aria-label="Déconnexion">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </button>
+      </div>
 
-        <!-- Change password area -->
-        <div class="admin-change-pwd" style="margin-top:1rem;">
-          <button id="toggleChangePwd" class="btn ghost" aria-expanded="false" style="width:100%;">Changer le mot de passe</button>
-          <form id="changePwdForm" style="display:none; margin-top:0.75rem; gap:0.5rem;" aria-hidden="true">
-            <label for="currentPassword">Mot de passe actuel</label>
-            <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password">
-
-            <label for="newPassword">Nouveau mot de passe</label>
-            <input id="newPassword" name="newPassword" type="password" autocomplete="new-password">
-
-            <label for="confirmNewPassword">Confirmer le nouveau mot de passe</label>
-            <input id="confirmNewPassword" name="confirmNewPassword" type="password" autocomplete="new-password">
-
-            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-              <button type="submit" id="changePwdBtn" class="btn primary" style="flex:1;">Enregistrer</button>
-              <button type="button" id="cancelChangePwd" class="btn ghost" style="flex:1;">Annuler</button>
+      <!-- Sidebar / Mobile Drawer -->
+      <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="sidebar-header">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <h1>Panel Admin</h1>
+              <span class="logo-sub">Maison Pardailhé</span>
             </div>
-            <div id="changePwdMsg" role="status" aria-live="polite" style="margin-top:0.5rem; color:#f33;"></div>
-          </form>
+            <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Réduire le menu" title="Réduire le menu">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 19l-7-7 7-7M19 19l-7-7 7-7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <nav class="admin-tabs-vertical" role="tablist">
+          <button class="tab-btn-vertical active" data-tab="attente" role="tab" aria-selected="true">
+            <span class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              </svg>
+            </span>
+            <span class="tab-label">En attente</span>
+            <span id="badge-attente" class="badge"></span>
+          </button>
+          <button class="tab-btn-vertical" data-tab="encours" role="tab" aria-selected="false">
+            <span class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+            </span>
+            <span class="tab-label">En cours</span>
+            <span id="badge-encours" class="badge"></span>
+          </button>
+          <button class="tab-btn-vertical" data-tab="notifications" role="tab" aria-selected="false">
+            <span class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </span>
+            <span class="tab-label">Notifications</span>
+            <span id="badge-notifs" class="badge"></span>
+          </button>
+          <button class="tab-btn-vertical" data-tab="menus" role="tab" aria-selected="false">
+            <span class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6M9 18h6"/>
+              </svg>
+            </span>
+            <span class="tab-label">Menus</span>
+          </button>
+          <button class="tab-btn-vertical" data-tab="emails" role="tab" aria-selected="false">
+            <span class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <path d="m22 6-10 7L2 6"/>
+              </svg>
+            </span>
+            <span class="tab-label">Emails</span>
+          </button>
+          <button class="tab-btn-vertical" data-tab="admins" role="tab" aria-selected="false">
+            <span class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="tab-label">Admins</span>
+          </button>
+          <button class="tab-btn-vertical" data-tab="stats" role="tab" aria-selected="false">
+            <span class="tab-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 20V10M12 20V4M6 20v-6"/>
+              </svg>
+            </span>
+            <span class="tab-label">Statistiques</span>
+          </button>
+        </nav>
+        
+        <div class="sidebar-footer">
+          <button id="logoutBtn" class="logout-btn">
+            <span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+              </svg>
+            </span>
+            <span>Déconnexion</span>
+          </button>
+
+          <!-- Change password area -->
+          <div class="admin-change-pwd">
+            <button id="toggleChangePwd" class="btn ghost btn-collapse" aria-expanded="false">
+              <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <span>Changer le mot de passe</span>
+            </button>
+            <form id="changePwdForm" class="collapse-content" style="display:none;" aria-hidden="true">
+              <label for="currentPassword">Mot de passe actuel</label>
+              <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password">
+
+              <label for="newPassword">Nouveau mot de passe</label>
+              <input id="newPassword" name="newPassword" type="password" autocomplete="new-password">
+
+              <label for="confirmNewPassword">Confirmer le nouveau mot de passe</label>
+              <input id="confirmNewPassword" name="confirmNewPassword" type="password" autocomplete="new-password">
+
+              <div class="btn-group">
+                <button type="submit" id="changePwdBtn" class="btn primary">Enregistrer</button>
+                <button type="button" id="cancelChangePwd" class="btn ghost">Annuler</button>
+              </div>
+              <div id="changePwdMsg" role="status" aria-live="polite"></div>
+            </form>
+          </div>
         </div>
       </aside>
+
+      <!-- Overlay for mobile drawer -->
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+      <!-- Main Content Area -->
       <main class="admin-main">
         <div id="tab-attente" class="tab-content active">
           <h2>Commandes en attente</h2>
@@ -79,11 +189,20 @@
                 <input id="menu-visible" type="checkbox" checked>
                 <span style="font-size:0.9rem;">Visible</span>
               </label>
-              <button type="submit" class="btn primary">➕ Ajouter</button>
+              <button type="submit" class="btn primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Ajouter
+              </button>
             </form>
             <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
               <input id="menu-search" placeholder="Rechercher...">
-              <button id="menu-refresh" class="btn">⟳</button>
+              <button id="menu-refresh" class="btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+              </button>
             </div>
           </div>
           <div id="menu-table-container">
@@ -104,6 +223,168 @@
             </table>
           </div>
         </div>
+        <div id="tab-emails" class="tab-content">
+          <h2>Templates d'emails</h2>
+          <p style="color:var(--muted); margin-bottom:1.5rem;">Gérez les emails envoyés automatiquement aux clients lors des différentes étapes de commande.</p>
+          
+          <div class="email-templates-container">
+            <div class="email-templates-sidebar">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Templates disponibles</h3>
+              <div id="email-templates-list" class="email-templates-list">
+                <div class="loader" style="margin:2rem auto;"></div>
+              </div>
+            </div>
+            
+            <div class="email-editor-container">
+              <div id="email-editor-empty" class="email-editor-empty">
+                <div style="text-align:center; color:var(--muted); padding:3rem;">
+                  <span style="font-size:3rem; display:block; margin-bottom:1rem;">✉️</span>
+                  <p>Sélectionnez un template pour le modifier</p>
+                </div>
+              </div>
+              
+              <div id="email-editor" class="email-editor" style="display:none;">
+                <div class="email-editor-header">
+                  <div>
+                    <h3 id="email-editor-title">—</h3>
+                    <p id="email-editor-description" style="color:var(--muted); font-size:0.9rem; margin-top:0.25rem;">—</p>
+                  </div>
+                  <div class="email-editor-actions">
+                    <button id="email-restore-btn" class="btn ghost" title="Restaurer la dernière sauvegarde">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                      </svg>
+                      Restaurer
+                    </button>
+                    <button id="email-save-btn" class="btn primary">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                      </svg>
+                      Enregistrer
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="email-variables-info">
+                  <details>
+                    <summary style="cursor:pointer; font-weight:500; user-select:none;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                      Variables disponibles
+                    </summary>
+                    <div id="email-variables-list" style="margin-top:0.5rem; padding-left:1rem;">
+                      <!-- Variables will be injected here -->
+                    </div>
+                  </details>
+                </div>
+                
+                <div class="email-editor-tabs">
+                  <button class="email-tab-btn active" data-mode="visual">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Éditeur visuel
+                  </button>
+                  <button class="email-tab-btn" data-mode="preview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                    Prévisualisation
+                  </button>
+                  <button class="email-tab-btn" data-mode="code">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                    </svg>
+                    Code HTML
+                  </button>
+                </div>
+                
+                <div class="email-editor-content">
+                  <div id="email-visual-mode" class="email-mode active">
+                    <div class="email-visual-toolbar">
+                      <button type="button" class="toolbar-btn" data-command="bold" title="Gras">
+                        <strong>B</strong>
+                      </button>
+                      <button type="button" class="toolbar-btn" data-command="italic" title="Italique">
+                        <em>I</em>
+                      </button>
+                      <button type="button" class="toolbar-btn" data-command="underline" title="Souligné">
+                        <u>U</u>
+                      </button>
+                      <div class="toolbar-separator"></div>
+                      <select class="toolbar-select" data-command="fontSize" title="Taille du texte">
+                        <option value="">Taille</option>
+                        <option value="1">Très petit</option>
+                        <option value="2">Petit</option>
+                        <option value="3">Normal</option>
+                        <option value="4">Grand</option>
+                        <option value="5">Très grand</option>
+                        <option value="6">Énorme</option>
+                      </select>
+                      <select class="toolbar-select" data-command="foreColor" title="Couleur du texte">
+                        <option value="">Couleur</option>
+                        <option value="#000000">Noir</option>
+                        <option value="#c24b3f">Rouge (accent)</option>
+                        <option value="#333333">Gris foncé</option>
+                        <option value="#666666">Gris</option>
+                        <option value="#0366d6">Bleu</option>
+                        <option value="#28a745">Vert</option>
+                      </select>
+                      <div class="toolbar-separator"></div>
+                      <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="Liste à puces">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                        </svg>
+                      </button>
+                      <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="Liste numérotée">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
+                          <path d="M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
+                        </svg>
+                      </button>
+                      <div class="toolbar-separator"></div>
+                      <button type="button" class="toolbar-btn" data-command="createLink" title="Insérer un lien">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                      </button>
+                      <button type="button" class="toolbar-btn" data-command="insertVariable" title="Insérer une variable">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                        </svg>
+                      </button>
+                      <div class="toolbar-separator"></div>
+                      <button type="button" class="toolbar-btn" data-command="undo" title="Annuler">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                        </svg>
+                      </button>
+                      <button type="button" class="toolbar-btn" data-command="redo" title="Rétablir">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div id="email-visual-editor" class="email-visual-editor" contenteditable="true"></div>
+                  </div>
+                  <div id="email-preview-mode" class="email-mode">
+                    <iframe id="email-preview-frame" class="email-preview-frame" sandbox="allow-same-origin"></iframe>
+                  </div>
+                  <div id="email-code-mode" class="email-mode">
+                    <textarea id="email-html-editor" class="email-html-editor" spellcheck="false"></textarea>
+                  </div>
+                </div>
+                
+                <div id="email-editor-status" class="email-editor-status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div id="tab-admins" class="tab-content">
           <h2>Administrateurs</h2>
           <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
@@ -115,7 +396,12 @@
                 <input id="admin-can-edit-menus" type="checkbox" checked>
                 <span style="font-size:0.9rem;">Peut modifier les menus</span>
               </label>
-              <button type="submit" class="btn primary">➕ Ajouter</button>
+              <button type="submit" class="btn primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Ajouter
+              </button>
             </form>
             <div style="margin-left:auto;">
               <!-- refresh button removed for Administrateurs tab -->
@@ -129,33 +415,187 @@
           </div>
         </div>
         <div id="tab-stats" class="tab-content">
-          <h2>Statistiques</h2>
-          <div style="display:flex; gap:1rem; align-items:flex-start; margin-bottom:1rem;">
-            <div class="stat-card" style="background:var(--card); padding:12px; border-radius:8px; min-width:160px;"> 
-              <div style="font-size:0.85rem; color:var(--muted);">Commandes totales</div>
-              <div id="stat-total-orders" style="font-size:1.25rem; font-weight:700;">—</div>
-              <div style="font-size:0.75rem; color:var(--muted);">Derniers 30 jours: <span id="stat-last30">—</span></div>
-            </div>
-            <div class="stat-card" style="background:var(--card); padding:12px; border-radius:8px; min-width:220px;"> 
-              <div style="font-size:0.85rem; color:var(--muted);">Répartition par statut</div>
-              <div id="stat-by-status" style="margin-top:6px; font-size:0.95rem;">—</div>
-            </div>
-            <div class="stat-card" style="background:var(--card); padding:12px; border-radius:8px; min-width:200px; margin-left:auto; text-align:right;"> 
-              <div style="font-size:0.85rem; color:var(--muted);">CA estimé</div>
-              <div id="stat-revenue" style="font-size:1.25rem; font-weight:700;">—</div>
-              <div style="font-size:0.75rem; color:var(--muted);">(basé sur menus.price_cents)</div>
+          <div class="stats-header">
+            <h2>Statistiques</h2>
+            <div class="stats-controls">
+              <select id="stats-period" class="stats-select">
+                <option value="7">7 derniers jours</option>
+                <option value="30" selected>30 derniers jours</option>
+                <option value="90">90 derniers jours</option>
+                <option value="365">1 an</option>
+              </select>
+              <button id="stat-export-csv" class="btn btn-export">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export CSV
+              </button>
             </div>
           </div>
-          <div id="stat-items" style="margin-top:6px;">
-            <h3>Articles vendus (données analytiques)</h3>
-            <div id="stat-items-list" style="color:var(--muted);">—</div>
+
+          <!-- KPI Cards Grid -->
+          <div id="stats-alerts-container"></div>
+          
+          <div class="stats-kpi-grid">
+            <div class="stat-card stat-card-primary">
+              <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Commandes totales</div>
+                <div class="stat-value" id="stat-total-orders">—</div>
+                <div class="stat-trend" id="stat-orders-trend"></div>
+              </div>
+            </div>
+            
+            <div class="stat-card stat-card-success">
+              <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Chiffre d'affaires</div>
+                <div class="stat-value" id="stat-revenue">—</div>
+                <div class="stat-trend" id="stat-revenue-trend"></div>
+              </div>
+            </div>
+            
+            <div class="stat-card stat-card-info">
+              <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Panier moyen</div>
+                <div class="stat-value" id="stat-avg-basket">—</div>
+                <div class="stat-trend" id="stat-basket-trend"></div>
+              </div>
+            </div>
+            
+            <div class="stat-card stat-card-warning">
+              <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">En attente</div>
+                <div class="stat-value" id="stat-pending">—</div>
+                <div class="stat-sublabel">Nécessitent une action</div>
+              </div>
+            </div>
           </div>
-          <div style="margin-top:12px; display:flex; gap:0.5rem; align-items:center;">
-            <h3 style="margin:0;">Commandes: 30 derniers jours</h3>
-            <button id="stat-export-csv" class="btn" style="margin-left:auto;">Export CSV</button>
+
+          <!-- Charts Section -->
+          <div class="stats-charts-grid">
+            <div class="stats-chart-card">
+              <div class="stats-chart-header">
+                <h3>Évolution des commandes</h3>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-dot legend-orders"></span> Commandes</span>
+                  <span class="legend-item"><span class="legend-dot legend-revenue"></span> CA (€)</span>
+                </div>
+              </div>
+              <div class="stats-chart-container">
+                <canvas id="ordersChart"></canvas>
+              </div>
+            </div>
+
+            <div class="stats-chart-card">
+              <div class="stats-chart-header">
+                <h3>Répartition par statut</h3>
+              </div>
+              <div class="stats-chart-container stats-chart-doughnut">
+                <canvas id="statusChart"></canvas>
+                <div id="stat-by-status-list" class="status-legend"></div>
+              </div>
+            </div>
           </div>
-          <div style="margin-top:8px;">
-            <canvas id="ordersChart" width="600" height="140" style="max-width:100%; height:auto;"></canvas>
+
+          <!-- Top Products -->
+          <div class="stats-products-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:8px;">
+                <circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+              </svg>
+              Top produits vendus
+            </h3>
+            <div class="stats-products-grid" id="stat-items-list">
+              <div class="empty-state">Chargement...</div>
+            </div>
+          </div>
+
+          <!-- Recent Activity Table -->
+          <div class="stats-activity-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:8px;">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              </svg>
+              Activité récente
+            </h3>
+            <div class="stats-activity-table" id="stat-recent-orders">
+              <div class="empty-state">Chargement...</div>
+            </div>
+          </div>
+
+          <!-- Location Stats -->
+          <div class="stats-locations-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:8px;">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              Statistiques par localisation
+            </h3>
+            <div class="stats-locations-grid" id="stat-locations">
+              <div class="empty-state">Chargement...</div>
+            </div>
+          </div>
+
+          <!-- Customer Insights -->
+          <div class="stats-customers-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:8px;">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Insights clients
+            </h3>
+            <div class="stats-customers-overview" id="stat-customer-overview"></div>
+            <div class="stats-customers-table" id="stat-top-customers">
+              <div class="empty-state">Chargement...</div>
+            </div>
+          </div>
+
+          <!-- Year-over-Year Comparison -->
+          <div class="stats-yoy-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:8px;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Comparaison année sur année
+            </h3>
+            <div class="stats-chart-card">
+              <div class="stats-chart-container">
+                <canvas id="yoyChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Trends Modal -->
+          <div id="product-trend-modal" class="stats-modal" style="display:none;">
+            <div class="stats-modal-content">
+              <div class="stats-modal-header">
+                <h3 id="product-trend-title">Tendance produit</h3>
+                <button class="stats-modal-close" onclick="closeProductTrendModal()">✕</button>
+              </div>
+              <div class="stats-modal-body">
+                <canvas id="productTrendChart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
         <!-- Stockage removed: functionality merged into Menus -->

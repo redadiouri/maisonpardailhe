@@ -605,6 +605,13 @@ function initContactForm() {
 
     const infoId = 'contact-info-msg';
     function showContactMessage(msg, isError) {
+        // Utiliser le nouveau système de toast si disponible
+        if (typeof showToast === 'function') {
+            showToast(msg, isError ? 'error' : 'success', 4000);
+            return;
+        }
+        
+        // Fallback vers l'ancien système
         let el = document.getElementById(infoId);
         if (!el) {
             el = document.createElement('div'); el.id = infoId; el.style.marginTop = '0.75rem';
@@ -652,6 +659,13 @@ function initContactForm() {
 }
 
 function showCCMessage(msg, isError) {
+    // Utiliser le nouveau système de toast si disponible
+    if (typeof showToast === 'function') {
+        showToast(msg, isError ? 'error' : 'success', 4000);
+        return;
+    }
+    
+    // Fallback vers l'ancien système
     let info = document.getElementById('cc-info-msg');
     if (!info) {
         info = document.createElement('div');
@@ -689,7 +703,7 @@ function showMiniToast(orderId) {
     link.className = 'mp-toast-link';
     // public recap route: /commande/:id
     // link to the static SPA recap page and open in a new tab
-    link.href = `/commande.html?id=${orderId}`;
+    link.href = `/commande?id=${orderId}`;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.textContent = 'Voir la commande';

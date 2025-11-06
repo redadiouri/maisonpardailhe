@@ -1,0 +1,12 @@
+# Maison Pardailhé - robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://maisonpardailhe.fr/sitemap.xml
+
+# Crawl-delay pour les bots trop agressifs
+User-agent: *
+Crawl-delay: 1
