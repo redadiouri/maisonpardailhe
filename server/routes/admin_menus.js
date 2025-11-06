@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Menu = require('../models/menu');
 const auth = require('../middleware/auth');
+const { validate, menuSchema } = require('../middleware/validation');
+const { sanitizeMiddleware } = require('../middleware/sanitize');
+const { adminActionLimiter } = require('../middleware/rateLimits');
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -10,43 +13,48 @@ router.get('/', auth, wrap(async (req, res) => {
   res.json(items);
 }));
 
-router.post('/', auth, wrap(async (req, res) => {
+router.post('/', 
+  auth, 
+  adminActionLimiter,
+  sanitizeMiddleware(['name', 'description'], false),
+  validate(menuSchema),
+  wrap(async (req, res) => {
     const adminId = req.session?.admin?.id;
   const Admin = require('../models/admin');
   const current = await Admin.getById(adminId);
   if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
-  const { name, description, price_cents, is_quote, stock, visible_on_menu, available } = req.body || {};
-  if (!name || String(name).trim() === '') return res.status(400).json({ message: 'Name required.' });
-  if (!Number.isInteger(Number(price_cents)) || Number(price_cents) < 0) return res.status(400).json({ message: 'price_cents must be integer >= 0' });
-  if (!Number.isInteger(Number(stock)) || Number(stock) < 0) return res.status(400).json({ message: 'stock must be integer >= 0' });
+  const { name, description, price_cents, is_quote, stock, visible_on_menu, available } = req.body;
   const id = await Menu.create({
-    name: String(name).trim(),
+    name,
     description: description || '',
-    price_cents: Number(price_cents),
+    price_cents,
     is_quote: Boolean(is_quote),
-    stock: Number(stock),
+    stock,
     visible_on_menu: visible_on_menu === undefined ? 1 : (visible_on_menu ? 1 : 0),
     available: available === undefined ? 1 : (available ? 1 : 0)
   });
   res.status(201).json({ id });
 }));
 
-router.put('/:id', auth, wrap(async (req, res) => {
+router.put('/:id', 
+  auth, 
+  adminActionLimiter,
+  sanitizeMiddleware(['name', 'description'], false),
+  wrap(async (req, res) => {
     const adminId = req.session?.admin?.id;
   const Admin = require('../models/admin');
   const current = await Admin.getById(adminId);
   if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ message: 'Invalid id' });
-  const body = req.body || {};
-  if (body.price_cents !== undefined && (!Number.isInteger(Number(body.price_cents)) || Number(body.price_cents) < 0)) return res.status(400).json({ message: 'price_cents must be integer >=0' });
-  if (body.stock !== undefined && (!Number.isInteger(Number(body.stock)) || Number(body.stock) < 0)) return res.status(400).json({ message: 'stock must be integer >=0' });
-    if (body.available !== undefined && typeof body.available !== 'boolean' && body.available !== 0 && body.available !== 1) return res.status(400).json({ message: 'available must be boolean/0/1' });
-  const affected = await Menu.update(id, body);
+  const affected = await Menu.update(id, req.body);
   res.json({ affected });
 }));
 
-router.delete('/:id', auth, wrap(async (req, res) => {
+router.delete('/:id', 
+  auth, 
+  adminActionLimiter,
+  wrap(async (req, res) => {
     const adminId = req.session?.admin?.id;
   const Admin = require('../models/admin');
   const current = await Admin.getById(adminId);

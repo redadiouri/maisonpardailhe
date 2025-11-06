@@ -1,26 +1,3 @@
-4. Admin Dashboard 📊
-a) Statistiques avancées
-
-Graphiques de ventes par période
-Produits les plus vendus
-Horaires de pic
-b) Export de données
-
-Export Excel/CSV des commandes
-Rapports PDF
-c) Gestion des stocks en temps réel
-
-Alertes de stock bas
-Prévisions basées sur l'historique
-5. Sécurité 🔒
-a) Rate limiting plus strict
-
-b) CSP (Content Security Policy)
-
-c) Validation côté serveur renforcée
-
-Validation Joi/Zod pour tous les inputs
-Sanitization HTML
 6. Code Quality 🧹
 a) Tests automatisés
 

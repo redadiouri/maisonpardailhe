@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
 const Commande = require('../models/commande');
 const { sendCommandeEmail } = require('../utils/email');
 const db = require('../models/db');
 const { normalizeToYMD, formatForDisplay, TZ } = require('../utils/dates');
+const { validate, commandeSchema } = require('../middleware/validation');
+const { sanitizeMiddleware } = require('../middleware/sanitize');
+const { commandeLimiter } = require('../middleware/rateLimits');
 
 function parseDateString(s) {
   if (!s) return null;
@@ -108,9 +110,11 @@ const validateCommandeFields = [
   body('items.*.qty').optional().isInt({ gt: 0 })
 ];
 
-router.post('/', validateCommandeFields, async (req, res) => {
-  const valErr = validationResult(req);
-  if (!valErr.isEmpty()) return res.status(400).json({ errors: valErr.array() });
+router.post('/', 
+  commandeLimiter,
+  sanitizeMiddleware(['nom_complet', 'remarques', 'precisions'], false),
+  validate(commandeSchema),
+  async (req, res) => {
   const data = req.body;
     if (Array.isArray(data.items) && data.items.length > 0) {
         const v = validateCommande(data);

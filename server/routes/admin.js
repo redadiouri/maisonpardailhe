@@ -5,43 +5,17 @@ const Commande = require('../models/commande');
 const EmailUtil = require('../utils/email');
 const Admin = require('../models/admin');
 const auth = require('../middleware/auth');
+const { validate, loginSchema, adminSchema } = require('../middleware/validation');
+const { sanitizeMiddleware } = require('../middleware/sanitize');
+const { strictAuthLimiter, adminActionLimiter } = require('../middleware/rateLimits');
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-const rateLimit = require('express-rate-limit');
-const slowDown = require('express-slow-down');
-const { body, validationResult } = require('express-validator');
-
-const loginKeyGenerator = (req) => {
-  const ip = (req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress || '').toString();
-  const username = (req.body && req.body.username) ? String(req.body.username).toLowerCase() : '';
-  return `${username}:${ip}`;
-};
-
-const loginSlowDown = slowDown({
-  windowMs: 15 * 60 * 1000,   delayAfter: 2,   delayMs: 1000,   maxDelayMs: 30 * 1000,
-  keyGenerator: loginKeyGenerator
-});
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   max: 5,   standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: loginKeyGenerator,
-  handler: (req, res ) => {
-    const retrySecs = req.rateLimit && req.rateLimit.resetTime ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000) : Math.ceil(15 * 60);
-    res.set('Retry-After', String(retrySecs));
-    res.status(429).json({ message: 'Trop de tentatives de connexion. Réessayez plus tard.' });
-  }
-});
-
-
 router.post('/login',
-    body('username').isString().trim().isLength({ min: 3 }).escape(),
-      body('password').isString().notEmpty().withMessage('Le mot de passe est requis.'),
-  loginSlowDown, loginLimiter,
+  strictAuthLimiter,
+  sanitizeMiddleware(['username'], true),
+  validate(loginSchema),
   wrap(async (req, res) => {
-        const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     const { username, password } = req.body;
   const admin = await Admin.getByUsername(username);
   if (!admin) return res.status(401).json({ message: 'Identifiants invalides.' });
@@ -130,7 +104,7 @@ router.post('/admins', auth, wrap(async (req, res) => {
   res.status(201).json({ success: true });
 }));
 
-router.put('/admins/:id', auth, wrap(async (req, res) => {
+router.put('/admins/:id', auth, adminActionLimiter, wrap(async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ message: 'Invalid id' });
   const adminId = req.session?.admin?.id;

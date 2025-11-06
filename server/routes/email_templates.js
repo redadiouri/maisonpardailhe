@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
+const { validate, emailTemplateSchema } = require('../middleware/validation');
+const { adminActionLimiter } = require('../middleware/rateLimits');
 
 const TEMPLATES_DIR = path.join(__dirname, '..', 'email_templates');
 
@@ -70,7 +72,10 @@ router.get('/:filename', async (req, res) => {
   }
 });
 
-router.put('/:filename', async (req, res) => {
+router.put('/:filename', 
+  adminActionLimiter,
+  validate(emailTemplateSchema),
+  async (req, res) => {
   try {
     const { filename } = req.params;
     const { content } = req.body;

@@ -21,7 +21,6 @@ const helmet = require('helmet');
 const csurf = require('csurf');
 const bodyParser = require('body-parser');
 const compression = require('compression');
-const rateLimit = require('express-rate-limit');
 const app = express();
 
 const path = require('path');
@@ -32,21 +31,80 @@ const mask = (v) => {
   return v.slice(0, 3) + '…' + v.slice(-3);
 };
 
+const crypto = require('crypto');
+const { globalLimiter } = require('./middleware/rateLimits');
+
+const generateNonce = () => crypto.randomBytes(16).toString('base64');
+
+app.use((req, res, next) => {
+  res.locals.nonce = generateNonce();
+  next();
+});
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com', 'https://maps.gstatic.com', "'unsafe-inline'"],
-      styleSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
-        "styleSrcElem": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://*.googleapis.com', 'https://*.gstatic.com'],
-    connectSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://maps.googleapis.com'],
-    frameSrc: ["'self'", 'https://www.google.com', 'https://maps.google.com'],
-    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      scriptSrc: [
+        "'self'",
+        'https://cdn.jsdelivr.net',
+        'https://maps.googleapis.com',
+        'https://maps.gstatic.com',
+        (req, res) => `'nonce-${res.locals.nonce}'`
+      ],
+      styleSrc: [
+        "'self'",
+        'https://cdn.jsdelivr.net',
+        'https://fonts.googleapis.com',
+        (req, res) => `'nonce-${res.locals.nonce}'`,
+        "'unsafe-inline'"
+      ],
+      styleSrcElem: [
+        "'self'",
+        'https://cdn.jsdelivr.net',
+        'https://fonts.googleapis.com',
+        "'unsafe-inline'"
+      ],
+      imgSrc: [
+        "'self'",
+        'data:',
+        'https://maps.googleapis.com',
+        'https://maps.gstatic.com',
+        'https://*.googleapis.com',
+        'https://*.gstatic.com'
+      ],
+      connectSrc: [
+        "'self'",
+        'https://cdn.jsdelivr.net',
+        'https://maps.googleapis.com'
+      ],
+      frameSrc: [
+        "'self'",
+        'https://www.google.com',
+        'https://maps.google.com'
+      ],
+      fontSrc: [
+        "'self'",
+        'https://fonts.gstatic.com'
+      ],
       objectSrc: ["'none'"],
-      frameAncestors: ["'none'"]
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
     }
-  }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  referrerPolicy: {
+    policy: 'strict-origin-when-cross-origin'
+  },
+  noSniff: true,
+  xssFilter: true,
+  hidePoweredBy: true
 }));
 
 let allowedOrigins;
@@ -81,17 +139,11 @@ app.use(compression({
   }
 }));
 
-const globalLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,   max: process.env.NODE_ENV === 'production' ? 100 : 200,   message: 'Trop de requêtes depuis cette adresse IP, veuillez réessayer dans une minute.',
-  standardHeaders: true,   legacyHeaders: false,     skip: (req) => {
-    const path = req.path;
-    return path.match(/\.(css|js|jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i);
-  }
-});
-
 app.use(globalLimiter);
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-this';
 if (!process.env.SESSION_SECRET) {
   logger.warn('Warning: SESSION_SECRET not set in .env — using fallback. Set SESSION_SECRET for production.');
