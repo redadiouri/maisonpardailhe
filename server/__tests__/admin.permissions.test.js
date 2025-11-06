@@ -1,14 +1,6 @@
 const request = require('supertest');
 const app = require('../server');
 
-const adminRoutes = require('../routes/admin');
-const adminMenusRoutes = require('../routes/admin_menus');
-const menusRoutes = require('../routes/menus');
-
-app.use('/api/admin', adminRoutes);
-app.use('/api/admin/menus', adminMenusRoutes);
-app.use('/api/menus', menusRoutes);
-
 async function getCsrf(agent) {
   const res = await agent.get('/api/csrf-token');
   expect(res.status).toBe(200);

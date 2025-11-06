@@ -324,74 +324,63 @@ const checkDatabase = async () => {
   }
 };
 
-if (require.main === module) {
-    const commandesRoutes = require('./routes/commandes');
-  const adminRoutes = require('./routes/admin');
-  const menusRoutes = require('./routes/menus');
-  const adminMenusRoutes = require('./routes/admin_menus');
-  const unsubscribeRoutes = require('./routes/unsubscribe');
-  const schedulesRoutes = require('./routes/schedules');
-  const notificationsRoutes = require('./routes/notifications');
-  const adminNotificationsRoutes = require('./routes/admin_notifications');
-  const emailTemplatesRoutes = require('./routes/email_templates');
-  const requireAuth = require('./middleware/auth');
+const commandesRoutes = require('./routes/commandes');
+const adminRoutes = require('./routes/admin');
+const menusRoutes = require('./routes/menus');
+const adminMenusRoutes = require('./routes/admin_menus');
+const unsubscribeRoutes = require('./routes/unsubscribe');
+const schedulesRoutes = require('./routes/schedules');
+const notificationsRoutes = require('./routes/notifications');
+const adminNotificationsRoutes = require('./routes/admin_notifications');
+const emailTemplatesRoutes = require('./routes/email_templates');
+const requireAuth = require('./middleware/auth');
 
-    function escapeHtml(s) {
-    if (s === undefined || s === null) return '';
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+app.use('/api/commandes', commandesRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/admin/notifications', adminNotificationsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/menus', menusRoutes);
+app.use('/api/admin/menus', adminMenusRoutes);
+app.use('/api/admin/email-templates', requireAuth, emailTemplatesRoutes);
+app.use('/unsubscribe', unsubscribeRoutes);
+app.use('/api/schedules', schedulesRoutes);
+
+app.get('/commande/:id', (req, res) => {
+  const id = Number(req.params.id || 0);
+  if (!id) return res.status(400).send('ID invalide');
+  return res.redirect(302, `/commande?id=${encodeURIComponent(id)}`);
+});
+
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api')) {
+    return res.status(404).sendFile(path.join(__dirname, '../maisonpardailhe/404.html'));
   }
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
+  next();
+});
 
-  app.use('/api/commandes', commandesRoutes);
-  
-  
-  app.use('/api/notifications', notificationsRoutes);
-  app.use('/api/admin/notifications', adminNotificationsRoutes);
-  app.use('/api/admin', adminRoutes);
-  app.use('/api/menus', menusRoutes);
-  app.use('/api/admin/menus', adminMenusRoutes);
-  app.use('/api/admin/email-templates', requireAuth, emailTemplatesRoutes);
-  app.use('/unsubscribe', unsubscribeRoutes);
-  app.use('/api/schedules', schedulesRoutes);
+app.use((err, req, res, next) => {
+  if (err && err.code === 'EBADCSRFTOKEN') {
+    logger.warn('CSRF token validation failed: %o', err && (err.message || err));
+    if (!res.headersSent) return res.status(403).json({ message: 'Invalid CSRF token' });
+  }
+  logger.error('Unhandled error: %o', err && (err.stack || err));
+  if (!res.headersSent) res.status(500).json({ message: 'Internal server error' });
+});
 
-  
-  
-  
-  app.get('/commande/:id', (req, res) => {
-    
-    const id = Number(req.params.id || 0);
-    if (!id) return res.status(400).send('ID invalide');
-    return res.redirect(302, `/commande?id=${encodeURIComponent(id)}`);
-  });
-
-  
-  app.use((req, res, next) => {
-    
-    if (req.method === 'GET' && !req.path.startsWith('/api')) {
-      return res.status(404).sendFile(path.join(__dirname, '../maisonpardailhe/404.html'));
-    }
-    
-    if (req.path.startsWith('/api')) {
-      return res.status(404).json({ message: 'API endpoint not found' });
-    }
-    next();
-  });
-
-  
-  app.use((err, req, res, next) => {
-    
-    if (err && err.code === 'EBADCSRFTOKEN') {
-      logger.warn('CSRF token validation failed: %o', err && (err.message || err));
-      if (!res.headersSent) return res.status(403).json({ message: 'Invalid CSRF token' });
-    }
-    logger.error('Unhandled error: %o', err && (err.stack || err));
-    if (!res.headersSent) res.status(500).json({ message: 'Internal server error' });
-  });
-
+if (require.main === module) {
   logStartupInfo();
   checkDatabase().catch((e) => logger.error('DB check unexpected error: %o', e && (e.stack || e)));
 
@@ -399,13 +388,8 @@ if (require.main === module) {
     logger.info(`Server running on port ${PORT}`);
   });
 } else {
-  
-  
-  
-  
   module.exports = app;
   module.exports.shutdown = async () => {
-    
     try {
       if (sessionConnection && typeof sessionConnection.end === 'function') {
         await sessionConnection.end();

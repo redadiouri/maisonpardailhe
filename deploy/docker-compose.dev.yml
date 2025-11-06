@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: maisonpardailhe-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: maisonpardailhe_db
+      MYSQL_USER: maisonpardailhe
+      MYSQL_PASSWORD: devpass123
+    ports:
+      - "3307:3306"  # Évite conflit avec MySQL local éventuel
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ..
+      dockerfile: ./server/Dockerfile
+    container_name: maisonpardailhe-server-dev
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: maisonpardailhe
+      DB_PASSWORD: devpass123
+      DB_NAME: maisonpardailhe_db
+      SESSION_SECRET: dev_secret_change_in_prod
+      # Optionnel : activer SMTP pour tester les emails
+      # SMTP_HOST: smtp.mailtrap.io
+      # SMTP_PORT: 2525
+      # SMTP_USER: your_mailtrap_user
+      # SMTP_PASS: your_mailtrap_pass
+      # SMTP_FROM: noreply@maisonpardailhe.local
+    volumes:
+      # Mount code pour hot-reload (optionnel, retire pour tester l'image finale)
+      # - ../server:/app/server:ro
+      # - ../maisonpardailhe:/app/maisonpardailhe:ro
+      - logs_dev:/app/logs
+    command: npm run dev
+    # Alternative : pour développement avec nodemon (ajouter nodemon dans package.json)
+    # command: npx nodemon server.js
+
+volumes:
+  mysql_dev_data:
+    driver: local
+  logs_dev:
+    driver: local
