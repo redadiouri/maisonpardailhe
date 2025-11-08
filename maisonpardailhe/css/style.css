@@ -947,15 +947,35 @@ section > p:not([class]) {
 
 .contact-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2.5rem;
-    align-items: stretch;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 3rem;
+    align-items: start;
+}
+
+.contact-card {
+    padding: 2.5rem;
+    background: rgba(7, 7, 7, 0.95);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 31, 31, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+    border-color: rgba(255, 31, 31, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+    transform: translateY(-4px);
 }
 
 .contact-card h3 {
     text-transform: uppercase;
     letter-spacing: 0.16rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: rgba(255, 31, 31, 0.95);
+    border-bottom: 2px solid rgba(255, 31, 31, 0.3);
+    padding-bottom: 0.75rem;
 }
 
 form {
@@ -987,29 +1007,38 @@ input,
 textarea,
 select {
     width: 100%;
-    padding: 1rem 1.25rem;
+    padding: 1.1rem 1.5rem;
     border-radius: 12px;
-    border: 1.5px solid rgba(247, 247, 247, 0.12);
-    background: rgba(7, 7, 7, 0.95);
+    border: 2px solid rgba(247, 247, 247, 0.12);
+    background: rgba(7, 7, 7, 0.98);
     color: var(--blanc-opale);
     font-family: inherit;
     font-size: 16px;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-    min-height: 50px;
+    transition: all 0.3s ease;
+    min-height: 52px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 input::placeholder,
 textarea::placeholder {
-    color: rgba(247, 247, 247, 0.4);
+    color: rgba(247, 247, 247, 0.35);
+    letter-spacing: 0.03rem;
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+    border-color: rgba(255, 31, 31, 0.3);
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-    border-color: rgba(255, 31, 31, 0.6);
+    border-color: rgba(255, 31, 31, 0.7);
     background: rgba(7, 7, 7, 1);
-    box-shadow: 0 0 0 4px rgba(255, 31, 31, 0.1);
+    box-shadow: 0 0 0 4px rgba(255, 31, 31, 0.12), 0 4px 16px rgba(0, 0, 0, 0.3);
     outline: none;
+    transform: translateY(-1px);
 }
 
 .form-hint {
@@ -1022,8 +1051,10 @@ select:focus {
 }
 
 textarea {
-    min-height: 160px;
+    min-height: 180px;
     resize: vertical;
+    line-height: 1.7;
+    font-family: inherit;
 }
 
 .table {
@@ -1724,15 +1755,88 @@ textarea {
 .contact-info {
     display: grid;
     gap: 1.25rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 31, 31, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 31, 31, 0.2);
+}
+
+.contact-info p {
+    font-size: 1rem;
+    font-weight: 600;
 }
 
 .contact-info a {
-    color: rgba(247, 247, 247, 0.8);
-    transition: color var(--transition);
+    color: rgba(255, 31, 31, 0.95);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .contact-info a:hover {
-    color: var(--rouge-intense);
+    color: #fff;
+    transform: translateX(4px);
+}
+
+.contact-locations {
+    display: grid;
+    gap: 2rem;
+}
+
+.contact-location {
+    padding: 1.75rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.contact-location:hover {
+    background: rgba(255, 31, 31, 0.05);
+    border-color: rgba(255, 31, 31, 0.2);
+    transform: translateX(4px);
+}
+
+.contact-location h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.08rem;
+    text-transform: uppercase;
+    color: rgba(255, 31, 31, 0.95);
+    margin-bottom: 0.75rem;
+}
+
+.contact-location p {
+    color: rgba(247, 247, 247, 0.85);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.contact-hours {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.contact-hours li {
+    padding: 0.65rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: rgba(247, 247, 247, 0.75);
+    border-left: 3px solid rgba(255, 31, 31, 0.4);
+    transition: all 0.3s ease;
+}
+
+.contact-hours li:hover {
+    background: rgba(255, 31, 31, 0.1);
+    border-left-color: rgba(255, 31, 31, 0.8);
+    transform: translateX(4px);
 }
 
 .map-embed {
@@ -1755,9 +1859,52 @@ textarea {
 }
 
 .map-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+#contact-map {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 31, 31, 0.15);
+    border: 2px solid rgba(255, 31, 31, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#contact-map:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 31, 31, 0.25);
+}
+
+.map-caption {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(7, 7, 7, 0.95);
+    border: 1px solid rgba(255, 31, 31, 0.3);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.05rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.map-caption::before {
+    content: "📍";
+    font-size: 1rem;
+}
+
+.map-caption:hover {
+    border-color: rgba(255, 31, 31, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 
@@ -1844,6 +1991,29 @@ textarea {
     .grid--three {
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 2rem;
+    }
+
+    
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .contact-card {
+        padding: 2rem;
+    }
+
+    .contact-card:hover {
+        transform: translateY(-2px);
+    }
+
+    #contact-map {
+        min-height: 380px !important;
+    }
+
+    .map-caption {
+        font-size: 0.75rem;
+        padding: 0.6rem 1rem;
     }
 
     
@@ -1962,6 +2132,21 @@ textarea {
     
     section {
         padding: 3rem 1rem;
+    }
+
+    
+    .contact-location {
+        padding: 1.5rem;
+    }
+
+    .contact-hours li {
+        font-size: 0.85rem;
+        padding: 0.6rem 0.85rem;
+    }
+
+    #contact-map {
+        min-height: 340px !important;
+        border-radius: 12px;
     }
 
     

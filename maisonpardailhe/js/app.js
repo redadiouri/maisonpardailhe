@@ -15,6 +15,103 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
 });
 
+// Initialize contact page geolocation buttons (attach after DOMContentLoaded)
+function initContactGeo() {
+    // buttons that open directions with geolocation
+    const localizeButtons = document.querySelectorAll('.btn-localize');
+    const openButtons = document.querySelectorAll('.btn-open');
+
+    const openDirections = (destLat, destLng, originLat, originLng) => {
+        let url;
+        if (originLat != null && originLng != null) {
+            url = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
+        } else {
+            url = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
+        }
+        window.open(url, '_blank', 'noopener');
+    };
+
+    localizeButtons.forEach((btn) => {
+        if (btn._geoBound) return; btn._geoBound = true;
+        btn.addEventListener('click', () => {
+            const lat = btn.dataset.lat; const lng = btn.dataset.lng;
+            if (!navigator.geolocation) {
+                alert('Géolocalisation non supportée par votre navigateur.');
+                return;
+            }
+            btn.disabled = true;
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                const userLat = pos.coords.latitude;
+                const userLng = pos.coords.longitude;
+                // fill hidden fields if present
+                const latField = document.getElementById('geo_lat');
+                const lngField = document.getElementById('geo_lng');
+                if (latField) latField.value = userLat;
+                if (lngField) lngField.value = userLng;
+                openDirections(lat, lng, userLat, userLng);
+                btn.disabled = false;
+            }, function(err) {
+                btn.disabled = false;
+                if (err.code === 1) {
+                    alert('Autorisation refusée pour la géolocalisation. Vous pouvez ouvrir l’itinéraire manuellement.');
+                } else {
+                    alert('Impossible de déterminer votre position.');
+                }
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        });
+    });
+
+    openButtons.forEach((btn) => {
+        if (btn._openBound) return; btn._openBound = true;
+        btn.addEventListener('click', () => {
+            const lat = btn.dataset.lat; const lng = btn.dataset.lng;
+            openDirections(lat, lng);
+        });
+    });
+}
+
+// Call initContactGeo after core init
+document.addEventListener('DOMContentLoaded', () => {
+    try { initContactGeo(); } catch (e) { console.debug && console.debug('initContactGeo error', e); }
+});
+
+// Initialize Leaflet map on contact page
+function initContactMap() {
+    if (typeof L === 'undefined') return; // Leaflet not loaded
+    const el = document.getElementById('contact-map');
+    if (!el) return;
+
+    // Coordinates for stores
+    const stores = [
+        { id: 'roquettes', name: 'Roquettes', lat: 43.498992171106636, lng: 1.3569978765146686, address: 'Centre Commercial le Château, 31120 Roquettes' },
+        { id: 'victor-hugo', name: 'Marché Victor Hugo', lat: 43.6047, lng: 1.4442, address: 'Pl. Victor Hugo 253, 31000 Toulouse' }
+    ];
+
+    // create map
+    const map = L.map(el, { scrollWheelZoom: false }).setView([ (stores[0].lat+stores[1].lat)/2, (stores[0].lng+stores[1].lng)/2 ], 12);
+
+    // tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const markers = [];
+    stores.forEach(s => {
+        const m = L.marker([s.lat, s.lng]).addTo(map);
+        m.bindPopup(`<strong>${s.name}</strong><br>${s.address}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}" target="_blank" rel="noopener">Itinéraire</a>`);
+        markers.push(m);
+    });
+
+    // fit bounds to markers
+    const group = L.featureGroup(markers);
+    map.fitBounds(group.getBounds().pad(0.2));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    try { initContactMap(); } catch (e) { console.debug && console.debug('initContactMap error', e); }
+});
+
 function todayIso() {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -558,11 +655,19 @@ function initContactForm() {
                 const t = await fetch('/api/csrf-token', { credentials: 'include' }); if (t.ok) { const td = await t.json(); csrf = td && td.csrfToken; }
             } catch (e) {}
 
+            // include optional address and geolocation if present
+            const addr = (form.querySelector('#address')?.value || '').trim();
+            const geoLat = (form.querySelector('#geo_lat')?.value || '').trim();
+            const geoLng = (form.querySelector('#geo_lng')?.value || '').trim();
+            const payload = { fullname: f, email: e, subject: s, message: m };
+            if (addr) payload.address = addr;
+            if (geoLat && geoLng) payload.geo = { lat: Number(geoLat), lng: Number(geoLng) };
+
             const res = await fetch('/api/notifications', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf || '' },
                 credentials: 'include',
-                body: JSON.stringify({ fullname: f, email: e, subject: s, message: m })
+                body: JSON.stringify(payload)
             });
             if (res.ok) {
                 form.reset();

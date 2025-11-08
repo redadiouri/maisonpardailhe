@@ -1,278 +1,98 @@
 <!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page introuvable – Maison Pardailhe</title>
-    <meta name="description" content="Cette page n'existe pas ou a été déplacée. Retournez à l'accueil de Maison Pardailhé." />
-    <meta name="robots" content="noindex,nofollow" />
-    
-    <link rel="icon" href="/img/logo.png" />
-    <link rel="apple-touch-icon" href="/img/logo.png" />
-    <meta name="theme-color" content="#c24b3f" />
-    
-    
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>404 — Page introuvable · Maison Pardailhé</title>
+    <meta name="description" content="La page demandée est introuvable. Retournez à l'accueil de Maison Pardailhé." />
+    <meta name="robots" content="noindex,nofollow">
+
+    <link rel="icon" href="/img/logo.png">
+    <link rel="apple-touch-icon" href="/img/logo.png">
+    <meta name="theme-color" content="#c24b3f">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    
+
     <link rel="stylesheet" href="/css/style.css">
-    
+
     <style>
-        .error-container {
-            min-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            text-align: center;
-        }
-        
-        .error-code {
-            font-size: clamp(6rem, 15vw, 12rem);
-            font-weight: 900;
-            line-height: 1;
-            background: linear-gradient(135deg, var(--rouge-signature, #c01818) 0%, #8f1212 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin: 0;
-            letter-spacing: -0.05em;
-            animation: fadeInScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .error-title {
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
-            font-weight: 700;
-            color: var(--noir-profond, #1a1a1a);
-            margin: 1.5rem 0 1rem;
-            animation: fadeIn 0.8s ease-out 0.2s both;
-        }
-        
-        .error-description {
-            font-size: clamp(1rem, 2.5vw, 1.25rem);
-            color: var(--gris-velin, #666);
-            max-width: 600px;
-            margin: 0 auto 2.5rem;
-            line-height: 1.6;
-            animation: fadeIn 0.8s ease-out 0.4s both;
-        }
-        
-        .error-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            animation: fadeIn 0.8s ease-out 0.6s both;
-        }
-        
-        .error-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.875rem 1.75rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-        }
-        
-        .error-btn-primary {
-            background: var(--rouge-signature, #c01818);
-            color: white;
-            box-shadow: 0 4px 12px rgba(192, 24, 24, 0.3);
-        }
-        
-        .error-btn-primary:hover {
-            background: #8f1212;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(192, 24, 24, 0.4);
-        }
-        
-        .error-btn-secondary {
-            background: white;
-            color: var(--noir-profond, #1a1a1a);
-            border: 2px solid #e0e0e0;
-        }
-        
-        .error-btn-secondary:hover {
-            border-color: var(--rouge-signature, #c01818);
-            color: var(--rouge-signature, #c01818);
-            transform: translateY(-2px);
-        }
-        
-        .error-links {
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid #e0e0e0;
-            animation: fadeIn 0.8s ease-out 0.8s both;
-        }
-        
-        .error-links-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--noir-profond, #1a1a1a);
-            margin-bottom: 1.25rem;
-        }
-        
-        .error-links-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 1rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .error-link {
-            padding: 0.75rem 1rem;
-            background: #f8f9fa;
-            border-radius: 6px;
-            text-decoration: none;
-            color: var(--noir-profond, #1a1a1a);
-            font-weight: 500;
-            transition: all 0.2s ease;
-            display: block;
-        }
-        
-        .error-link:hover {
-            background: var(--rouge-signature, #c01818);
-            color: white;
-            transform: scale(1.05);
-        }
-        
-        .error-illustration {
-            margin-bottom: 2rem;
-            opacity: 0.15;
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes fadeInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-        
-        @media (max-width: 640px) {
-            .error-actions {
-                flex-direction: column;
-                width: 100%;
-                max-width: 300px;
-                margin: 0 auto;
-            }
-            
-            .error-btn {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .error-links-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+      /* Small helpers to reuse the site's design system */
+      .error-hero {
+        padding: 6rem 1.25rem;
+        text-align: center;
+      }
+      .error-code {
+        font-size: clamp(5rem, 12vw, 9rem);
+        font-weight: 900;
+        color: var(--rouge-signature, #c01818);
+        margin: 0 0 1rem;
+        letter-spacing: -0.03em;
+      }
+      .error-title {
+        font-size: 1.75rem;
+        margin: 0.25rem 0 1rem;
+      }
+      .error-desc { color: var(--gris-velin,#666); max-width: 720px; margin: 0 auto 1.5rem; }
+      .error-actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:1.25rem }
+      .error-actions .btn { text-decoration:none }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <!-- reuse the site's header markup so 404 sits in the same DA/layout -->
     <header>
-        <div class="nav-container">
-            <a href="/" class="brand">
-                <span class="brand-name">La Maison <span>Pardailhé</span></span>
-            </a>
-            <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="/">Accueil</a></li>
-                    <li><a href="/menu">Menu</a></li>
-                    <li><a href="/services">Services</a></li>
-                    <li><a href="/identite">Identité</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                </ul>
-            </nav>
-        </div>
+      <div class="nav-container">
+        <a href="/" class="brand"><span class="brand-name">La Maison <span>Pardailhé</span></span></a>
+        <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        <nav>
+          <ul class="nav-links">
+            <li><a href="/">Accueil</a></li>
+            <li><a href="/menu">Menu</a></li>
+            <li><a href="/services">Services</a></li>
+            <li><a href="/identite">Identité</a></li>
+            <li><a href="/contact">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
     </header>
 
     <main>
-        <div class="error-container">
-            
-            <svg class="error-illustration" width="200" height="150" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M100 20L130 80H70L100 20Z" fill="currentColor" opacity="0.3"/>
-                <circle cx="100" cy="100" r="40" fill="currentColor" opacity="0.2"/>
-                <path d="M80 95L90 105L120 75" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            
-            <h1 class="error-code" aria-label="Erreur 404">404</h1>
-            
-            <h2 class="error-title">Cette page n'existe pas</h2>
-            
-            <p class="error-description">
-                Désolé, nous ne trouvons pas la page que vous cherchez. 
-                Elle a peut-être été déplacée ou supprimée.
-            </p>
-            
-            <div class="error-actions">
-                <a href="/" class="error-btn error-btn-primary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    Retour à l'accueil
-                </a>
-                
-                <a href="/menu" class="error-btn error-btn-secondary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 3h18v18H3zM9 3v18M3 9h18M3 15h18"/>
-                    </svg>
-                    Voir le menu
-                </a>
+      <section class="error-hero">
+        <div>
+          <div class="error-illustration" aria-hidden="true" style="opacity:.08;margin-bottom:1rem">
+            <img src="/img/pate_en_croute.png" alt="" width="220" height="160" style="max-width:220px">
+          </div>
+          <h1 class="error-code">404</h1>
+          <h2 class="error-title">Oups — page introuvable</h2>
+          <p class="error-desc">La page que vous cherchez n'existe pas ou a été déplacée. Essayez d'aller sur l'une des pages suivantes.</p>
+
+          <div class="error-actions">
+            <a class="btn btn--primary" href="/">Retour à l'accueil</a>
+            <a class="btn" href="/menu">Consulter le menu</a>
+            <a class="btn" href="/contact">Nous contacter</a>
+          </div>
+
+          <div style="margin-top:2rem;max-width:820px;margin-left:auto;margin-right:auto;color:var(--gris-velin,#777)">
+            <strong>Pages populaires :</strong>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin-top:.75rem">
+              <a class="error-link" href="/">Accueil</a>
+              <a class="error-link" href="/menu">Menu</a>
+              <a class="error-link" href="/services">Services</a>
+              <a class="error-link" href="/identite">Notre histoire</a>
+              <a class="error-link" href="/contact">Contact</a>
             </div>
-            
-            <div class="error-links">
-                <h3 class="error-links-title">Pages populaires</h3>
-                <div class="error-links-grid">
-                    <a href="/" class="error-link">Accueil</a>
-                    <a href="/menu" class="error-link">Menu</a>
-                    <a href="/services" class="error-link">Services</a>
-                    <a href="/identite" class="error-link">Notre histoire</a>
-                    <a href="/contact" class="error-link">Contact</a>
-                </div>
-            </div>
+          </div>
         </div>
+      </section>
     </main>
 
-    <footer style="margin-top: 4rem; padding: 2rem; text-align: center; background: #f8f9fa; border-top: 1px solid #e0e0e0;">
-        <p style="color: #666; margin: 0;">&copy; 2025 Maison Pardailhé. Tous droits réservés.</p>
+    <footer>
+      <div style="padding:2rem;text-align:center;color:var(--gris-velin,#666)">&copy; 2025 Maison Pardailhé. Tous droits réservés.</div>
     </footer>
 
     <script src="/js/app.js"></script>
-</body>
+  </body>
 </html>
+                      </div>

@@ -30,6 +30,8 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
     <link rel="stylesheet" href="css/style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 
     
     <script type="application/ld+json">
@@ -136,6 +138,10 @@
                         <label for="message">Message</label>
                         <textarea id="message" name="message" placeholder="Parlez-nous de votre besoin, du nombre de convives, de la date..." required></textarea>
 
+                        <label for="address">Votre adresse (optionnel)</label>
+                        <input id="address" name="address" type="text" placeholder="Rue, ville — remplir pour que l'on vous contacte plus précisément" autocomplete="street-address">
+
+                        <!-- no geolocation fields: we only show fixed map embeds -->
                         <button type="submit" class="btn btn--block">Envoyer</button>
                     </form>
                 </div>
@@ -146,11 +152,10 @@
             <h2 class="section-title">Nous situer</h2>
             <p class="section-subtitle">Retrouvez-nous dans notre boutique historique de Roquettes et désormais au Marché Victor Hugo, loge 250, en plein cœur de Toulouse.</p>
             <div class="map-grid">
-                <div class="map-embed">
-                    <iframe title="Plan d'accès Roquettes" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2887.141608042549!2d1.3569978765146686!3d43.498992171106636!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12aed72602461d2f%3A0xa6547f2dc80bd048!2sRoquettes!5e0!3m2!1sfr!2sfr!4v1700000000000"></iframe>
-                </div>
-                <div class="map-embed">
-                    <iframe title="Plan d'accès Marché Victor Hugo" src="https://www.google.com/maps?q=March%C3%A9%20Victor%20Hugo%20Loge%20250%20Toulouse&output=embed"></iframe>
+                <div id="contact-map" style="width:100%;min-height:450px;"></div>
+                <div style="display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;">
+                    <div class="map-caption">Roquettes — Centre Commercial le Château</div>
+                    <div class="map-caption">Marché Victor Hugo — Loge 250, Toulouse</div>
                 </div>
             </div>
         </section>
@@ -231,6 +236,8 @@
         </div>
     </footer>
 
+    <!-- Leaflet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/js/app.js"></script>
     <script src="/js/seo.js" defer></script>
 </body>

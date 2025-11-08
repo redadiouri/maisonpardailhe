@@ -42,6 +42,8 @@ app.use((req, res, next) => {
 });
 
 app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -76,6 +78,9 @@ app.use(helmet({
         "'self'",
         'data:',
         'https://images.unsplash.com',
+        'https://cdn.jsdelivr.net',
+        'https://*.tile.openstreetmap.org',
+        'https://tile.openstreetmap.org',
         'https://*.googleapis.com',
         'https://maps.googleapis.com',
         'https://maps.gstatic.com',
