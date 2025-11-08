@@ -65,7 +65,14 @@ const commandeSchema = Joi.object({
     .trim()
     .max(2000)
     .optional()
-    .allow('', null),
+    .allow('', null)
+    .when('items', {
+      is: Joi.array().min(1),
+      then: Joi.optional().allow('', null),
+      otherwise: Joi.required().messages({
+        'any.required': 'Le produit ou les items sont requis'
+      })
+    }),
 
   items: Joi.array()
     .items(
@@ -83,6 +90,12 @@ const commandeSchema = Joi.object({
     }),
 
   remarques: Joi.string()
+    .trim()
+    .max(1000)
+    .optional()
+    .allow('', null),
+
+  precisions: Joi.string()
     .trim()
     .max(1000)
     .optional()

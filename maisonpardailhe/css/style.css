@@ -1090,7 +1090,7 @@ textarea {
 
 .services-hero {
     padding: clamp(6rem, 9vw, 8rem) 1.5rem clamp(4rem, 7vw, 5.5rem);
-    background: linear-gradient(135deg, rgba(255, 31, 31, 0.18), rgba(7, 7, 7, 0.72)), url("img/service-hero.jpg") center/cover fixed;
+    background: linear-gradient(135deg, rgba(255, 31, 31, 0.18), rgba(7, 7, 7, 0.72));
     border-bottom: 1px solid rgba(255, 31, 31, 0.22);
     overflow: hidden;
 }

@@ -50,20 +50,27 @@ router.post('/change-password', auth, wrap(async (req, res) => {
 }));
 
 router.get('/commandes/stream', auth, (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no'); 
-    res.write('data: {"type":"connected"}\n\n');
+  
+  res.write('data: {"type":"connected"}\n\n');
 
-    const orderEmitter = require('../utils/eventEmitter');
+  const orderEmitter = require('../utils/eventEmitter');
   orderEmitter.addClient(res);
 
-    const heartbeatInterval = setInterval(() => {
-    res.write(': heartbeat\n\n');
-  }, 30000);
+  // Heartbeat toutes les 15 secondes pour maintenir la connexion active
+  // (Cloudflare timeout = 100s gratuit / 524s payant, nginx = configuré à 1d)
+  const heartbeatInterval = setInterval(() => {
+    try {
+      res.write(': heartbeat\n\n');
+    } catch (e) {
+      clearInterval(heartbeatInterval);
+    }
+  }, 15000);
 
-    req.on('close', () => {
+  req.on('close', () => {
     clearInterval(heartbeatInterval);
     orderEmitter.removeClient(res);
   });

@@ -50,33 +50,52 @@ app.use(helmet({
         'https://cdn.jsdelivr.net',
         'https://maps.googleapis.com',
         'https://maps.gstatic.com',
+        'https://www.googletagmanager.com',
+        'https://www.google-analytics.com',
         (req, res) => `'nonce-${res.locals.nonce}'`
       ],
       styleSrc: [
         "'self'",
         'https://cdn.jsdelivr.net',
         'https://fonts.googleapis.com',
-        (req, res) => `'nonce-${res.locals.nonce}'`,
+        'https://cdn.1gsldjv.net',
+        'https://*.1gsldjv.net',
+        'https://*.jsdelivr.net',
         "'unsafe-inline'"
       ],
       styleSrcElem: [
         "'self'",
         'https://cdn.jsdelivr.net',
         'https://fonts.googleapis.com',
+        'https://cdn.1gsldjv.net',
+        'https://*.1gsldjv.net',
+        'https://*.jsdelivr.net',
         "'unsafe-inline'"
       ],
       imgSrc: [
         "'self'",
         'data:',
+        'https://images.unsplash.com',
+        'https://*.googleapis.com',
         'https://maps.googleapis.com',
         'https://maps.gstatic.com',
-        'https://*.googleapis.com',
-        'https://*.gstatic.com'
+        'https://*.gstatic.com',
+        'https://maps.goopleapis.com',
+        'https://r.static.com'
       ],
       connectSrc: [
         "'self'",
         'https://cdn.jsdelivr.net',
-        'https://maps.googleapis.com'
+        'https://images.unsplash.com',
+        'https://*.googleapis.com',
+        'https://maps.googleapis.com',
+        'https://www.google-analytics.com',
+        'https://fonts.googleapis.com',
+        'https://fonts.gstatic.com',
+        'https://cdn.1gsldjv.net',
+        'https://*.gstatic.com',
+        'https://xn--maisonpardailh-okb.fr',
+        'https://sse.xn--maisonpardailh-okb.fr'
       ],
       frameSrc: [
         "'self'",
@@ -85,8 +104,14 @@ app.use(helmet({
       ],
       fontSrc: [
         "'self'",
-        'https://fonts.gstatic.com'
+        'https://fonts.gstatic.com',
+        'https://cdn.1gsldjv.net',
+        'https://*.1gsldjv.net',
+        'https://cdn.jsdelivr.net',
+        'https://*.jsdelivr.net',
+        'data:'
       ],
+      manifestSrc: ["'self'"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],
@@ -119,6 +144,22 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   allowedOrigins = ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:5500', 'http://127.0.0.1:5500'];
 }
+
+// Fichiers publics servis AVANT tout middleware
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
+// Servir les fichiers statiques publics en premier (y compris manifest.json)
+app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { 
+  maxAge: 0, // Pas de cache pour debug
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('manifest.json')) {
+      res.setHeader('Content-Type', 'application/manifest+json');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  }
+}));
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -200,7 +241,15 @@ app.use(session({
 }));
 
 const csrfProtection = csurf();
-app.use('/api', csrfProtection);
+
+const csrfMiddleware = (req, res, next) => {
+  if (req.method === 'GET' && req.path.startsWith('/admin/email-templates')) {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+};
+
+app.use('/api', csrfMiddleware);
 
 app.get('/api/csrf-token', (req, res) => {
   try {
@@ -274,14 +323,41 @@ const routeToFile = {
   '/admin/dashboard': 'admin/dashboard.html'
 };
 
+const fs = require('fs');
+
+// Middleware pour injecter le nonce dans les pages admin
+const injectNonce = (filePath) => {
+  return (req, res) => {
+    const fullPath = path.join(__dirname, `../maisonpardailhe/${filePath}`);
+    fs.readFile(fullPath, 'utf8', (err, html) => {
+      if (err) {
+        logger.error('Error reading file %s: %o', filePath, err);
+        return res.status(500).send('Internal Server Error');
+      }
+      
+      // Injecter le nonce dans toutes les balises <script> qui n'ont pas déjà un attribut nonce
+      const nonce = res.locals.nonce;
+      const htmlWithNonce = html.replace(/<script(?!\s+[^>]*nonce=)/g, `<script nonce="${nonce}"`);
+      
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(htmlWithNonce);
+    });
+  };
+};
+
 Object.keys(routeToFile).forEach(route => {
   app.get(route, (req, res) => {
     const file = routeToFile[route];
+    // Injecter le nonce pour les pages admin
+    if (file.startsWith('admin/')) {
+      return injectNonce(file)(req, res);
+    }
     return res.sendFile(path.join(__dirname, `../maisonpardailhe/${file}`));
   });
 });
 
-app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
+// express.static déjà défini en haut du fichier (ligne ~154)
+// app.use(express.static(...)) commenté pour éviter doublon
 app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
 
 

@@ -6,6 +6,11 @@
   <title>Panel Admin - Maison Pardailhé</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="css/admin-clean.css">
+  <!-- Configuration SSE: Utiliser le domaine principal pour éviter 502 -->
+  <!-- Décommentez quand le sous-domaine sse.xn--maisonpardailh-okb.fr sera créé dans Cloudflare -->
+  <script>
+    window.SSE_ENDPOINT = 'https://sse.xn--maisonpardailh-okb.fr/api/admin/commandes/stream';
+  </script>
 </head>
 <body class="admin-bg">
   <div class="admin-dashboard-wrapper">
@@ -229,7 +234,7 @@
           
           <div class="email-templates-container">
             <div class="email-templates-sidebar">
-              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Templates disponibles</h3>
+              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Templates Email</h3>
               <div id="email-templates-list" class="email-templates-list">
                 <div class="loader" style="margin:2rem auto;"></div>
               </div>
@@ -239,23 +244,29 @@
               <div id="email-editor-empty" class="email-editor-empty">
                 <div style="text-align:center; color:var(--muted); padding:3rem;">
                   <span style="font-size:3rem; display:block; margin-bottom:1rem;">✉️</span>
-                  <p>Sélectionnez un template pour le modifier</p>
+                  <p>Sélectionnez un template pour commencer</p>
                 </div>
               </div>
               
-              <div id="email-editor" class="email-editor" style="display:none;">
+              <div id="email-template-editor" class="email-editor" style="display:none;">
                 <div class="email-editor-header">
                   <div>
                     <h3 id="email-editor-title">—</h3>
                     <p id="email-editor-description" style="color:var(--muted); font-size:0.9rem; margin-top:0.25rem;">—</p>
                   </div>
                   <div class="email-editor-actions">
-                    <button id="email-restore-btn" class="btn ghost" title="Restaurer la dernière sauvegarde">
+                    <button id="email-restore-btn" class="btn ghost" title="Restaurer sauvegarde">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
                         <path d="M21 3v5h-5"/>
                       </svg>
                       Restaurer
+                    </button>
+                    <button id="email-preview-btn" class="btn ghost">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Prévisualiser
                     </button>
                     <button id="email-save-btn" class="btn primary">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -267,120 +278,53 @@
                   </div>
                 </div>
                 
+                <div id="email-editor-status" class="email-editor-status"></div>
+                
                 <div class="email-variables-info">
                   <details>
                     <summary style="cursor:pointer; font-weight:500; user-select:none;">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
                       </svg>
-                      Variables disponibles
+                      Variables disponibles (cliquer pour copier)
                     </summary>
-                    <div id="email-variables-list" style="margin-top:0.5rem; padding-left:1rem;">
-                      
+                    <div id="email-variables-list" style="margin-top:0.5rem;">
                     </div>
                   </details>
                 </div>
                 
                 <div class="email-editor-tabs">
-                  <button class="email-tab-btn active" data-mode="visual">
+                  <button class="email-editor-tab-btn active">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                     </svg>
-                    Éditeur visuel
+                    Visuel
                   </button>
-                  <button class="email-tab-btn" data-mode="preview">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                    </svg>
-                    Prévisualisation
-                  </button>
-                  <button class="email-tab-btn" data-mode="code">
+                  <button class="email-editor-tab-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
                     </svg>
-                    Code HTML
+                    HTML
+                  </button>
+                  <button class="email-editor-tab-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                    Aperçu
                   </button>
                 </div>
                 
                 <div class="email-editor-content">
-                  <div id="email-visual-mode" class="email-mode active">
-                    <div class="email-visual-toolbar">
-                      <button type="button" class="toolbar-btn" data-command="bold" title="Gras">
-                        <strong>B</strong>
-                      </button>
-                      <button type="button" class="toolbar-btn" data-command="italic" title="Italique">
-                        <em>I</em>
-                      </button>
-                      <button type="button" class="toolbar-btn" data-command="underline" title="Souligné">
-                        <u>U</u>
-                      </button>
-                      <div class="toolbar-separator"></div>
-                      <select class="toolbar-select" data-command="fontSize" title="Taille du texte">
-                        <option value="">Taille</option>
-                        <option value="1">Très petit</option>
-                        <option value="2">Petit</option>
-                        <option value="3">Normal</option>
-                        <option value="4">Grand</option>
-                        <option value="5">Très grand</option>
-                        <option value="6">Énorme</option>
-                      </select>
-                      <select class="toolbar-select" data-command="foreColor" title="Couleur du texte">
-                        <option value="">Couleur</option>
-                        <option value="#000000">Noir</option>
-                        <option value="#c24b3f">Rouge (accent)</option>
-                        <option value="#333333">Gris foncé</option>
-                        <option value="#666666">Gris</option>
-                        <option value="#0366d6">Bleu</option>
-                        <option value="#28a745">Vert</option>
-                      </select>
-                      <div class="toolbar-separator"></div>
-                      <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="Liste à puces">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-                          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-                        </svg>
-                      </button>
-                      <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="Liste numérotée">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
-                          <path d="M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
-                        </svg>
-                      </button>
-                      <div class="toolbar-separator"></div>
-                      <button type="button" class="toolbar-btn" data-command="createLink" title="Insérer un lien">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                        </svg>
-                      </button>
-                      <button type="button" class="toolbar-btn" data-command="insertVariable" title="Insérer une variable">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                        </svg>
-                      </button>
-                      <div class="toolbar-separator"></div>
-                      <button type="button" class="toolbar-btn" data-command="undo" title="Annuler">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
-                        </svg>
-                      </button>
-                      <button type="button" class="toolbar-btn" data-command="redo" title="Rétablir">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
-                        </svg>
-                      </button>
-                    </div>
+                  <div class="email-editor-tab-content active">
                     <div id="email-visual-editor" class="email-visual-editor" contenteditable="true"></div>
                   </div>
-                  <div id="email-preview-mode" class="email-mode">
-                    <iframe id="email-preview-frame" class="email-preview-frame" sandbox="allow-same-origin"></iframe>
-                  </div>
-                  <div id="email-code-mode" class="email-mode">
+                  <div class="email-editor-tab-content">
                     <textarea id="email-html-editor" class="email-html-editor" spellcheck="false"></textarea>
                   </div>
+                  <div class="email-editor-tab-content">
+                    <iframe id="email-preview-frame" class="email-preview-frame" sandbox="allow-same-origin"></iframe>
+                  </div>
                 </div>
-                
-                <div id="email-editor-status" class="email-editor-status"></div>
               </div>
             </div>
           </div>
@@ -590,7 +534,7 @@
             <div class="stats-modal-content">
               <div class="stats-modal-header">
                 <h3 id="product-trend-title">Tendance produit</h3>
-                <button class="stats-modal-close" onclick="closeProductTrendModal()">✕</button>
+                <button class="stats-modal-close" id="close-product-trend-modal">✕</button>
               </div>
               <div class="stats-modal-body">
                 <canvas id="productTrendChart"></canvas>

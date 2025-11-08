@@ -18,10 +18,10 @@ services:
       - DB_NAME=${DB_NAME}
       - SESSION_SECRET=${SESSION_SECRET}
       # PROD_ALLOWED_ORIGINS: comma-separated list of allowed origins for CORS (required for production)
-      # Example: https://serv-test.smp4.xyz,https://azeur-mdp-web.smp4.xyz,https://azeur-cloud-web.smp4.xyz
-      - PROD_ALLOWED_ORIGINS=${PROD_ALLOWED_ORIGINS}
+      # Example: https://xn--maisonpardailh-okb.fr,https://www.xn--maisonpardailh-okb.fr
+      - PROD_ALLOWED_ORIGINS=${PROD_ALLOWED_ORIGINS:-https://xn--maisonpardailh-okb.fr,https://www.xn--maisonpardailh-okb.fr}
       - TIMEZONE=${TIMEZONE:-Europe/Paris}
-      - APP_URL=${APP_URL}
+      - APP_URL=${APP_URL:-https://xn--maisonpardailh-okb.fr}
     # If you want to mount persistent storage for uploads or logs, configure volumes in Portainer
     # volumes:
     #   - /host/path/uploads:/app/uploads
@@ -40,6 +40,19 @@ services:
 
 # volumes:
 #  mysql_data:
+
+  # Watchtower : mise à jour automatique des conteneurs
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=300  # Vérifie toutes les 5 minutes
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+    command: maisonpardailhe  # Ne surveille que ce conteneur
 
 # Notes for Portainer:
 # - When creating a new Stack in Portainer, paste this file and then define the variables

@@ -1,1 +1,39 @@
+# Build et push l'image Docker
 pwsh ./deploy/build-and-push.ps1 -Username mehdimp4 -Repo maisonpardailhe-server -Tag latest -ContextPath server
+
+# ═══════════════════════════════════════════════════════════════════
+# Sur le VPS - Configuration initiale (première fois seulement)
+# ═══════════════════════════════════════════════════════════════════
+
+# 1. Copier .env.production.example vers le VPS et le renommer en .env
+# 2. Éditer .env et remplir toutes les valeurs (DB, SESSION_SECRET, etc.)
+# 3. Vérifier que PROD_ALLOWED_ORIGINS contient : https://xn--maisonpardailh-okb.fr
+
+# ═══════════════════════════════════════════════════════════════════
+# Sur le VPS - Mise à jour après un nouveau build
+# ═══════════════════════════════════════════════════════════════════
+
+# Méthode 1 : Via Portainer (RECOMMANDÉ)
+# 1. Aller sur Portainer : http://votre-vps:9000
+# 2. Stacks → maisonpardailhe → Editor
+# 3. Vérifier PROD_ALLOWED_ORIGINS=https://xn--maisonpardailh-okb.fr,...
+# 4. Update the stack + Re-pull image and redeploy
+
+# Méthode 2 : Via SSH et docker-compose
+docker pull mehdimp4/maisonpardailhe-server:latest
+docker-compose pull
+docker-compose up -d
+docker-compose logs -f
+
+# Méthode 3 : Via docker direct (sans compose)
+docker stop maisonpardailhe-server
+docker rm maisonpardailhe-server
+docker pull mehdimp4/maisonpardailhe-server:latest
+docker run -d --name maisonpardailhe-server \
+  --restart unless-stopped \
+  --env-file /root/maisonpardailhe/.env \
+  -p 3001:3001 \
+  mehdimp4/maisonpardailhe-server:latest
+
+# Vérifier les logs
+docker logs -f maisonpardailhe-server

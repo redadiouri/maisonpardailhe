@@ -4,6 +4,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { validate, emailTemplateSchema } = require('../middleware/validation');
 const { adminActionLimiter } = require('../middleware/rateLimits');
+const logger = require('../logger');
 
 const TEMPLATES_DIR = path.join(__dirname, '..', 'email_templates');
 
@@ -30,11 +31,16 @@ const TEMPLATE_INFO = {
   }
 };
 
+const normalizeFilename = (name = '') => {
+  const cleanedName = name.replace(/\.html$/, '');
+  return `${cleanedName}.html`;
+};
+
 router.get('/', async (req, res) => {
   try {
     const files = await fs.readdir(TEMPLATES_DIR);
     const templates = files
-      .filter(f => f.endsWith('.html'))
+      .filter(f => f.endsWith('.html') && !f.endsWith('.backup'))
       .map(filename => ({
         filename,
         ...TEMPLATE_INFO[filename]
@@ -42,16 +48,16 @@ router.get('/', async (req, res) => {
     
     res.json({ templates });
   } catch (err) {
-    req.log.error({ err }, 'Failed to list templates');
+    logger.error({ err }, 'Failed to list templates');
     res.status(500).json({ error: 'Erreur lors de la lecture des templates' });
   }
 });
 
 router.get('/:filename', async (req, res) => {
   try {
-    const { filename } = req.params;
+    const filename = normalizeFilename(req.params.filename);
     
-    if (!filename.endsWith('.html') || filename.includes('..') || filename.includes('/')) {
+    if (filename.includes('..') || filename.includes('/')) {
       return res.status(400).json({ error: 'Nom de fichier invalide' });
     }
 
@@ -67,7 +73,7 @@ router.get('/:filename', async (req, res) => {
     if (err.code === 'ENOENT') {
       return res.status(404).json({ error: 'Template non trouvé' });
     }
-    req.log.error({ err }, 'Failed to read template');
+    logger.error({ err, filename: req.params.filename }, 'Failed to read template');
     res.status(500).json({ error: 'Erreur lors de la lecture du template' });
   }
 });
@@ -77,10 +83,10 @@ router.put('/:filename',
   validate(emailTemplateSchema),
   async (req, res) => {
   try {
-    const { filename } = req.params;
+    const filename = normalizeFilename(req.params.filename);
     const { content } = req.body;
 
-    if (!filename.endsWith('.html') || filename.includes('..') || filename.includes('/')) {
+    if (filename.includes('..') || filename.includes('/')) {
       return res.status(400).json({ error: 'Nom de fichier invalide' });
     }
 
@@ -95,19 +101,20 @@ router.put('/:filename',
       const oldContent = await fs.readFile(filePath, 'utf8');
       await fs.writeFile(backupPath, oldContent, 'utf8');
     } catch (err) {
-      req.log.warn({ err }, 'Could not create backup');
+      // Log warning but continue, backup is not critical
+      logger.warn({ err }, 'Could not create template backup');
     }
 
     await fs.writeFile(filePath, content, 'utf8');
     
-    req.log.info({ filename }, 'Email template updated');
+    logger.info({ filename }, 'Email template updated');
     res.json({ 
       success: true, 
       message: 'Template mis à jour avec succès',
       filename 
     });
   } catch (err) {
-    req.log.error({ err }, 'Failed to update template');
+    logger.error({ err, filename: req.params.filename }, 'Failed to update template');
     res.status(500).json({ error: 'Erreur lors de la mise à jour du template' });
   }
 });
@@ -115,9 +122,9 @@ router.put('/:filename',
 // Restaure le backup d'un template
 router.post('/:filename/restore', async (req, res) => {
   try {
-    const { filename } = req.params;
+    const filename = normalizeFilename(req.params.filename);
 
-    if (!filename.endsWith('.html') || filename.includes('..') || filename.includes('/')) {
+    if (filename.includes('..') || filename.includes('/')) {
       return res.status(400).json({ error: 'Nom de fichier invalide' });
     }
 
@@ -127,7 +134,7 @@ router.post('/:filename/restore', async (req, res) => {
     const backupContent = await fs.readFile(backupPath, 'utf8');
     await fs.writeFile(filePath, backupContent, 'utf8');
 
-    req.log.info({ filename }, 'Email template restored from backup');
+    logger.info({ filename }, 'Email template restored from backup');
     res.json({ 
       success: true, 
       message: 'Template restauré avec succès',
@@ -137,7 +144,7 @@ router.post('/:filename/restore', async (req, res) => {
     if (err.code === 'ENOENT') {
       return res.status(404).json({ error: 'Backup non trouvé' });
     }
-    req.log.error({ err }, 'Failed to restore template');
+    logger.error({ err, filename: req.params.filename }, 'Failed to restore template');
     res.status(500).json({ error: 'Erreur lors de la restauration du template' });
   }
 });

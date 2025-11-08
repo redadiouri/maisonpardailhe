@@ -1,5 +1,12 @@
 const apiBase = '/api/admin';
 
+// URL SSE: utiliser un sous-domaine sans proxy Cloudflare pour éviter les timeout 524
+// En production: https://sse.votre-domaine.com/api/admin/commandes/stream
+// En développement: /api/admin/commandes/stream (même domaine)
+const sseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api/admin/commandes/stream'
+  : (window.SSE_ENDPOINT || '/api/admin/commandes/stream');
+
 async function getCsrfToken() {
   try {
     if (window._csrfToken) return window._csrfToken;
@@ -421,17 +428,49 @@ if (document.getElementById('logoutBtn')) {
   const overlay = document.getElementById('sidebar-overlay');
   const body = document.body;
 
+  function isMobile() {
+    return window.innerWidth < 768;
+  }
+
+  function initSidebarAccessibility() {
+    if (sidebar) {
+      if (isMobile() && !body.classList.contains('sidebar-open')) {
+        sidebar.setAttribute('aria-hidden', 'true');
+        sidebar.querySelectorAll('button, a, input, select, textarea').forEach(el => {
+          el.setAttribute('tabindex', '-1');
+        });
+      } else {
+        sidebar.setAttribute('aria-hidden', 'false');
+        sidebar.querySelectorAll('button, a, input, select, textarea').forEach(el => {
+          el.removeAttribute('tabindex');
+        });
+      }
+    }
+  }
+
   function openMobileMenu() {
     body.classList.add('sidebar-open');
     overlay.classList.add('active');
     sidebar.setAttribute('aria-hidden', 'false');
+    sidebar.querySelectorAll('button, a, input, select, textarea').forEach(el => {
+      el.removeAttribute('tabindex');
+    });
   }
 
   function closeMobileMenu() {
     body.classList.remove('sidebar-open');
     overlay.classList.remove('active');
-    sidebar.setAttribute('aria-hidden', 'true');
+    if (isMobile()) {
+      sidebar.setAttribute('aria-hidden', 'true');
+      sidebar.querySelectorAll('button, a, input, select, textarea').forEach(el => {
+        el.setAttribute('tabindex', '-1');
+      });
+    }
   }
+
+  initSidebarAccessibility();
+
+  window.addEventListener('resize', initSidebarAccessibility);
 
   if (mobileMenuToggle) {
     mobileMenuToggle.addEventListener('click', () => {
@@ -1179,20 +1218,21 @@ if (document.getElementById('logoutBtn')) {
       
       actions.appendChild(finishBtn);
       actions.appendChild(noteBtn);
-      
-            const metaDiv = card.querySelector('.meta');
-      if (metaDiv) {
-        const countdownDiv = document.createElement('div');
-        countdownDiv.className = 'countdown-row';
-        const pickupDateObj = parseDateTime(cmd.date_retrait, cmd.creneau);
-        if (pickupDateObj) {
-          const ts = pickupDateObj.getTime();
-          countdownDiv.innerHTML = `<b>Temps restant:</b> <span class="countdown" data-target="${ts}">--:--:--</span>`;
-        } else {
-          countdownDiv.innerHTML = `<b>Temps restant:</b> -`;
-        }
-        metaDiv.appendChild(countdownDiv);
+    }
+    
+    // Ajouter le countdown pour toutes les commandes
+    const metaDiv = card.querySelector('.meta');
+    if (metaDiv) {
+      const countdownDiv = document.createElement('div');
+      countdownDiv.className = 'countdown-row';
+      const pickupDateObj = parseDateTime(cmd.date_retrait, cmd.creneau);
+      if (pickupDateObj) {
+        const ts = pickupDateObj.getTime();
+        countdownDiv.innerHTML = `<b>Temps restant:</b> <span class="countdown" data-target="${ts}">--:--:--</span>`;
+      } else {
+        countdownDiv.innerHTML = `<b>Temps restant:</b> -`;
       }
+      metaDiv.appendChild(countdownDiv);
     }
     
     return card;
@@ -1232,13 +1272,12 @@ if (document.getElementById('logoutBtn')) {
       badge.textContent = currentCount + 1;
     }
     
-        if (statut === 'en_cours') {
-      try { 
-        if (typeof updateCountdowns === 'function') updateCountdowns(); 
-      } catch (e) {}
-    }
+    // Mettre à jour les countdowns pour toutes les commandes
+    try { 
+      if (typeof updateCountdowns === 'function') updateCountdowns(); 
+    } catch (e) {}
     
-        adjustListMaxHeight(containerId);
+    adjustListMaxHeight(containerId);
   }
 
     async function loadCommandes(statut, containerId, badgeId, loaderId) {
@@ -1543,7 +1582,7 @@ if (document.getElementById('logoutBtn')) {
         const topItems = items.slice(0, 8);
     
     container.innerHTML = topItems.map((item, index) => `
-      <div class="stat-product-card" onclick="showProductTrendModal(${item.menu_id}, '${escapeHtml(item.name || 'Menu #' + item.menu_id).replace(/'/g, "\\'")}')">
+      <div class="stat-product-card" data-menu-id="${item.menu_id}" data-product-name="${escapeHtml(item.name || 'Menu #' + item.menu_id)}">
         <div class="stat-product-rank">${index + 1}</div>
         <div class="stat-product-info">
           <div class="stat-product-name">${escapeHtml(item.name || 'Menu #' + item.menu_id)}</div>
@@ -1551,6 +1590,14 @@ if (document.getElementById('logoutBtn')) {
         </div>
       </div>
     `).join('');
+    
+    container.querySelectorAll('.stat-product-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const menuId = parseInt(card.getAttribute('data-menu-id'));
+        const productName = card.getAttribute('data-product-name');
+        showProductTrendModal(menuId, productName);
+      });
+    });
   }
   
     function renderRecentActivity(orders) {
@@ -1618,7 +1665,7 @@ if (document.getElementById('logoutBtn')) {
       { 
         key: 'roquettes', 
         name: 'Roquettes', 
-        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' 
+        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' 
       },
       { 
         key: 'victor_hugo', 
@@ -1897,6 +1944,11 @@ if (document.getElementById('logoutBtn')) {
     }
   });
   
+  const closeModalBtn = document.getElementById('close-product-trend-modal');
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', window.closeProductTrendModal);
+  }
+  
     function setupCSVExport(statsData) {
     const btn = document.getElementById('stat-export-csv');
     if (!btn) return;
@@ -2151,8 +2203,7 @@ if (document.getElementById('logoutBtn')) {
                 const badge = document.createElement('span');
         badge.className = 'cell-badge pending';
         badge.innerHTML = '<span class="cell-spinner"></span><span class="cell-undo">Annuler</span>';
-        td.appendChild(badge);
-        td.dataset.scheduled = '1';
+        td.appendChild(badge); td.dataset.scheduled = '1';
                 const tr = td.closest('tr');
         if (tr) { tr.dataset.modified = '1'; setRowModified(tr, true); }
 
@@ -2284,8 +2335,9 @@ if (document.getElementById('logoutBtn')) {
     let eventSource = null;
   let notificationSound = null;
   let sseReconnectAttempts = 0;
-  const MAX_SSE_RECONNECT_ATTEMPTS = 3;
+  const MAX_SSE_RECONNECT_ATTEMPTS = Infinity; // Reconnexion illimitée pour gérer les timeouts Cloudflare
   let sseWorking = false;
+  let sseReconnectTimer = null;
   let fallbackPollingInterval = null;
 
     function startFallbackPolling() {
@@ -2373,21 +2425,34 @@ if (document.getElementById('logoutBtn')) {
       } catch (e) {}
     }
 
+    // Nettoyer l'ancien timer de reconnexion
+    if (sseReconnectTimer) {
+      clearTimeout(sseReconnectTimer);
+      sseReconnectTimer = null;
+    }
+
     try {
-      eventSource = new EventSource('/api/admin/commandes/stream');
+      eventSource = new EventSource(sseUrl);
 
       eventSource.onopen = function() {
-        sseReconnectAttempts = 0;         sseWorking = true;
-        stopFallbackPolling();       };
+        sseReconnectAttempts = 0;
+        sseWorking = true;
+        console.log('✅ SSE connecté');
+        stopFallbackPolling();
+      };
 
       eventSource.onmessage = function(event) {
         try {
           const message = JSON.parse(event.data);
           
-          if (message.type === 'connected') return;
+          if (message.type === 'connected') {
+            console.log('📡 SSE stream ouvert');
+            return;
+          }
           
           if (message.type === 'new_order') {
-                        if (notificationSound) {
+            // Son de notification
+            if (notificationSound) {
               try {
                 notificationSound.play();
               } catch (e) {
@@ -2395,9 +2460,11 @@ if (document.getElementById('logoutBtn')) {
               }
             }
             
-                        showOrderNotification(message.data);
+            // Afficher la notification visuelle
+            showOrderNotification(message.data);
             
-                        addCommandeToList(message.data, 'en_attente', 'attente-list', 'badge-attente')
+            // Ajouter à la liste
+            addCommandeToList(message.data, 'en_attente', 'attente-list', 'badge-attente')
               .catch(err => console.error('❌ Error adding order to list:', err));
           }
         } catch (e) {
@@ -2406,22 +2473,26 @@ if (document.getElementById('logoutBtn')) {
       };
 
       eventSource.onerror = function(err) {
-        console.error('❌ SSE error:', err);
+        console.warn('⚠️ SSE erreur, reconnexion dans quelques secondes...', err);
         sseWorking = false;
         
         try {
           eventSource.close();
         } catch (e) {}
         
-                if (sseReconnectAttempts < MAX_SSE_RECONNECT_ATTEMPTS) {
-          sseReconnectAttempts++;
-          const delay = Math.min(5000 * sseReconnectAttempts, 15000);           setTimeout(() => {
-            setupSSE();
-          }, delay);
-        }
+        // Reconnexion avec backoff exponentiel (max 30 secondes)
+        sseReconnectAttempts++;
+        const delay = Math.min(3000 * Math.pow(1.5, Math.min(sseReconnectAttempts, 5)), 30000);
+        console.log(`🔄 Tentative de reconnexion SSE #${sseReconnectAttempts} dans ${(delay/1000).toFixed(1)}s`);
+        
+        sseReconnectTimer = setTimeout(() => {
+          setupSSE();
+        }, delay);
       };
     } catch (e) {
       console.error('Failed to setup SSE:', e);
+      // Réessayer même en cas d'erreur d'initialisation
+      sseReconnectTimer = setTimeout(() => setupSSE(), 5000);
     }
   }
 
@@ -2756,255 +2827,215 @@ if (document.getElementById('logoutBtn')) {
 function initEmailTemplatesTab() {
   let templates = [];
   let currentTemplate = null;
+  let isDirty = false;
   
   const templatesList = document.getElementById('email-templates-list');
+  const editorContainer = document.getElementById('email-template-editor');
   const editorEmpty = document.getElementById('email-editor-empty');
-  const editor = document.getElementById('email-editor');
   const editorTitle = document.getElementById('email-editor-title');
   const editorDescription = document.getElementById('email-editor-description');
-  const variablesList = document.getElementById('email-variables-list');
   const htmlEditor = document.getElementById('email-html-editor');
   const visualEditor = document.getElementById('email-visual-editor');
   const previewFrame = document.getElementById('email-preview-frame');
+  const variablesList = document.getElementById('email-variables-list');
+  const statusDiv = document.getElementById('email-editor-status');
   const saveBtn = document.getElementById('email-save-btn');
   const restoreBtn = document.getElementById('email-restore-btn');
-  const statusDiv = document.getElementById('email-editor-status');
+  const previewBtn = document.getElementById('email-preview-btn');
+  const tabBtns = document.querySelectorAll('.email-editor-tab-btn');
+  const tabContents = document.querySelectorAll('.email-editor-tab-content');
   
-    const tabBtns = document.querySelectorAll('.email-tab-btn');
-  const visualMode = document.getElementById('email-visual-mode');
-  const previewMode = document.getElementById('email-preview-mode');
-  const codeMode = document.getElementById('email-code-mode');
-  
-  tabBtns.forEach(btn => {
+  if (!templatesList) return;
+
+  function showStatus(message, type = 'info', duration = 3000) {
+    if (!statusDiv) return;
+    statusDiv.textContent = message;
+    statusDiv.className = `email-editor-status ${type}`;
+    
+    if (type === 'success' || type === 'info') {
+      setTimeout(() => {
+        if (statusDiv.textContent === message) {
+          statusDiv.textContent = '';
+          statusDiv.className = 'email-editor-status';
+        }
+      }, duration);
+    }
+  }
+
+  function markDirty() {
+    if (isDirty) return;
+    isDirty = true;
+    if (saveBtn) saveBtn.classList.add('unsaved');
+  }
+
+  function markClean() {
+    isDirty = false;
+    if (saveBtn) saveBtn.classList.remove('unsaved');
+  }
+
+  tabBtns.forEach((btn, index) => {
     btn.addEventListener('click', () => {
-      const mode = btn.dataset.mode;
       tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
+      tabContents[index].classList.add('active');
       
-      if (mode === 'visual') {
-                if (htmlEditor.value) {
+      if (index === 0) { // Visual
+        if (htmlEditor.value) {
           visualEditor.innerHTML = extractBodyContent(htmlEditor.value);
         }
-        visualMode.classList.add('active');
-        previewMode.classList.remove('active');
-        codeMode.classList.remove('active');
-      } else if (mode === 'preview') {
-                syncVisualToHtml();
-        visualMode.classList.remove('active');
-        previewMode.classList.add('active');
-        codeMode.classList.remove('active');
+      } else if (index === 1) { // HTML
+        syncVisualToHtml();
+      } else if (index === 2) { // Preview
+        syncVisualToHtml();
         updatePreview();
-      } else if (mode === 'code') {
-                syncVisualToHtml();
-        visualMode.classList.remove('active');
-        previewMode.classList.remove('active');
-        codeMode.classList.add('active');
       }
     });
   });
-  
-    const toolbar = document.querySelector('.email-visual-toolbar');
-  if (toolbar) {
-    toolbar.addEventListener('click', (e) => {
-      const btn = e.target.closest('.toolbar-btn');
-      if (!btn) return;
-      
-      e.preventDefault();
-      const command = btn.dataset.command;
-      
-      if (command === 'createLink') {
-        const url = prompt('URL du lien:');
-        if (url) {
-          document.execCommand('createLink', false, url);
-        }
-      } else if (command === 'insertVariable') {
-        showVariableModal();
-      } else {
-        document.execCommand(command, false, null);
-      }
-      
-      visualEditor.focus();
-    });
-    
-        toolbar.addEventListener('change', (e) => {
-      const select = e.target.closest('.toolbar-select');
-      if (!select) return;
-      
-      const command = select.dataset.command;
-      const value = select.value;
-      
-      if (value) {
-        document.execCommand(command, false, value);
-        select.value = '';
-        visualEditor.focus();
-      }
-    });
+
+  if (htmlEditor) {
+    htmlEditor.addEventListener('input', markDirty);
   }
-  
-    function showVariableModal() {
-    if (!currentTemplate || !currentTemplate.variables) return;
-    
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;';
-    
-    const box = document.createElement('div');
-    box.style.cssText = 'background:var(--card);padding:1.5rem;border-radius:8px;max-width:500px;width:90%;';
-    
-    const title = document.createElement('h3');
-    title.textContent = 'Insérer une variable';
-    title.style.marginTop = '0';
-    
-    const list = document.createElement('div');
-    list.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;margin:1rem 0;';
-    
-    currentTemplate.variables.forEach(varName => {
-      const btn = document.createElement('button');
-      btn.textContent = `{{${varName}}}`;
-      btn.className = 'btn';
-      btn.style.cssText = 'text-align:left;font-family:monospace;';
-      btn.onclick = () => {
-        document.execCommand('insertHTML', false, `<span style="background:#fff3cd;padding:2px 4px;border-radius:3px;font-family:monospace;">{{${varName}}}</span>`);
-        modal.remove();
-        visualEditor.focus();
-      };
-      list.appendChild(btn);
-    });
-    
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Annuler';
-    cancelBtn.className = 'btn ghost';
-    cancelBtn.onclick = () => modal.remove();
-    
-    box.appendChild(title);
-    box.appendChild(list);
-    box.appendChild(cancelBtn);
-    modal.appendChild(box);
-    document.body.appendChild(modal);
-    
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.remove();
-    };
+
+  if (visualEditor) {
+    visualEditor.addEventListener('input', markDirty);
   }
-  
-    function extractBodyContent(html) {
+
+  function extractBodyContent(html) {
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    if (bodyMatch) {
-      return bodyMatch[1];
-    }
-    return html;
+    return bodyMatch ? bodyMatch[1] : html;
   }
-  
-    function syncVisualToHtml() {
-    if (!currentTemplate) return;
+
+  function syncVisualToHtml() {
+    if (!currentTemplate || !htmlEditor || !visualEditor) return;
     
     const bodyContent = visualEditor.innerHTML;
     const fullHtml = htmlEditor.value;
     
-        const newHtml = fullHtml.replace(
-      /(<body[^>]*>)([\s\S]*)(<\/body>)/i,
-      `$1${bodyContent}$3`
-    );
-    
-    htmlEditor.value = newHtml;
+    if (fullHtml.includes('</body>')) {
+      const newHtml = fullHtml.replace(
+        /(<body[^>]*>)([\s\S]*)(<\/body>)/i,
+        `$1${bodyContent}$3`
+      );
+      htmlEditor.value = newHtml;
+    } else {
+      // If no body tag, assume the whole thing is editable content
+      htmlEditor.value = bodyContent;
+    }
   }
-  
-    async function loadTemplates() {
+
+  async function loadTemplates() {
     try {
       templatesList.innerHTML = '<div class="loader" style="margin:2rem auto;"></div>';
-      const token = await getCsrfToken();
-      const res = await fetch('/api/admin/email-templates', {
-        credentials: 'include',
-        headers: token ? { 'csrf-token': token } : {}
-      });
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Failed to load templates:', res.status, errorText);
-        throw new Error(`HTTP ${res.status}: ${errorText}`);
-      }
+      const res = await fetch('/api/admin/email-templates', { credentials: 'include' });
+      if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`);
       
       const data = await res.json();
       templates = data.templates || [];
       renderTemplatesList();
     } catch (err) {
-      console.error('Error loading templates:', err);
-      templatesList.innerHTML = `<p style="color:#ff6b6b; text-align:center; padding:1rem;">❌ Erreur: ${err.message}</p>`;
-      showStatus('Erreur lors du chargement des templates: ' + err.message, 'error');
+      templatesList.innerHTML = `<div class="error-box">❌ Erreur de chargement des templates.</div>`;
+      showStatus('Erreur: ' + err.message, 'error');
     }
   }
-  
-    function renderTemplatesList() {
+
+  function renderTemplatesList() {
     if (!templates.length) {
-      templatesList.innerHTML = '<p style="color:var(--muted); text-align:center;">Aucun template trouvé</p>';
+      templatesList.innerHTML = '<p class="muted-text">Aucun template</p>';
       return;
     }
     
     templatesList.innerHTML = templates.map(t => `
       <div class="email-template-item ${currentTemplate && currentTemplate.filename === t.filename ? 'active' : ''}" 
            data-filename="${t.filename}">
-        <h4>${t.name || t.filename}</h4>
-        <p>${t.description || ''}</p>
+        <div class="template-item-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="template-item-details">
+          <h4>${t.name || t.filename}</h4>
+          <p>${t.description || ''}</p>
+        </div>
       </div>
     `).join('');
     
-        templatesList.querySelectorAll('.email-template-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const filename = item.dataset.filename;
-        loadTemplate(filename);
+    templatesList.querySelectorAll('.email-template-item').forEach(item => {
+      item.addEventListener('click', async () => {
+        if (isDirty && !confirm('Vous avez des modifications non sauvegardées. Continuer sans sauvegarder ?')) {
+          return;
+        }
+        await loadTemplate(item.dataset.filename);
       });
     });
   }
-  
-    async function loadTemplate(filename) {
+
+  async function loadTemplate(filename) {
     try {
-      const token = await getCsrfToken();
-      const res = await fetch(`/api/admin/email-templates/${filename}`, {
-        credentials: 'include',
-        headers: token ? { 'csrf-token': token } : {}
+      showStatus('Chargement du template...', 'info');
+      
+      const res = await fetch(`/api/admin/email-templates/${encodeURIComponent(filename)}`, {
+        credentials: 'include'
       });
       
-      if (!res.ok) throw new Error('Failed to load template');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: `Erreur HTTP ${res.status}` }));
+        throw new Error(errData.error);
+      }
       
       currentTemplate = await res.json();
       renderEditor();
-      renderTemplatesList();     } catch (err) {
-      console.error('Error loading template:', err);
-      showStatus('Erreur lors du chargement du template', 'error');
+      renderTemplatesList(); // To update active state
+      markClean();
+      showStatus('Template chargé avec succès', 'success');
+    } catch (err) {
+      showStatus(`Erreur: ${err.message}`, 'error');
     }
   }
-  
-    function renderEditor() {
+
+  function renderEditor() {
     if (!currentTemplate) {
       editorEmpty.style.display = 'flex';
-      editor.style.display = 'none';
+      editorContainer.style.display = 'none';
       return;
     }
     
     editorEmpty.style.display = 'none';
-    editor.style.display = 'flex';
+    editorContainer.style.display = 'flex';
     
     editorTitle.textContent = currentTemplate.name || currentTemplate.filename;
     editorDescription.textContent = currentTemplate.description || '';
     htmlEditor.value = currentTemplate.content || '';
+    visualEditor.innerHTML = extractBodyContent(currentTemplate.content || '');
     
-        visualEditor.innerHTML = extractBodyContent(currentTemplate.content || '');
-    
-        if (currentTemplate.variables && currentTemplate.variables.length) {
-      variablesList.innerHTML = currentTemplate.variables.map(v => 
-        `<code class="email-variable-tag">{{${v}}}</code>`
-      ).join('');
+    if (currentTemplate.variables && currentTemplate.variables.length) {
+      variablesList.innerHTML = `
+        <div class="email-variables-grid">
+          ${currentTemplate.variables.map(v => 
+            `<code class="email-variable-tag" data-var="${v}">{{${v}}}</code>`
+          ).join('')}
+        </div>
+      `;
+      variablesList.querySelectorAll('.email-variable-tag').forEach(el => {
+        el.addEventListener('click', async () => {
+          const name = el.getAttribute('data-var');
+          try {
+            await navigator.clipboard.writeText(`{{${name}}}`);
+            showStatus(`Copié: {{${name}}}`, 'info');
+          } catch (e) {
+            showStatus('Impossible de copier la variable', 'error');
+          }
+        });
+      });
     } else {
-      variablesList.innerHTML = '<p style="color:var(--muted);">Aucune variable disponible</p>';
+      variablesList.innerHTML = '<p class="muted-text">Aucune variable pour ce template</p>';
     }
     
-        statusDiv.textContent = '';
+    statusDiv.textContent = '';
     statusDiv.className = 'email-editor-status';
-    
-        tabBtns[0].click();
+    tabBtns[0]?.click();
   }
-  
-    function updatePreview() {
-    if (!currentTemplate) return;
+
+  function updatePreview() {
+    if (!currentTemplate || !htmlEditor || !previewFrame) return;
     
     const html = htmlEditor.value;
     const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
@@ -3012,94 +3043,97 @@ function initEmailTemplatesTab() {
     doc.write(html);
     doc.close();
   }
-  
+
+  if (saveBtn) {
     saveBtn.addEventListener('click', async () => {
-    if (!currentTemplate) return;
-    
-        syncVisualToHtml();
-    
-    const content = htmlEditor.value;
-    
-    if (!content.trim()) {
-      showStatus('Le contenu ne peut pas être vide', 'error');
-      return;
-    }
-    
-    try {
-      saveBtn.disabled = true;
-      showStatus('Enregistrement...', 'info');
+      if (!currentTemplate) return;
       
-      const token = await getCsrfToken();
-      const res = await fetch(`/api/admin/email-templates/${currentTemplate.filename}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'csrf-token': token } : {})
-        },
-        body: JSON.stringify({ content })
-      });
+      syncVisualToHtml();
+      const content = htmlEditor.value;
       
-      const data = await res.json();
+      if (!content.trim()) {
+        showStatus('Le contenu ne peut pas être vide', 'error');
+        return;
+      }
       
-      if (!res.ok) throw new Error(data.error || 'Failed to save');
-      
-      showStatus('✓ Template enregistré avec succès', 'success');
-      
-            setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
-    } catch (err) {
-      console.error('Error saving template:', err);
-      showStatus('Erreur lors de l\'enregistrement: ' + err.message, 'error');
-    } finally {
-      saveBtn.disabled = false;
-    }
-  });
-  
-    restoreBtn.addEventListener('click', async () => {
-    if (!currentTemplate) return;
-    
-    if (!confirm(`Êtes-vous sûr de vouloir restaurer le template "${currentTemplate.name}" depuis la dernière sauvegarde ?`)) {
-      return;
-    }
-    
-    try {
-      restoreBtn.disabled = true;
-      showStatus('Restauration...', 'info');
-      
-      const token = await getCsrfToken();
-      const res = await fetch(`/api/admin/email-templates/${currentTemplate.filename}/restore`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: token ? { 'csrf-token': token } : {}
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || 'Failed to restore');
-      
-      showStatus('✓ Template restauré avec succès', 'success');
-      
-            setTimeout(() => loadTemplate(currentTemplate.filename), 1000);
-    } catch (err) {
-      console.error('Error restoring template:', err);
-      showStatus('Erreur lors de la restauration: ' + err.message, 'error');
-    } finally {
-      restoreBtn.disabled = false;
-    }
-  });
-  
-    function showStatus(message, type = 'info') {
-    statusDiv.textContent = message;
-    statusDiv.className = `email-editor-status ${type}`;
-    
-    if (type === 'success') {
-      setTimeout(() => {
-        statusDiv.textContent = '';
-        statusDiv.className = 'email-editor-status';
-      }, 3000);
-    }
+      try {
+        saveBtn.disabled = true;
+        showStatus('Enregistrement...', 'info');
+        
+        const token = await getCsrfToken();
+        const res = await fetch(`/api/admin/email-templates/${encodeURIComponent(currentTemplate.filename)}`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-CSRF-Token': token } : {})
+          },
+          body: JSON.stringify({ content })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Erreur HTTP ${res.status}`);
+        }
+        
+        markClean();
+        showStatus('✓ Sauvegardé avec succès', 'success');
+        await loadTemplate(currentTemplate.filename);
+      } catch (err) {
+        showStatus('Erreur: ' + err.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
   }
-  
-    loadTemplates();
+
+  if (restoreBtn) {
+    restoreBtn.addEventListener('click', async () => {
+      if (!currentTemplate) return;
+      
+      if (!confirm(`Voulez-vous vraiment restaurer "${currentTemplate.name}" depuis la sauvegarde ? Les modifications non sauvegardées seront perdues.`)) {
+        return;
+      }
+      
+      try {
+        restoreBtn.disabled = true;
+        showStatus('Restauration...', 'info');
+
+        const token = await getCsrfToken();
+        const res = await fetch(`/api/admin/email-templates/${encodeURIComponent(currentTemplate.filename)}/restore`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: token ? { 'X-CSRF-Token': token } : {}
+        });
+        
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Erreur HTTP ${res.status}`);
+        }
+        
+        showStatus('✓ Restauré avec succès', 'success');
+        await loadTemplate(currentTemplate.filename);
+      } catch (err) {
+        showStatus('Erreur: ' + err.message, 'error');
+      } finally {
+        restoreBtn.disabled = false;
+      }
+    });
+  }
+
+  if (previewBtn) {
+    previewBtn.addEventListener('click', () => {
+      tabBtns[2]?.click();
+    });
+  }
+
+  window.addEventListener('beforeunload', (e) => {
+    if (isDirty) {
+      e.preventDefault();
+      e.returnValue = 'Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir quitter ?';
+    }
+  });
+
+  loadTemplates();
 }
 
