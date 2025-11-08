@@ -6,10 +6,10 @@
   <title>Panel Admin - Maison Pardailhé</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="css/admin-clean.css">
-  <!-- Configuration SSE: Utiliser le domaine principal pour éviter 502 -->
-  <!-- Décommentez quand le sous-domaine sse.xn--maisonpardailh-okb.fr sera créé dans Cloudflare -->
+  <!-- Configuration SSE: EventSource n'envoie pas les cookies cross-domain -->
   <script>
-    window.SSE_ENDPOINT = 'https://sse.xn--maisonpardailh-okb.fr/api/admin/commandes/stream';
+    // EventSource ne supporte pas withCredentials, utiliser le même domaine
+    // Les reconnexions Cloudflare (timeout 100s) sont gérées automatiquement
   </script>
 </head>
 <body class="admin-bg">

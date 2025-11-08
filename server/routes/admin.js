@@ -60,15 +60,18 @@ router.get('/commandes/stream', auth, (req, res) => {
   const orderEmitter = require('../utils/eventEmitter');
   orderEmitter.addClient(res);
 
-  // Heartbeat toutes les 15 secondes pour maintenir la connexion active
-  // (Cloudflare timeout = 100s gratuit / 524s payant, nginx = configuré à 1d)
+  // Heartbeat toutes les 10 secondes pour contourner Cloudflare timeout (100s gratuit)
+  // Envoyer un commentaire ET un event vide pour forcer Cloudflare à considérer la connexion active
   const heartbeatInterval = setInterval(() => {
     try {
-      res.write(': heartbeat\n\n');
+      // Commentaire SSE (ignoré par le client mais compte pour Cloudflare)
+      res.write(': heartbeat ' + Date.now() + '\n');
+      // Event vide avec timestamp pour garder la connexion active
+      res.write('data: {"type":"ping","ts":' + Date.now() + '}\n\n');
     } catch (e) {
       clearInterval(heartbeatInterval);
     }
-  }, 15000);
+  }, 10000); // 10 secondes au lieu de 15
 
   req.on('close', () => {
     clearInterval(heartbeatInterval);

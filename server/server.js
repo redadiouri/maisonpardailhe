@@ -237,7 +237,8 @@ app.use(session({
   cookie: {
     secure: (process.env.NODE_ENV === 'production'),     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 1000 * 60 * 60   }
+    maxAge: 1000 * 60 * 60,
+    domain: process.env.NODE_ENV === 'production' ? '.xn--maisonpardailh-okb.fr' : undefined   }
 }));
 
 const csrfProtection = csurf();
