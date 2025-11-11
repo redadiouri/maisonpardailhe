@@ -49,7 +49,20 @@ coverage/
 ## OneDrive / temp
 ~$*
 
+## Backups
+server/backups/
+*.sql.gz
+*.dump
+
+## Uploaded files (keep structure, ignore content)
+maisonpardailhe/img/menus/*
+!maisonpardailhe/img/menus/.gitkeep
+
+## Test artifacts
+*.test.js.snap
+test-results/
+
 # Keep example files
 !.env.example
-server/.env
-.github/copilot-instructions.md
+!server/.env.example
+!server/.env.production.example
