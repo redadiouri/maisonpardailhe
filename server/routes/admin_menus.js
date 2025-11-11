@@ -8,6 +8,7 @@ const { adminActionLimiter } = require('../middleware/rateLimits');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const sharp = require('sharp');
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -125,27 +126,52 @@ router.post('/:id/upload-image',
       return res.status(400).json({ message: 'Aucune image fournie' });
     }
 
-    // Construire l'URL relative de l'image
-    const imageUrl = `/img/menus/${req.file.filename}`;
+    // Optimiser l'image avec Sharp
+    const uploadedPath = req.file.path;
+    const optimizedFilename = `optimized-${req.file.filename}`;
+    const optimizedPath = path.join(path.dirname(uploadedPath), optimizedFilename);
     
-    // Récupérer l'ancienne image pour la supprimer
-    const menu = await Menu.getById(id);
-    const oldImageUrl = menu?.image_url;
-    
-    // Mettre à jour le menu avec la nouvelle image
-    await Menu.update(id, { image_url: imageUrl });
-    
-    // Supprimer l'ancienne image si elle existe
-    if (oldImageUrl && oldImageUrl.startsWith('/img/menus/')) {
-      try {
-        const oldImagePath = path.join(__dirname, '../../maisonpardailhe', oldImageUrl);
-        await fs.unlink(oldImagePath);
-      } catch (err) {
-        // Ignorer si le fichier n'existe pas
+    try {
+      // Redimensionner et optimiser : max 1200px de largeur, qualité 90
+      await sharp(uploadedPath)
+        .resize(1200, null, { 
+          withoutEnlargement: true,
+          fit: 'inside'
+        })
+        .jpeg({ quality: 90, mozjpeg: true })
+        .toFile(optimizedPath);
+      
+      // Supprimer l'image originale non optimisée
+      await fs.unlink(uploadedPath);
+      
+      // Utiliser l'image optimisée
+      const imageUrl = `/img/menus/${optimizedFilename}`;
+      
+      // Récupérer l'ancienne image pour la supprimer
+      const menu = await Menu.getById(id);
+      const oldImageUrl = menu?.image_url;
+      
+      // Mettre à jour le menu avec la nouvelle image
+      await Menu.update(id, { image_url: imageUrl });
+      
+      // Supprimer l'ancienne image si elle existe
+      if (oldImageUrl && oldImageUrl.startsWith('/img/menus/')) {
+        try {
+          const oldImagePath = path.join(__dirname, '../../maisonpardailhe', oldImageUrl);
+          await fs.unlink(oldImagePath);
+        } catch (err) {
+          // Ignorer si le fichier n'existe pas
+        }
       }
+      
+      res.json({ success: true, image_url: imageUrl });
+    } catch (err) {
+      // En cas d'erreur d'optimisation, supprimer le fichier uploadé
+      try {
+        await fs.unlink(uploadedPath);
+      } catch (e) {}
+      throw err;
     }
-    
-    res.json({ success: true, image_url: imageUrl });
   })
 );
 
