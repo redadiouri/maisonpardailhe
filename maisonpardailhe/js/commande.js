@@ -251,11 +251,77 @@ function formatPrice(cents) {
     const productsHtml = await renderProducts(cmd.produit);
     const totalPrice = cmd.total_cents ? `<div class="total-price">${icons.money}Total : <strong>${formatPrice(cmd.total_cents)}</strong></div>` : '';
     
+    // Vérifier si Stripe est disponible et si on peut payer
+    let paymentButton = '';
+    const canPay = cmd.total_cents && cmd.total_cents > 0 && 
+                   cmd.statut_paiement !== 'paye' && 
+                   cmd.statut !== 'refusée';
+    
+    if (canPay) {
+      try {
+        const configResp = await fetch('/api/payment/config');
+        const config = await configResp.json();
+        
+        if (config.stripeAvailable) {
+          paymentButton = `
+            <div class="payment-section" style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                <div>
+                  <div style="font-weight: 600; color: #212529;">Paiement en ligne</div>
+                  <div style="font-size: 0.875rem; color: #6c757d;">Paiement sécurisé par Stripe</div>
+                </div>
+              </div>
+              <button id="payment-btn" class="payment-btn" style="
+                width: 100%;
+                padding: 12px 24px;
+                background: #635bff;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+              ">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Payer ${formatPrice(cmd.total_cents)}
+              </button>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.warn('Erreur vérification config Stripe:', e);
+      }
+    }
+    
+    // Badge de statut de paiement
+    const paymentStatusBadge = cmd.statut_paiement === 'paye' ? `
+      <div style="margin-top: 16px; padding: 12px; background: #d1fae5; border: 1px solid #10b981; border-radius: 8px; color: #065f46; font-weight: 600; text-align: center;">
+        ✅ Commande payée ${cmd.date_paiement ? 'le ' + formatDateTimeForDisplay(cmd.date_paiement) : ''}
+      </div>
+    ` : cmd.statut_paiement === 'impaye' && cmd.statut !== 'refusée' ? `
+      <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; color: #92400e; font-weight: 600; text-align: center;">
+        ⏳ En attente de paiement
+      </div>
+    ` : '';
+    
     const productsCard = `
       <div class="order-card" style="grid-column: 1 / -1;">
         <h2><svg class="card-icon" viewBox="0 0 24 24"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg> Produits commandés</h2>
         ${productsHtml}
         ${totalPrice}
+        ${paymentStatusBadge}
+        ${paymentButton}
       </div>
     `;
 
@@ -268,7 +334,10 @@ function formatPrice(cents) {
         </div>
         ${cmd.raison_refus ? `
           <div class="refusal-reason">
-            <strong>⚠ Raison du refus :</strong>
+            <strong style="display:inline-flex;align-items:center;gap:0.5rem;">
+              <span style="width:20px;height:20px;color:#ff1f1f;">${Icons.alertTriangle}</span>
+              Raison du refus :
+            </strong>
             <div>${escapeHtml(cmd.raison_refus)}</div>
           </div>
         ` : ''}
@@ -285,5 +354,57 @@ function formatPrice(cents) {
         ${statusCard}
       </div>
     `;
+    
+    // Gérer le clic sur le bouton de paiement
+    const paymentBtn = document.getElementById('payment-btn');
+    if (paymentBtn) {
+      paymentBtn.addEventListener('click', async () => {
+        paymentBtn.disabled = true;
+        paymentBtn.innerHTML = '<span>Chargement...</span>';
+        
+        try {
+          const response = await fetch('/api/payment/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commande_id: id })
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erreur lors de la création de la session de paiement');
+          }
+          
+          const { url } = await response.json();
+          
+          // Rediriger vers Stripe Checkout
+          window.location.href = url;
+          
+        } catch (error) {
+          console.error('Erreur paiement:', error);
+          alert('Erreur lors de la création de la session de paiement. Veuillez réessayer.');
+          paymentBtn.disabled = false;
+          paymentBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Payer ${formatPrice(cmd.total_cents)}
+          `;
+        }
+      });
+    }
+    
+    // Afficher un message si le paiement a réussi/échoué
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    if (paymentStatus === 'success') {
+      if (typeof showToast === 'function') {
+        showToast('✅ Paiement effectué avec succès ! Votre commande a été confirmée.', 'success', 8000);
+      }
+    } else if (paymentStatus === 'cancel') {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Paiement annulé. Vous pouvez réessayer quand vous le souhaitez.', 'warning', 6000);
+      }
+    }
+    
   }catch(err){ console.error(err); if (spinner) spinner.style.display = 'none'; sub.textContent='Impossible de charger la commande. Vérifiez votre connexion ou réessayez.'; }
 })();

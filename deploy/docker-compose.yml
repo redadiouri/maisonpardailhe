@@ -22,9 +22,9 @@ services:
       - PROD_ALLOWED_ORIGINS=${PROD_ALLOWED_ORIGINS:-https://xn--maisonpardailh-okb.fr,https://www.xn--maisonpardailh-okb.fr}
       - TIMEZONE=${TIMEZONE:-Europe/Paris}
       - APP_URL=${APP_URL:-https://xn--maisonpardailh-okb.fr}
-    # If you want to mount persistent storage for uploads or logs, configure volumes in Portainer
-    # volumes:
-    #   - /host/path/uploads:/app/uploads
+    # Volume persistant pour les images des menus
+    volumes:
+      - menu_images:/app/maisonpardailhe/img/menus
 
   # Optional: example MySQL service (uncomment if you want to run DB in the same stack)
   # mysql:
@@ -38,8 +38,9 @@ services:
   #     - mysql_data:/var/lib/mysql
   #   restart: unless-stopped
 
-# volumes:
-#  mysql_data:
+# Volumes pour la persistance des données
+volumes:
+  menu_images:
 
   # Watchtower : mise à jour automatique des conteneurs
   watchtower:

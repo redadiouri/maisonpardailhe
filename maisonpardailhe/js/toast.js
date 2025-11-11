@@ -63,7 +63,7 @@
   }
 
   
-  function showToast(message, type = 'info', duration = 4000) {
+  function showToast(message, type = 'info', duration = 4000, options = {}) {
     initToastContainer();
     
     const config = TOAST_TYPES[type] || TOAST_TYPES.info;
@@ -81,7 +81,7 @@
       align-items: flex-start;
       gap: 12px;
       pointer-events: auto;
-      cursor: pointer;
+      cursor: ${options.actionUrl ? 'default' : 'pointer'};
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       transform: translateX(400px);
       opacity: 0;
@@ -103,16 +103,57 @@
     `;
     iconWrapper.innerHTML = config.icon;
     
-        const content = document.createElement('div');
-    content.style.cssText = `
+        const contentWrapper = document.createElement('div');
+    contentWrapper.style.cssText = `
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
       font-size: 0.95rem;
       line-height: 1.5;
       color: #1a1a1a;
       font-weight: 500;
-      padding-top: 4px;
     `;
     content.textContent = message;
+    
+    contentWrapper.appendChild(content);
+    
+    // Add action button if provided
+    if (options.actionUrl && options.actionText) {
+      const actionBtn = document.createElement('a');
+      actionBtn.href = options.actionUrl;
+      actionBtn.target = '_blank';
+      actionBtn.rel = 'noopener noreferrer';
+      actionBtn.textContent = options.actionText;
+      actionBtn.style.cssText = `
+        display: inline-block;
+        padding: 8px 16px;
+        background: ${config.color};
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        align-self: flex-start;
+      `;
+      actionBtn.onmouseover = () => {
+        actionBtn.style.opacity = '0.9';
+        actionBtn.style.transform = 'translateY(-1px)';
+      };
+      actionBtn.onmouseout = () => {
+        actionBtn.style.opacity = '1';
+        actionBtn.style.transform = 'translateY(0)';
+      };
+      actionBtn.onclick = (e) => {
+        e.stopPropagation();
+      };
+      contentWrapper.appendChild(actionBtn);
+    }
     
         const closeBtn = document.createElement('button');
     closeBtn.setAttribute('aria-label', 'Fermer la notification');
@@ -136,7 +177,7 @@
     closeBtn.onmouseout = () => closeBtn.style.color = '#9ca3af';
     
     toast.appendChild(iconWrapper);
-    toast.appendChild(content);
+    toast.appendChild(contentWrapper);
     toast.appendChild(closeBtn);
     
         function removeToast() {
@@ -149,14 +190,16 @@
       }, 300);
     }
     
-        closeBtn.onclick = (e) => {
+    
+    closeBtn.onclick = (e) => {
       e.stopPropagation();
       removeToast();
     };
     
-    toast.onclick = removeToast;
-    
-        let autoRemoveTimer;
+    // Only make the whole toast clickable if there's no action button
+    if (!options.actionUrl) {
+      toast.onclick = removeToast;
+    }        let autoRemoveTimer;
     toast.onmouseenter = () => {
       if (autoRemoveTimer) clearTimeout(autoRemoveTimer);
       toast.style.transform = 'translateX(0) scale(1.02)';

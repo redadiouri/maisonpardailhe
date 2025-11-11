@@ -121,8 +121,24 @@ async function sendMail({ to, subject, html, text, from } = {}) {
     to,
     subject: subject || '(no subject)',
     text: text || undefined,
-    html: html || undefined
+    html: html || undefined,
+    // prefer explicit Reply-To (can be overridden by caller via `from` param)
+    replyTo: process.env.REPLY_TO || mailFrom
   };
+
+  // Add List-Unsubscribe headers to improve deliverability and provide a clear unsubscribe path.
+  try {
+    const token = signToken(to);
+    const unsubscribeUrl = `${process.env.APP_URL || 'http://localhost:3001'}/unsubscribe?token=${encodeURIComponent(token)}`;
+    const postmaster = (String(mailFrom).match(/<([^>]+)>/) || [])[1] || (process.env.POSTMASTER_ADDRESS || (`postmaster@${process.env.APP_HOST || 'localhost'}`));
+    const listUnsubValue = `<${unsubscribeUrl}>, <mailto:${postmaster}>`;
+    mailOptions.headers = Object.assign({}, mailOptions.headers || {}, {
+      'List-Unsubscribe': listUnsubValue,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+    });
+  } catch (e) {
+    // non-blocking — if token generation or header set fails, continue without headers
+  }
 
   const normalizeRecipients = (v) => {
     if (!v) return [];

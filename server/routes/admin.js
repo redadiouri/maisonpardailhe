@@ -164,10 +164,49 @@ router.post('/commandes/:id/accepter', auth, wrap(async (req, res) => {
 }));
 
 router.post('/commandes/:id/refuser', auth, wrap(async (req, res) => {
+  const db = require('../models/db');
   const id = req.params.id;
   const { raison } = req.body;
   const commande = await Commande.getById(id);
   if (!commande) return res.status(404).json({ message: 'Commande introuvable.' });
+  
+  // Restaurer le stock si la commande contient des items JSON
+  if (commande.produit) {
+    try {
+      const items = JSON.parse(commande.produit);
+      if (Array.isArray(items) && items.length > 0) {
+        const conn = await db.getConnection();
+        try {
+          await conn.beginTransaction();
+          
+          for (const item of items) {
+            const menuId = Number(item.menu_id);
+            const qty = Math.floor(Number(item.qty) || 0);
+            
+            if (menuId && qty > 0) {
+              // Restaurer le stock
+              await conn.execute(
+                'UPDATE menus SET stock = stock + ? WHERE id = ?',
+                [qty, menuId]
+              );
+            }
+          }
+          
+          await conn.commit();
+          conn.release();
+        } catch (err) {
+          try { await conn.rollback(); } catch (e) {}
+          conn.release();
+          throw err;
+        }
+      }
+    } catch (parseErr) {
+      // Si ce n'est pas du JSON valide, continuer sans restaurer le stock
+      const logger = require('../logger');
+      logger.warn('Failed to parse produit for stock restoration: %o', parseErr);
+    }
+  }
+  
   await Commande.updateStatut(id, 'refusée', raison);
   res.json({ success: true });
 }));

@@ -13,7 +13,8 @@ router.get('/', async (req, res) => {
       price_cents: Number(m.price_cents || 0),
       is_quote: Boolean(m.is_quote),
       stock: Number(m.stock || 0),
-      visible_on_menu: Boolean(m.visible_on_menu)
+      visible_on_menu: Boolean(m.visible_on_menu),
+      image_url: m.image_url || ''
     })));
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur.' });

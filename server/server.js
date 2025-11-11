@@ -54,6 +54,7 @@ app.use(helmet({
         'https://maps.gstatic.com',
         'https://www.googletagmanager.com',
         'https://www.google-analytics.com',
+        'https://js.stripe.com',
         (req, res) => `'nonce-${res.locals.nonce}'`
       ],
       styleSrc: [
@@ -100,12 +101,14 @@ app.use(helmet({
         'https://cdn.1gsldjv.net',
         'https://*.gstatic.com',
         'https://xn--maisonpardailh-okb.fr',
-        'https://sse.xn--maisonpardailh-okb.fr'
+        'https://sse.xn--maisonpardailh-okb.fr',
+        'https://api.stripe.com'
       ],
       frameSrc: [
         "'self'",
         'https://www.google.com',
-        'https://maps.google.com'
+        'https://maps.google.com',
+        'https://js.stripe.com'
       ],
       fontSrc: [
         "'self'",
@@ -415,6 +418,7 @@ const schedulesRoutes = require('./routes/schedules');
 const notificationsRoutes = require('./routes/notifications');
 const adminNotificationsRoutes = require('./routes/admin_notifications');
 const emailTemplatesRoutes = require('./routes/email_templates');
+const paymentRoutes = require('./routes/payment');
 const requireAuth = require('./middleware/auth');
 
 function escapeHtml(s) {
@@ -434,6 +438,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/menus', menusRoutes);
 app.use('/api/admin/menus', adminMenusRoutes);
 app.use('/api/admin/email-templates', requireAuth, emailTemplatesRoutes);
+app.use('/api/payment', paymentRoutes);
 app.use('/unsubscribe', unsubscribeRoutes);
 app.use('/api/schedules', schedulesRoutes);
 

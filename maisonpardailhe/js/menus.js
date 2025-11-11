@@ -18,11 +18,28 @@
   function renderMenuCard(m) {
     const article = document.createElement('article');
     article.className = 'menu-card';
-        const badge = document.createElement('span');
+    
+    // Image du menu
+    if (m.image_url) {
+      const imgContainer = document.createElement('div');
+      imgContainer.className = 'menu-card__image';
+      const img = document.createElement('img');
+      img.src = m.image_url;
+      img.alt = m.name;
+      img.loading = 'lazy';
+      imgContainer.appendChild(img);
+      article.appendChild(imgContainer);
+    }
+    
+    // Wrapper pour le contenu
+    const content = document.createElement('div');
+    content.className = 'menu-card__content';
+    
+    const badge = document.createElement('span');
     badge.className = 'menu-badge';
     badge.textContent = m.is_quote ? 'Sur devis' : (m.price_cents && m.price_cents>0 ? '' : '');
     if (!m.is_quote) {
-            badge.style.display = 'none';
+      badge.style.display = 'none';
     }
     const h3 = document.createElement('h3'); h3.textContent = m.name;
     const p = document.createElement('p'); p.textContent = m.description || '';
@@ -33,10 +50,12 @@
     strong.textContent = m.is_quote ? 'Nous contacter' : formatPrice(m.price_cents);
     priceDiv.appendChild(span); priceDiv.appendChild(strong);
 
-    article.appendChild(badge);
-    article.appendChild(h3);
-    article.appendChild(p);
-    article.appendChild(priceDiv);
+    content.appendChild(badge);
+    content.appendChild(h3);
+    content.appendChild(p);
+    content.appendChild(priceDiv);
+    
+    article.appendChild(content);
     return article;
   }
 
@@ -45,10 +64,29 @@
   div.className = 'selection-item';
   div.dataset.menuId = String(m.id);
     div.dataset.priceCents = String(Number(m.price_cents || 0));
-    const info = document.createElement('div'); info.className = 'selection-item__info';
+    
+    const info = document.createElement('div'); 
+    info.className = 'selection-item__info';
+    
+    // Image du menu (petite vignette)
+    if (m.image_url) {
+      const imgWrapper = document.createElement('div');
+      imgWrapper.className = 'selection-item__image';
+      const img = document.createElement('img');
+      img.src = m.image_url;
+      img.alt = m.name;
+      img.loading = 'lazy';
+      imgWrapper.appendChild(img);
+      info.appendChild(imgWrapper);
+    }
+    
+    const textInfo = document.createElement('div');
+    textInfo.className = 'selection-item__text';
     const h4 = document.createElement('h4'); h4.textContent = m.name;
     const p = document.createElement('p'); p.textContent = m.description || '';
-    info.appendChild(h4); info.appendChild(p);
+    textInfo.appendChild(h4); 
+    textInfo.appendChild(p);
+    info.appendChild(textInfo);
 
     const controls = document.createElement('div'); controls.className = 'selection-item__controls';
     const dec = document.createElement('button'); dec.type='button'; dec.className='quantity-btn'; dec.dataset.action='decrement'; dec.setAttribute('aria-label','Retirer'); dec.textContent='−';

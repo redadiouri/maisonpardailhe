@@ -62,8 +62,8 @@ function renderProduitHtml(rawProduit) {
 if (document.getElementById('loginForm')) {
     const pwdInput = document.getElementById('loginPassword');
   const togglePwd = document.getElementById('togglePwd');
-  const eyeOpenSVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7z" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const eyeSlashSVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l20 20" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.58 10.58a3 3 0 004.24 4.24" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 5c-1.73 0-3.33.35-4.78.98" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12c-1.73 3.89-6 7-11 7-1.25 0-2.45-.18-3.58-.52" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const eyeOpenSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const eyeSlashSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
   if (togglePwd && pwdInput) {
         togglePwd.innerHTML = eyeOpenSVG;
     togglePwd.onclick = () => {
@@ -345,11 +345,11 @@ function showToast(message, options = {}) {
 
         let icon = '';
     if (type === 'success') {
-      icon = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      icon = '<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>';
     } else if (type === 'error') {
-      icon = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      icon = '<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="m9 9 6 6"/></svg>';
     } else {
-      icon = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>';
+      icon = '<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>';
     }
 
     toast.innerHTML = icon + '<div class="toast-text">' + String(message) + '</div>';
@@ -877,7 +877,7 @@ if (document.getElementById('logoutBtn')) {
     const tbody = document.querySelector('#menu-table tbody');
     tbody.innerHTML = '';
     if (!items || items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="color:#aaa; text-align:center;">Aucun menu.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="color:#aaa; text-align:center;">Aucun menu.</td></tr>';
       return;
     }
     items.forEach(it => {
@@ -885,7 +885,24 @@ if (document.getElementById('logoutBtn')) {
       tr.dataset.id = it.id;
       const desc = (it.description || '').toString().trim();
       const shortDesc = desc.length > 60 ? escapeHtml(desc.slice(0, 57)) + '...' : escapeHtml(desc);
+      
+      // Image preview
+      const imageHtml = it.image_url 
+        ? `<img src="${escapeAttr(it.image_url)}" alt="${escapeAttr(it.name)}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;display:block;">`
+        : `<div style="width:60px;height:60px;background:rgba(255,255,255,0.05);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:24px;">📷</div>`;
+      
       tr.innerHTML = `
+  <td data-label="Image">
+    <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:center;">
+      ${imageHtml}
+      <label class="btn small" style="cursor:pointer;font-size:0.75rem;padding:0.35rem 0.65rem;display:inline-flex;align-items:center;gap:0.35rem;">
+        <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+        Upload
+        <input type="file" accept="image/*" data-action="upload-image" data-id="${it.id}" style="display:none;">
+      </label>
+      ${it.image_url ? `<button class="btn small danger" data-action="delete-image" data-id="${it.id}" style="font-size:0.7rem;padding:0.3rem 0.5rem;display:inline-flex;align-items:center;gap:0.3rem;" title="Supprimer l'image"><svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button>` : ''}
+    </div>
+  </td>
   <td data-label="Nom" data-field="name"><span class="value">${escapeHtml(it.name)}</span></td>
   <td data-label="Description" data-field="description" title="${escapeAttr(desc)}"><span class="value">${shortDesc}</span></td>
   <td data-label="Prix" data-field="price_cents"><span class="value">${it.is_quote ? 'Sur devis' : ( (Number(it.price_cents||0)/100).toFixed(2) + '€' )}</span></td>
@@ -895,7 +912,7 @@ if (document.getElementById('logoutBtn')) {
   <td data-label="Visible" data-field="visible_on_menu"><span class="value">${it.visible_on_menu ? 'Oui' : 'Non'}</span></td>
         <td data-label="Actions">
           <button class="btn small icon-only danger" data-action="delete-menu" data-id="${it.id}" title="Supprimer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11v6" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
           </button>
         </td>
       `;
@@ -955,6 +972,26 @@ if (document.getElementById('logoutBtn')) {
           await loadMenus();
           showToast('Menu supprimé', { duration: 3000 });
   } catch (e) { showAlertModal('Erreur', 'Erreur suppression'); }
+      }
+      
+      // Supprimer l'image d'un menu
+      if (action === 'delete-image') {
+        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) { showAlertModal('Permission', 'Permission refusée'); return; }
+        const confirmed = await showConfirmModal('Supprimer l\'image ?', 'Voulez-vous supprimer l\'image de ce menu ?');
+        if (!confirmed) return;
+        try {
+          const _csrf = await getCsrfToken();
+          const res = await fetch(apiBase + '/menus/' + id + '/image', { 
+            method: 'DELETE', 
+            credentials: 'include', 
+            headers: { 'X-CSRF-Token': _csrf || '' } 
+          });
+          if (!res.ok) throw new Error('err');
+          await loadMenus();
+          showToast('Image supprimée', { duration: 3000 });
+        } catch (e) { 
+          showAlertModal('Erreur', 'Erreur lors de la suppression de l\'image'); 
+        }
       }
             if (action === 'toggle-perm') {
         const checkbox = btn;         const newVal = !!checkbox.checked;
@@ -1018,6 +1055,67 @@ if (document.getElementById('logoutBtn')) {
           } catch (err) { showAlertModal('Erreur', 'Erreur lors de la mise à jour'); }
         };
         form.addEventListener('submit', submitHandler);
+      }
+    });
+    
+    // Gestionnaire pour l'upload d'image
+    document.addEventListener('change', async (e) => {
+      const input = e.target;
+      if (input.dataset.action === 'upload-image') {
+        if (!window._currentAdmin || !window._currentAdmin.can_edit_menus) {
+          showAlertModal('Permission', 'Permission refusée');
+          input.value = '';
+          return;
+        }
+        
+        const id = input.dataset.id;
+        const file = input.files[0];
+        
+        if (!file) return;
+        
+        // Vérifier le type de fichier
+        if (!file.type.startsWith('image/')) {
+          showAlertModal('Erreur', 'Veuillez sélectionner une image');
+          input.value = '';
+          return;
+        }
+        
+        // Vérifier la taille (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          showAlertModal('Erreur', 'L\'image est trop volumineuse (max 5MB)');
+          input.value = '';
+          return;
+        }
+        
+        try {
+          const formData = new FormData();
+          formData.append('image', file);
+          
+          const _csrf = await getCsrfToken();
+          
+          showToast('Upload en cours...', { duration: 2000 });
+          
+          const res = await fetch(apiBase + '/menus/' + id + '/upload-image', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            headers: {
+              'X-CSRF-Token': _csrf || ''
+            }
+          });
+          
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => null);
+            throw new Error(errorData?.message || 'Erreur d\'upload');
+          }
+          
+          await loadMenus();
+          showToast('Image uploadée avec succès', { duration: 3000 });
+        } catch (e) {
+          showAlertModal('Erreur', e.message || 'Erreur lors de l\'upload de l\'image');
+        } finally {
+          input.value = ''; // Reset l'input
+        }
       }
     });
   })();
@@ -1087,11 +1185,18 @@ if (document.getElementById('logoutBtn')) {
     const created = cmd.date_creation ? new Date(cmd.date_creation).toLocaleString('fr-FR') : '';
     const totalDisplay = cmd.total_cents ? `<div style="margin-top:8px;"><b>Total:</b> <span style="color:#0a0;font-weight:700;">${(Number(cmd.total_cents)/100).toFixed(2)} €</span></div>` : '';
     
+    // Badge de statut de paiement
+    const paymentBadge = cmd.statut_paiement === 'paye' 
+      ? `<span style="display:inline-block;padding:4px 10px;background:#10b981;color:white;border-radius:4px;font-size:0.75rem;font-weight:700;margin-left:8px;">✓ PAYÉ</span>`
+      : cmd.statut_paiement === 'impaye' && cmd.total_cents > 0
+      ? `<span style="display:inline-block;padding:4px 10px;background:#f59e0b;color:white;border-radius:4px;font-size:0.75rem;font-weight:700;margin-left:8px;">⏳ IMPAYÉ</span>`
+      : '';
+    
     card.innerHTML = `
       <div class="left">
         <div class="header">
           <div>
-            <div class="client">${cmd.nom_complet} <span class="id" style="color:var(--muted);font-weight:600;font-size:0.85rem">#${cmd.id}</span></div>
+            <div class="client">${cmd.nom_complet} <span class="id" style="color:var(--muted);font-weight:600;font-size:0.85rem">#${cmd.id}</span>${paymentBadge}</div>
             <div class="phone"><a href="tel:${cmd.telephone}" style="color:inherit;text-decoration:none">${cmd.telephone}</a></div>
             ${cmd.email ? `<div class="email"><a href="mailto:${cmd.email}" style="color:inherit;text-decoration:none">${cmd.email}</a></div>` : ''}
           </div>
@@ -1099,6 +1204,7 @@ if (document.getElementById('logoutBtn')) {
         </div>
         <div class="product">${renderProduitHtml(cmd.produit)}</div>
         ${totalDisplay}
+        ${cmd.date_paiement ? `<div style="margin-top:4px;font-size:0.85rem;color:#10b981;"><b>Payé le:</b> ${new Date(cmd.date_paiement).toLocaleString('fr-FR')}</div>` : ''}
         <div class="meta">
           <div><b>Date retrait:</b> ${dateRetrait} &nbsp;|&nbsp; <b>Créneau:</b> ${cmd.creneau} &nbsp;|&nbsp; <b>Lieu:</b> ${cmd.location || '-'} </div>
           <div><b>Commandé le:</b> ${created}</div>
@@ -1160,7 +1266,7 @@ if (document.getElementById('logoutBtn')) {
           const res = await fetch(apiBase + `/commandes/${cmd.id}/terminer`, { method: 'POST', credentials: 'include', headers: { 'X-CSRF-Token': _csrf || '' } });
           if (res.ok) {
                         showToast('Commande marquée terminée — demande d\'envoi d\'un email de remerciement déclenchée', { type: 'success' });
-            console.info(`📧 Email trigger requested for commande #${cmd.id}`);
+            console.info(`[Email] Email trigger requested for commande #${cmd.id}`);
                         try { const body = await res.json().catch(()=>null); console.debug('Server response for terminer:', body); } catch(e){}
           } else {
             showToast('Erreur lors de la finalisation de la commande', { type: 'error' });
@@ -1280,16 +1386,35 @@ if (document.getElementById('logoutBtn')) {
     adjustListMaxHeight(containerId);
   }
 
+    // Protection contre les appels multiples de loadCommandes
+    const loadingStates = {};
+    
     async function loadCommandes(statut, containerId, badgeId, loaderId) {
+    // Créer une clé unique pour cette combinaison
+    const loadKey = `${statut}-${containerId}`;
+    
+    // Si déjà en cours de chargement, ignorer
+    if (loadingStates[loadKey]) {
+      console.log(`⏭️ loadCommandes déjà en cours pour ${loadKey}, ignoré`);
+      return;
+    }
+    
+    // Marquer comme en cours
+    loadingStates[loadKey] = true;
+    
     const loader = document.getElementById(loaderId);
     const list = document.getElementById(containerId);
     const badge = document.getElementById(badgeId);
-    loader.style.display = 'block';
-    list.innerHTML = '';
+    
+    if (loader) loader.style.display = 'block';
+    
+    // Important: vider la liste UNIQUEMENT si elle existe
+    if (list) list.innerHTML = '';
     if (badge) badge.textContent = '';
+    
     try {
       const res = await fetch(apiBase + '/commandes?statut=' + statut, { credentials: 'include' });
-      loader.style.display = 'none';
+      if (loader) loader.style.display = 'none';
             if (res.status === 401) {
                 console.warn('Admin API returned 401 — redirecting to login');
         window.location.href = '/admin/login';
@@ -1300,8 +1425,9 @@ if (document.getElementById('logoutBtn')) {
         const commandes = await res.json();
         if (badge) badge.textContent = commandes.length;
         if (commandes.length === 0) {
-          list.innerHTML = '<div style="color:#aaa; text-align:center; margin:30px 0;">Aucune commande.</div>';
+          if (list) list.innerHTML = '<div style="color:#aaa; text-align:center; margin:30px 0;">Aucune commande.</div>';
           adjustListMaxHeight(containerId);
+          loadingStates[loadKey] = false; // Libérer le verrou
           return;
         }
 
@@ -1309,17 +1435,25 @@ if (document.getElementById('logoutBtn')) {
 
   commandes.forEach(cmd => {
                     const card = createCommandeCard(cmd, statut);
-          list.appendChild(card);
+          if (list) list.appendChild(card);
 
+          // Marquer les commandes existantes comme déjà vues (ne pas notifier au reload)
+          if (statut === 'en_attente' && cmd.id && window.notifiedOrderIds) {
+            window.notifiedOrderIds.add(cmd.id);
+            console.log(`[Viewed] Commande #${cmd.id} marquée comme déjà vue (reload)`);
+          }
                   });
                 adjustListMaxHeight(containerId);
                 animateCards(containerId);
       } else {
-        list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur de chargement des commandes.</div>';
+        if (list) list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur de chargement des commandes.</div>';
       }
     } catch (err) {
-      loader.style.display = 'none';
-      list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur serveur.</div>';
+      if (loader) loader.style.display = 'none';
+      if (list) list.innerHTML = '<div style="color:#f33; text-align:center; margin:30px 0;">Erreur serveur.</div>';
+    } finally {
+      // Toujours libérer le verrou
+      loadingStates[loadKey] = false;
     }
   }
     async function loadStats() {
@@ -1642,10 +1776,12 @@ if (document.getElementById('logoutBtn')) {
     }
     
     const html = alerts.map(alert => {
-      const icon = alert.type === 'danger' ? '🚨' : '⚠️';
+      const iconSvg = alert.type === 'danger' 
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
       return `
         <div class="stats-alert alert-${alert.type}">
-          <div class="stats-alert-icon">${icon}</div>
+          <div class="stats-alert-icon">${iconSvg}</div>
           <div class="stats-alert-content">
             <div class="stats-alert-title">${alert.title}</div>
             <div class="stats-alert-message">${alert.message}</div>
@@ -1665,17 +1801,17 @@ if (document.getElementById('logoutBtn')) {
       { 
         key: 'roquettes', 
         name: 'Roquettes', 
-        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' 
+        icon: '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' 
       },
       { 
         key: 'victor_hugo', 
         name: 'Victor Hugo (Toulouse)', 
-        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>' 
+        icon: '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>' 
       },
       { 
         key: 'other', 
         name: 'Autres', 
-        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' 
+        icon: '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>' 
       }
     ];
     
@@ -2329,10 +2465,14 @@ if (document.getElementById('logoutBtn')) {
     });
   }
 
+  // Tracker les commandes déjà notifiées pour éviter de rejouer les notifs au reload
+  // IMPORTANT: Initialiser AVANT loadCommandes()
+  window.notifiedOrderIds = new Set();
+
   loadCommandes('en_attente', 'attente-list', 'badge-attente', 'attente-loader');
   loadCommandes('en_cours', 'encours-list', 'badge-encours', 'encours-loader');
 
-    let eventSource = null;
+  let eventSource = null;
   let notificationSound = null;
   let sseReconnectAttempts = 0;
   const MAX_SSE_RECONNECT_ATTEMPTS = Infinity; // Reconnexion illimitée pour gérer les timeouts Cloudflare
@@ -2370,13 +2510,21 @@ if (document.getElementById('logoutBtn')) {
             if (!existing) {
               await addCommandeToList(cmd, 'en_attente', 'attente-list', 'badge-attente');
               
-                            if (notificationSound) {
-                try { notificationSound.play(); } catch (e) {}
+              // Ne notifier que si pas déjà notifiée
+              if (cmd.id && !window.notifiedOrderIds.has(cmd.id)) {
+                window.notifiedOrderIds.add(cmd.id);
+                
+                // Son de notification
+                if (notificationSound) {
+                  try { notificationSound.play(); } catch (e) {}
+                }
+                
+                // Notification visuelle
+                showOrderNotification(cmd);
               }
               
-                            showOrderNotification(cmd);
-              
-                            if (cmd.id > lastCommandeId) lastCommandeId = cmd.id;
+              // Mise à jour du dernier ID
+              if (cmd.id > lastCommandeId) lastCommandeId = cmd.id;
             }
           }
         }
@@ -2451,19 +2599,29 @@ if (document.getElementById('logoutBtn')) {
           }
           
           if (message.type === 'new_order') {
-            // Son de notification
-            if (notificationSound) {
-              try {
-                notificationSound.play();
-              } catch (e) {
-                console.warn('Failed to play notification sound:', e);
+            const orderId = message.data?.id;
+            
+            // Ne notifier que si c'est vraiment une nouvelle commande (pas déjà notifiée)
+            if (orderId && !window.notifiedOrderIds.has(orderId)) {
+              window.notifiedOrderIds.add(orderId);
+              console.log(`[Notification] Nouvelle commande #${orderId} - Notification envoyée`);
+              
+              // Son de notification
+              if (notificationSound) {
+                try {
+                  notificationSound.play();
+                } catch (e) {
+                  console.warn('Failed to play notification sound:', e);
+                }
               }
+              
+              // Afficher la notification visuelle
+              showOrderNotification(message.data);
+            } else {
+              console.log(`⏭️ Commande #${orderId} déjà notifiée - Ignorée`);
             }
             
-            // Afficher la notification visuelle
-            showOrderNotification(message.data);
-            
-            // Ajouter à la liste
+            // Ajouter à la liste (même si déjà notifiée, pour mettre à jour l'affichage)
             addCommandeToList(message.data, 'en_attente', 'attente-list', 'badge-attente')
               .catch(err => console.error('❌ Error adding order to list:', err));
           }
@@ -2473,7 +2631,7 @@ if (document.getElementById('logoutBtn')) {
       };
 
       eventSource.onerror = function(err) {
-        console.warn('⚠️ SSE erreur, reconnexion dans quelques secondes...', err);
+        console.warn('[SSE] Erreur SSE, reconnexion dans quelques secondes...', err);
         sseWorking = false;
         
         try {
@@ -2529,7 +2687,7 @@ if (document.getElementById('logoutBtn')) {
           justify-content: center;
           font-size: 24px;
           box-shadow: 0 4px 12px rgba(192, 41, 41, 0.4);
-        ">🔔</div>
+        "><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
         <div style="flex: 1;">
           <div style="font-size: 15px; margin-bottom: 5px; color: #fff; font-weight: 700;">Nouvelle commande !</div>
           <div style="font-size: 13px; color: #bdbfc1; font-weight: 500;">
@@ -2949,7 +3107,7 @@ function initEmailTemplatesTab() {
       <div class="email-template-item ${currentTemplate && currentTemplate.filename === t.filename ? 'active' : ''}" 
            data-filename="${t.filename}">
         <div class="template-item-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
         </div>
         <div class="template-item-details">
           <h4>${t.name || t.filename}</h4>
@@ -3077,7 +3235,7 @@ function initEmailTemplatesTab() {
         }
         
         markClean();
-        showStatus('✓ Sauvegardé avec succès', 'success');
+        showStatus('Sauvegardé avec succès', 'success');
         await loadTemplate(currentTemplate.filename);
       } catch (err) {
         showStatus('Erreur: ' + err.message, 'error');
@@ -3111,7 +3269,7 @@ function initEmailTemplatesTab() {
           throw new Error(data.error || `Erreur HTTP ${res.status}`);
         }
         
-        showStatus('✓ Restauré avec succès', 'success');
+        showStatus('Restauré avec succès', 'success');
         await loadTemplate(currentTemplate.filename);
       } catch (err) {
         showStatus('Erreur: ' + err.message, 'error');

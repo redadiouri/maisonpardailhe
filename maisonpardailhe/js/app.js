@@ -586,10 +586,27 @@ function initClickCollectForm() {
                 } catch (e) {  }
                                 let respJson = null;
                 try { respJson = await res.json(); } catch (e) {  }
+                const orderId = respJson && (respJson.id || respJson.insertId);
                 const selectionSummary = produits.map(p => `${p.qty} × ${p.title}`).join(', ');
-                showCCMessage(`Votre commande a bien été enregistrée : ${selectionSummary}. Nous vous confirmerons sous 2h ouvrées.`, false);
-                                try {
-                    const orderId = respJson && (respJson.id || respJson.insertId);
+                
+                // Show success toast with action button to view order
+                if (typeof showToast === 'function' && orderId) {
+                    showToast(
+                        `Votre commande a bien été enregistrée : ${selectionSummary}. Nous vous confirmerons sous 2h ouvrées. Vérifiez également votre dossier « Courrier indésirable / Spam ».`,
+                        'success',
+                        10000,
+                        {
+                            actionUrl: `/commande.html?id=${orderId}`,
+                            actionText: 'Voir ma commande'
+                        }
+                    );
+                } else {
+                    // Fallback to old method
+                    showCCMessage(`Votre commande a bien été enregistrée : ${selectionSummary}. Nous vous confirmerons sous 2h ouvrées. Vérifiez également votre dossier « Courrier indésirable / Spam » : le mail de confirmation peut s'y trouver.`, false);
+                }
+                
+                // Show mini toast as well (optional secondary notification)
+                try {
                     if (orderId) showMiniToast(orderId);
                 } catch (e) {  }
             } else {
@@ -731,7 +748,7 @@ function showMiniToast(orderId) {
     closeBtn.className = 'mp-toast-close';
     closeBtn.type = 'button';
     closeBtn.setAttribute('aria-label','Fermer la notification');
-    closeBtn.textContent = '✕';
+    closeBtn.innerHTML = Icons.close;
     closeBtn.addEventListener('click', () => {
         try { toast.remove(); } catch (e) {}
     });
@@ -800,10 +817,12 @@ function initSelectionPanel() {
                 }
 
                 const current = normaliseInputValue(input);
+                const max = Number(input.dataset.max) || Number(input.max) || Infinity;
                 const action = button.dataset.action;
 
                 if (action === 'increment') {
-                    input.value = String(current + 1);
+                    const newValue = current + 1;
+                    input.value = String(Math.min(newValue, max));
                 }
 
                 if (action === 'decrement') {
@@ -824,9 +843,11 @@ function initSelectionPanel() {
     };
 
     const normaliseInputValue = (input) => {
+        const max = Number(input.dataset.max) || Number(input.max) || Infinity;
         const value = Math.max(Number(input.value) || 0, 0);
-        input.value = String(value);
-        return value;
+        const normalised = Math.min(value, max);
+        input.value = String(normalised);
+        return normalised;
     };
 
     const updateDisplay = () => {
@@ -837,10 +858,18 @@ function initSelectionPanel() {
         quantityInputs.forEach((input) => {
             const container = input.closest('.selection-item');
             const value = normaliseInputValue(input);
+            const max = Number(input.dataset.max) || Number(input.max) || Infinity;
 
             if (container) {
                 container.classList.toggle('selection-item--active', value > 0);
                 const title = container.querySelector('h4')?.textContent?.trim() ?? '';
+
+                // Désactiver le bouton + si on atteint le stock maximum
+                const controls = container.querySelector('.selection-item__controls');
+                const incrementBtn = controls?.querySelector('.quantity-btn[data-action="increment"]');
+                if (incrementBtn) {
+                    incrementBtn.disabled = value >= max;
+                }
 
                 if (value > 0) {
                     parts.push(`${title} × ${value}`);

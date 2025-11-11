@@ -49,7 +49,16 @@ CREATE TABLE commandes (
   statut ENUM('en_attente', 'en_cours', 'refusée', 'terminée') NOT NULL DEFAULT 'en_attente',
   raison_refus TEXT,
   total_cents INT NOT NULL DEFAULT 0,
-  date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  -- Champs de paiement Stripe
+  statut_paiement ENUM('impaye', 'paye', 'rembourse') NOT NULL DEFAULT 'impaye' COMMENT 'Statut du paiement de la commande',
+  stripe_checkout_session_id VARCHAR(255) DEFAULT NULL COMMENT 'ID de la session Stripe Checkout',
+  stripe_payment_intent_id VARCHAR(255) DEFAULT NULL COMMENT 'ID du Payment Intent Stripe',
+  date_paiement TIMESTAMP NULL DEFAULT NULL COMMENT 'Date à laquelle le paiement a été effectué',
+  methode_paiement VARCHAR(50) DEFAULT NULL COMMENT 'Méthode de paiement (card, paypal, etc.)',
+  date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  -- Index pour recherche rapide
+  INDEX idx_stripe_session (stripe_checkout_session_id),
+  INDEX idx_statut_paiement (statut_paiement)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Seed menus (regroupe les informations auparavant présentes dans stock)
