@@ -4,12 +4,16 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
+# Install build dependencies for native modules (sharp)
+RUN apk add --no-cache python3 make g++ vips-dev
+
 # This Dockerfile expects the build context to be the repository root so we
 # can copy both the `server/` sources and the `maisonpardailhe/` static site.
 
 # Install production dependencies for the server
 COPY server/package*.json ./server/
-RUN cd server && npm ci --only=production
+RUN cd server && npm ci --only=production --ignore-scripts && \
+    npm rebuild sharp
 
 # Copy server sources and the static site into the image
 COPY server ./server
@@ -17,6 +21,9 @@ COPY maisonpardailhe ./maisonpardailhe
 
 FROM node:18-alpine
 WORKDIR /app/server
+
+# Install runtime dependencies for sharp (C++ bindings required)
+RUN apk add --no-cache vips-cpp
 
 # Copy only the installed node_modules and app files from the builder
 COPY --from=builder /app/server/node_modules ./node_modules
