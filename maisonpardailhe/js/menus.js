@@ -1,4 +1,7 @@
 (function(){
+  let allMenus = []; // Stocker tous les menus
+  let menuPagination = null; // Instance de pagination
+
   async function fetchMenus() {
     try {
       const res = await fetch('/api/menus');
@@ -110,24 +113,72 @@
 
   async function init() {
     const menus = await fetchMenus();
-        const root = document.getElementById('menus-root');
+    allMenus = menus; // Sauvegarder tous les menus
+    
+    // Page menu.html - Affichage avec pagination
+    const root = document.getElementById('menus-root');
     if (root) {
-      root.innerHTML = '';
-      menus.forEach(m => {
-        const card = renderMenuCard(m);
-        root.appendChild(card);
-      });
+      // Initialiser la pagination
+      if (typeof Pagination !== 'undefined') {
+        menuPagination = new Pagination({
+          currentPage: 1,
+          itemsPerPage: 12,
+          totalItems: menus.length,
+          maxButtons: 5,
+          containerSelector: '#menu-pagination',
+          onPageChange: (page) => {
+            renderMenus(menus);
+            // Scroll vers le haut de la liste
+            const menuSection = document.getElementById('menu-list');
+            if (menuSection) {
+              menuSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        });
+        
+        renderMenus(menus);
+        menuPagination.render();
+      } else {
+        // Fallback sans pagination
+        renderMenus(menus);
+      }
     }
-        const grid = document.getElementById('selection-grid');
+    
+    // Page commande.html - Liste de sélection (sans pagination)
+    const grid = document.getElementById('selection-grid');
     if (grid) {
       grid.innerHTML = '';
       menus.forEach(m => {
-                if (m.is_quote) return;
+        // Ne pas afficher les items "sur devis" dans la sélection
+        if (m.is_quote) return;
         const item = renderSelectionItem(m);
         grid.appendChild(item);
       });
-            document.dispatchEvent(new CustomEvent('menus:loaded'));
+      // Dispatch event pour la page commande
+      document.dispatchEvent(new CustomEvent('menus:loaded'));
     }
+  }
+  
+  function renderMenus(menus) {
+    const root = document.getElementById('menus-root');
+    if (!root) return;
+    
+    root.innerHTML = '';
+    
+    // Obtenir les items pour la page courante
+    const itemsToShow = menuPagination 
+      ? menuPagination.getPaginatedItems(menus)
+      : menus;
+    
+    if (itemsToShow.length === 0) {
+      root.innerHTML = '<p style="text-align:center;color:#666;padding:2rem;">Aucun menu disponible pour le moment.</p>';
+      return;
+    }
+    
+    itemsToShow.forEach(m => {
+      const card = renderMenuCard(m);
+      root.appendChild(card);
+    });
   }
 
     if (document.readyState === 'loading') {

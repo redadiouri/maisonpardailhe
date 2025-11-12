@@ -3,66 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Toast avec Bouton</title>
+    <title>Test Toast avec Bouton - Maison Pardailhé</title>
+    <meta name="description" content="Page de test des notifications toast pour Maison Pardailhé." />
+    <meta name="robots" content="noindex,nofollow">
+
+    <link rel="icon" href="/img/logo.png">
+    <link rel="apple-touch-icon" href="/img/logo.png">
+    <meta name="theme-color" content="#c24b3f">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
+    <link rel="stylesheet" href="/css/style.css">
+
     <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            padding: 40px;
-            background: #f5f5f7;
-        }
+        /* Styles spécifiques pour la page de test */
         .test-container {
             max-width: 600px;
-            margin: 0 auto;
-            background: white;
+            margin: 4rem auto;
             padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        h1 {
+        .test-container h1 {
             margin-top: 0;
-            color: #1a1a1a;
         }
-        .btn {
-            padding: 12px 24px;
-            background: #c02929;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
+        .test-container h2 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+        .test-container .btn {
             margin: 8px 8px 8px 0;
-            transition: all 0.2s;
-        }
-        .btn:hover {
-            background: #a02020;
-            transform: translateY(-1px);
-        }
-        .btn-secondary {
-            background: #3b82f6;
-        }
-        .btn-secondary:hover {
-            background: #2563eb;
         }
     </style>
 </head>
 <body>
-    <div class="test-container">
-        <h1>🧪 Test des notifications Toast</h1>
-        <p>Testez les différents types de notifications avec et sans boutons d'action.</p>
-        
-        <h2>Toast simples (sans bouton)</h2>
-        <button class="btn btn-secondary" onclick="testSimpleSuccess()">✓ Succès simple</button>
-        <button class="btn btn-secondary" onclick="testSimpleError()">✗ Erreur simple</button>
-        <button class="btn btn-secondary" onclick="testSimpleWarning()">⚠ Avertissement</button>
-        
-        <h2>Toast avec boutons d'action</h2>
-        <button class="btn" onclick="testOrderSuccess()">📦 Commande créée</button>
-        <button class="btn" onclick="testEmailWarning()">📧 Vérifier spam</button>
-        <button class="btn" onclick="testAccountCreated()">👤 Compte créé</button>
-    </div>
+    <header>
+        <div class="nav-container">
+            <a href="/" class="brand"><span class="brand-name">La Maison <span>Pardailhé</span></span></a>
+            <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/">Accueil</a></li>
+                    <li><a href="/menu">Menu</a></li>
+                    <li><a href="/services">Services</a></li>
+                    <li><a href="/identite">Identité</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="test-container">
+            <h1>🧪 Test des notifications Toast</h1>
+            <p>Testez les différents types de notifications avec et sans boutons d'action.</p>
+            
+            <h2>Toast simples (sans bouton)</h2>
+            <button class="btn btn--secondary" onclick="testSimpleSuccess()">✓ Succès simple</button>
+            <button class="btn btn--secondary" onclick="testSimpleError()">✗ Erreur simple</button>
+            <button class="btn btn--secondary" onclick="testSimpleWarning()">⚠ Avertissement</button>
+            
+            <h2>Toast avec boutons d'action</h2>
+            <button class="btn btn--primary" onclick="testOrderSuccess()">📦 Commande créée</button>
+            <button class="btn btn--primary" onclick="testEmailWarning()">📧 Vérifier spam</button>
+            <button class="btn btn--primary" onclick="testAccountCreated()">👤 Compte créé</button>
+        </div>
+    </main>
+
+    <footer>
+        <div style="padding:2rem;text-align:center;color:var(--gris-velin,#666)">&copy; 2025 Maison Pardailhé. Tous droits réservés.</div>
+    </footer>
 
     <!-- Include toast.js -->
+    <script src="/js/app.js"></script>
     <script src="/js/icons.js"></script>
     <script src="/js/toast.js"></script>
 

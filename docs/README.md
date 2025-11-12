@@ -42,6 +42,11 @@ Bienvenue dans la documentation complète du projet Maison Pardailhe.
 ## 🚀 Déploiement & Production
 
 - **[deployment.md](deployment.md)** - Guide complet de déploiement (Docker, nginx, SSL, docker-compose)
+- **[PORTAINER_BACKUP_GUIDE.md](PORTAINER_BACKUP_GUIDE.md)** - ⭐ Guide pas-à-pas backup automatique Portainer
+- **[PORTAINER_QUICKSTART.md](PORTAINER_QUICKSTART.md)** - ⚡ Quick Start backup Portainer (3 étapes)
+- **[portainer-backup.md](portainer-backup.md)** - Configuration avancée backup Portainer
+- **[docker-backup.md](docker-backup.md)** - Backup de base de données pour Docker
+- **[database-backup.md](database-backup.md)** - Backup de base de données (général)
 
 ---
 

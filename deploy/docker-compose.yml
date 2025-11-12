@@ -1,61 +1,355 @@
 version: '3.8'
+
 services:
-  maisonpardailhe:
-    # Image name should be provided when deploying in Portainer, e.g. myuser/maisonpardailhe-server:latest
-    image: "${DOCKER_IMAGE:-youruser/yourrepo:latest}"
-    container_name: maisonpardailhe
+  # ═══════════════════════════════════════════════════════════════════
+  # Application Node.js
+  # ═══════════════════════════════════════════════════════════════════
+  app:
+    image: "${DOCKER_IMAGE:-mehdimp4/maisonpardailhe-server:latest}"
+    container_name: maisonpardailhe-server
     restart: unless-stopped
     ports:
       - "${PORT:-3001}:3001"
     environment:
-      # Database configuration (set in Portainer as stack variables)
-      - PORT=${PORT:-3001}
-      - NODE_ENV=${NODE_ENV:-production}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT:-3306}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - SESSION_SECRET=${SESSION_SECRET}
-      # PROD_ALLOWED_ORIGINS: comma-separated list of allowed origins for CORS (required for production)
-      # Example: https://xn--maisonpardailh-okb.fr,https://www.xn--maisonpardailh-okb.fr
-      - PROD_ALLOWED_ORIGINS=${PROD_ALLOWED_ORIGINS:-https://xn--maisonpardailh-okb.fr,https://www.xn--maisonpardailh-okb.fr}
-      - TIMEZONE=${TIMEZONE:-Europe/Paris}
-      - APP_URL=${APP_URL:-https://xn--maisonpardailh-okb.fr}
-    # Volume persistant pour les images des menus
+      # Configuration générale
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3001}
+      TZ: ${TIMEZONE:-Europe/Paris}
+      
+      # Base de données
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-maisonpardailhe}
+      
+      # Session et sécurité
+      SESSION_SECRET: ${SESSION_SECRET}
+      EMAIL_SECRET: ${EMAIL_SECRET}
+      
+      # URLs et domaines
+      APP_URL: ${APP_URL:-https://xn--maisonpardailh-okb.fr}
+      APP_HOST: ${APP_HOST:-xn--maisonpardailh-okb.fr}
+      PROD_ALLOWED_ORIGINS: ${PROD_ALLOWED_ORIGINS:-https://xn--maisonpardailh-okb.fr,https://sse.xn--maisonpardailh-okb.fr}
+      
+      # SMTP (optionnel)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Maison Pardailhé <contact@maisonpardailhe.fr>}
+      
+      # Stripe (optionnel)
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    
     volumes:
+      # Volume persistant pour les images de menus uploadées
       - menu_images:/app/maisonpardailhe/img/menus
+    
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    networks:
+      - maisonpardailhe-network
+    
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/menus', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    labels:
+      com.maisonpardailhe.service: "application"
+      com.maisonpardailhe.version: "1.0"
 
-  # Optional: example MySQL service (uncomment if you want to run DB in the same stack)
-  # mysql:
-  #   image: mysql:8.0
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
-  #     - MYSQL_DATABASE=${DB_NAME:-maisonpardailhe}
-  #     - MYSQL_USER=${DB_USER:-mp}
-  #     - MYSQL_PASSWORD=${DB_PASSWORD:-mp}
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   restart: unless-stopped
+  # ═══════════════════════════════════════════════════════════════════
+  # Base de données MySQL 8.0
+  # ═══════════════════════════════════════════════════════════════════
+  db:
+    image: mysql:8.0
+    container_name: maisonpardailhe-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-maisonpardailhe}
+      TZ: ${TIMEZONE:-Europe/Paris}
+    
+    volumes:
+      # Volume persistant pour les données MySQL
+      - mysql_data:/var/lib/mysql
+    
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max_connections=150
+      --innodb_buffer_pool_size=256M
+      --innodb_flush_log_at_trx_commit=2
+      --innodb_flush_method=O_DIRECT
+    
+    networks:
+      - maisonpardailhe-network
+    
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    
+    labels:
+      com.maisonpardailhe.service: "database"
 
-# Volumes pour la persistance des données
-volumes:
-  menu_images:
+  # ═══════════════════════════════════════════════════════════════════
+  # phpMyAdmin - Interface web pour gérer MySQL
+  # ═══════════════════════════════════════════════════════════════════
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: maisonpardailhe-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PHPMYADMIN_PORT:-8080}:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      
+      # Paramètres phpMyAdmin
+      UPLOAD_LIMIT: ${PHPMYADMIN_UPLOAD_LIMIT:-300M}
+      MEMORY_LIMIT: ${PHPMYADMIN_MEMORY_LIMIT:-512M}
+      MAX_EXECUTION_TIME: ${PHPMYADMIN_MAX_EXECUTION_TIME:-600}
+      
+      # Timezone
+      TZ: ${TIMEZONE:-Europe/Paris}
+    
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    networks:
+      - maisonpardailhe-network
+    
+    labels:
+      com.maisonpardailhe.service: "phpmyadmin"
+      com.maisonpardailhe.web: "true"
 
-  # Watchtower : mise à jour automatique des conteneurs
+  # ═══════════════════════════════════════════════════════════════════
+  # Nginx Proxy Manager - Reverse proxy avec interface web
+  # ═══════════════════════════════════════════════════════════════════
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: maisonpardailhe-nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      # Interface d'administration
+      - '${NPM_ADMIN_PORT:-81}:81'
+      # HTTP
+      - '${NPM_HTTP_PORT:-80}:80'
+      # HTTPS
+      - '${NPM_HTTPS_PORT:-443}:443'
+    environment:
+      # Désactiver IPv6 si nécessaire
+      DISABLE_IPV6: ${NPM_DISABLE_IPV6:-true}
+      
+      # Base de données interne (SQLite par défaut)
+      # Pour utiliser MySQL externe, décommenter ci-dessous
+      # DB_MYSQL_HOST: db
+      # DB_MYSQL_PORT: 3306
+      # DB_MYSQL_USER: ${DB_USER}
+      # DB_MYSQL_PASSWORD: ${DB_PASSWORD}
+      # DB_MYSQL_NAME: npm
+      
+      # Timezone
+      TZ: ${TIMEZONE:-Europe/Paris}
+    
+    volumes:
+      # Données persistantes (configuration, certificats SSL)
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    
+    networks:
+      - maisonpardailhe-network
+    
+    healthcheck:
+      test: ["CMD", "/bin/check-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    labels:
+      com.maisonpardailhe.service: "nginx-proxy-manager"
+      com.maisonpardailhe.web: "true"
+      com.maisonpardailhe.admin: "true"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # Service de backup automatique MySQL
+  # ═══════════════════════════════════════════════════════════════════
+  backup:
+    image: fradelg/mysql-cron-backup:latest
+    container_name: maisonpardailhe-backup
+    restart: unless-stopped
+    environment:
+      # Connexion à MySQL
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASS: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-maisonpardailhe}
+      
+      # Planification (format cron)
+      # "0 3 * * *" = Tous les jours à 3h du matin
+      # "0 */6 * * *" = Toutes les 6 heures
+      # "0 2 * * 0" = Chaque dimanche à 2h
+      CRON_TIME: ${BACKUP_CRON_TIME:-0 3 * * *}
+      
+      # Rétention (nombre de backups à conserver)
+      MAX_BACKUPS: ${BACKUP_MAX_BACKUPS:-30}
+      
+      # Backup initial au démarrage
+      INIT_BACKUP: ${BACKUP_INIT:-1}
+      
+      # Timeout pour le backup
+      TIMEOUT: ${BACKUP_TIMEOUT:-10m}
+      
+      # Niveau de compression gzip (1-9, 9 = maximum)
+      GZIP_LEVEL: ${BACKUP_GZIP_LEVEL:-9}
+      
+      # Timezone
+      TZ: ${TIMEZONE:-Europe/Paris}
+      
+      # Notifications Slack (optionnel)
+      WEBHOOK_URL: ${BACKUP_WEBHOOK_URL:-}
+      WEBHOOK_ERROR_URL: ${BACKUP_WEBHOOK_ERROR_URL:-}
+    
+    volumes:
+      # Stockage des backups sur l'hôte
+      # Modifier le chemin selon votre configuration
+      - ${BACKUP_DIR:-./backups}:/backup
+    
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    networks:
+      - maisonpardailhe-network
+    
+    labels:
+      com.maisonpardailhe.service: "backup"
+      com.maisonpardailhe.backup.schedule: "${BACKUP_CRON_TIME:-0 3 * * *}"
+      com.maisonpardailhe.backup.retention: "${BACKUP_MAX_BACKUPS:-30}-days"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # Watchtower - Mise à jour automatique des conteneurs
+  # ═══════════════════════════════════════════════════════════════════
   watchtower:
     image: containrrr/watchtower
-    container_name: watchtower
+    container_name: maisonpardailhe-watchtower
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_POLL_INTERVAL=300  # Vérifie toutes les 5 minutes
-      - WATCHTOWER_INCLUDE_RESTARTING=true
-    command: maisonpardailhe  # Ne surveille que ce conteneur
+      # Nettoyer les anciennes images
+      WATCHTOWER_CLEANUP: ${WATCHTOWER_CLEANUP:-true}
+      
+      # Intervalle de vérification (secondes)
+      # 300 = 5 minutes, 3600 = 1 heure, 86400 = 1 jour
+      WATCHTOWER_POLL_INTERVAL: ${WATCHTOWER_POLL_INTERVAL:-3600}
+      
+      # Inclure les conteneurs en redémarrage
+      WATCHTOWER_INCLUDE_RESTARTING: ${WATCHTOWER_INCLUDE_RESTARTING:-true}
+      
+      # Notifications (optionnel)
+      WATCHTOWER_NOTIFICATIONS: ${WATCHTOWER_NOTIFICATIONS:-}
+      WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_NOTIFICATION_URL:-}
+      
+      # Timezone
+      TZ: ${TIMEZONE:-Europe/Paris}
+    
+    # Surveiller uniquement les conteneurs de cette stack
+    command: maisonpardailhe-server
+    
+    labels:
+      com.maisonpardailhe.service: "watchtower"
 
-# Notes for Portainer:
-# - When creating a new Stack in Portainer, paste this file and then define the variables
-#   (DOCKER_IMAGE, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, SESSION_SECRET, etc.) in the UI.
-# - Portainer will substitute variables when deploying the stack.
+# ═══════════════════════════════════════════════════════════════════
+# Réseaux
+# ═══════════════════════════════════════════════════════════════════
+networks:
+  maisonpardailhe-network:
+    driver: bridge
+    labels:
+      com.maisonpardailhe.network: "main"
+
+# ═══════════════════════════════════════════════════════════════════
+# Volumes persistants
+# ═══════════════════════════════════════════════════════════════════
+volumes:
+  # Volume pour les données MySQL
+  mysql_data:
+    driver: local
+    labels:
+      com.maisonpardailhe.volume: "database"
+  
+  # Volume pour les images de menus uploadées
+  menu_images:
+    driver: local
+    labels:
+      com.maisonpardailhe.volume: "uploads"
+  
+  # Volumes pour Nginx Proxy Manager
+  npm_data:
+    driver: local
+    labels:
+      com.maisonpardailhe.volume: "nginx-proxy-manager-data"
+  
+  npm_letsencrypt:
+    driver: local
+    labels:
+      com.maisonpardailhe.volume: "nginx-proxy-manager-certs"
+
+# ═══════════════════════════════════════════════════════════════════
+# Notes pour Portainer:
+# ═══════════════════════════════════════════════════════════════════
+# 
+# Variables obligatoires à définir dans Portainer → Stack → Environment variables:
+#   - DB_USER=maisonpardailhe_user
+#   - DB_PASSWORD=votre_mot_de_passe_securise
+#   - DB_ROOT_PASSWORD=votre_root_password_securise
+#   - SESSION_SECRET=votre_session_secret_64_chars
+#   - EMAIL_SECRET=votre_email_secret_64_chars
+#
+# Variables optionnelles:
+#   - DOCKER_IMAGE=mehdimp4/maisonpardailhe-server:latest
+#   - DB_NAME=maisonpardailhe
+#   - PORT=3001
+#   - PHPMYADMIN_PORT=8080
+#   - NPM_ADMIN_PORT=81
+#   - NPM_HTTP_PORT=80
+#   - NPM_HTTPS_PORT=443
+#   - NPM_DISABLE_IPV6=true
+#   - SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
+#   - STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+#   - BACKUP_CRON_TIME=0 3 * * *
+#   - BACKUP_MAX_BACKUPS=30
+#   - BACKUP_DIR=./backups
+#   - WATCHTOWER_POLL_INTERVAL=3600
+#
+# Accès aux services:
+#   - Application: http://localhost:3001 (ou le port configuré)
+#   - phpMyAdmin: http://localhost:8080 (ou PHPMYADMIN_PORT)
+#     Login: DB_USER / DB_PASSWORD ou root / DB_ROOT_PASSWORD
+#   - Nginx Proxy Manager: http://localhost:81 (ou NPM_ADMIN_PORT)
+#     Login initial: admin@example.com / changeme
+#     ⚠️ CHANGEZ LE MOT DE PASSE après la première connexion!
+#
+# Pour plus d'informations, voir:
+#   - docs/PORTAINER_BACKUP_GUIDE.md
+#   - deploy/.env.portainer.example
+# ═══════════════════════════════════════════════════════════════════
+

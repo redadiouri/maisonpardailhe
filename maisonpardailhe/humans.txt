@@ -1,0 +1,14 @@
+/* ÉQUIPE */
+Nom du site: Maison Pardailhé
+Type: Charcutier-traiteur artisan
+Localisation: Roquettes, Haute-Garonne (31), France
+
+/* SITE */
+Standards: HTML5, CSS3, JavaScript ES6+
+Composants: Node.js, Express, MySQL
+Optimisation: SEO local, Schema.org, Performance Web
+Accessibilité: WCAG 2.1 Level AA
+
+/* REMERCIEMENTS */
+Merci à nos clients fidèles de Roquettes et Toulouse
+Terroir occitan et savoir-faire artisanal depuis des générations

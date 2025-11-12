@@ -1,12 +1,29 @@
 # Maison Pardailhé - robots.txt
+# Optimisé pour un meilleur référencement
+
 User-agent: *
 Allow: /
+Allow: /css/
+Allow: /js/
+Allow: /img/
+
+# Pages à ne pas indexer
 Disallow: /admin/
 Disallow: /api/
+Disallow: /test-toast.html
+Disallow: /*?*payment=
+Disallow: /*?*id=
 
-# Sitemap
+# Sitemap principal
 Sitemap: https://maisonpardailhe.fr/sitemap.xml
 
-# Crawl-delay pour les bots trop agressifs
+# Optimisation pour les principaux moteurs de recherche
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 0
+
+# Ralentir les bots agressifs
 User-agent: *
 Crawl-delay: 1

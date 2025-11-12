@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════════
+  # Base de données MySQL - SIMPLE VERSION
+  # ═══════════════════════════════════════════════════════════════════
+  db:
+    image: mysql:8.0
+    container_name: maisonpardailhe-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      TZ: ${TIMEZONE:-Europe/Paris}
+    
+    volumes:
+      - mysql_data:/var/lib/mysql
+    
+    networks:
+      - maisonpardailhe-network
+
+  # ═══════════════════════════════════════════════════════════════════
+  # Application Node.js - SIMPLE VERSION
+  # ═══════════════════════════════════════════════════════════════════
+  app:
+    image: "${DOCKER_IMAGE:-mehdimp4/maisonpardailhe-server:latest}"
+    container_name: maisonpardailhe-server
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3001}:3001"
+    environment:
+      # Configuration générale
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3001}
+      TZ: ${TIMEZONE:-Europe/Paris}
+      
+      # Base de données
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      
+      # Session et sécurité
+      SESSION_SECRET: ${SESSION_SECRET}
+      EMAIL_SECRET: ${EMAIL_SECRET}
+      
+      # URLs et domaines
+      APP_URL: ${APP_URL}
+      APP_HOST: ${APP_HOST}
+      PROD_ALLOWED_ORIGINS: ${PROD_ALLOWED_ORIGINS}
+      
+      # SMTP
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      SMTP_REJECT_UNAUTHORIZED: ${SMTP_REJECT_UNAUTHORIZED:-true}
+    
+    volumes:
+      - menu_images:/app/maisonpardailhe/img/menus
+    
+    depends_on:
+      - db
+    
+    networks:
+      - maisonpardailhe-network
+
+networks:
+  maisonpardailhe-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  menu_images:
+    driver: local

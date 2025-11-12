@@ -2,6 +2,132 @@
 pwsh ./deploy/build-and-push.ps1 -Username mehdimp4 -Repo maisonpardailhe-server -Tag latest -ContextPath server
 
 # ═══════════════════════════════════════════════════════════════════
+# BACKUP DE LA BASE DE DONNÉES DOCKER
+# ═══════════════════════════════════════════════════════════════════
+
+# Backup manuel depuis l'hôte Docker (RECOMMANDÉ)
+cd server
+npm run db:backup:docker
+
+# Lister les backups disponibles
+npm run db:restore:docker
+
+# Restaurer le backup le plus récent
+npm run db:restore:docker:latest
+
+# Restaurer un backup spécifique
+pwsh scripts/db_restore_docker.ps1 backup-maisonpardailhe-2025-11-12_15-30-00.sql
+
+# Backup manuel avec paramètres personnalisés (Windows)
+pwsh scripts/db_backup_docker.ps1 -DbContainerName "maisonpardailhe-db" -BackupDir "./backups" -MaxBackups 30
+
+# Backup manuel (Linux/Mac)
+bash scripts/db_backup_docker.sh
+
+# ═══════════════════════════════════════════════════════════════════
+# BACKUP AUTOMATIQUE VIA PORTAINER
+# ═══════════════════════════════════════════════════════════════════
+
+# RECOMMANDÉ: Ajouter ce service dans docker-compose.yml
+# Voir la documentation complète: docs/portainer-backup.md
+
+# Service de backup automatique (à ajouter dans docker-compose.yml):
+#
+# services:
+#   backup:
+#     image: fradelg/mysql-cron-backup:latest
+#     container_name: maisonpardailhe-backup
+#     restart: unless-stopped
+#     environment:
+#       MYSQL_HOST: db
+#       MYSQL_PORT: 3306
+#       MYSQL_USER: ${DB_USER}
+#       MYSQL_PASS: ${DB_PASSWORD}
+#       MYSQL_DATABASE: ${DB_NAME}
+#       CRON_TIME: "0 3 * * *"      # Backup quotidien à 3h
+#       MAX_BACKUPS: 30              # Garder 30 jours
+#       INIT_BACKUP: 1               # Backup initial au démarrage
+#       TIMEOUT: 10m
+#       GZIP_LEVEL: 9
+#       TZ: Europe/Paris
+#     volumes:
+#       - ./backups:/backup
+#     depends_on:
+#       - db
+#     networks:
+#       - maisonpardailhe-network
+
+# Après avoir ajouté le service:
+# 1. Portainer → Stacks → maisonpardailhe → Editor
+# 2. Ajouter le service "backup" ci-dessus
+# 3. Update the stack + Re-pull and redeploy
+# 4. Vérifier les logs: docker logs maisonpardailhe-backup
+
+# Tester le backup manuellement
+docker exec maisonpardailhe-backup /backup.sh
+
+# Voir les backups
+docker exec maisonpardailhe-backup ls -lh /backup
+
+# Restaurer un backup
+docker exec -i maisonpardailhe-db mysql -u root -p$DB_ROOT_PASSWORD maisonpardailhe < backups/backup-latest.sql
+
+# ═══════════════════════════════════════════════════════════════════
+# BACKUP MANUEL - PLANIFICATION (depuis l'hôte Docker)
+# ═══════════════════════════════════════════════════════════════════
+
+# Windows - Tâche planifiée (quotidienne à 3h)
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File `"C:\chemin\vers\maisonpardailhe\server\scripts\db_backup_docker.ps1`" -WorkingDirectory `"C:\chemin\vers\maisonpardailhe\server`""
+$trigger = New-ScheduledTaskTrigger -Daily -At 3am
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+Register-ScheduledTask -TaskName "Backup Docker BDD Maison Pardailhé" -Action $action -Trigger $trigger -Principal $principal
+
+# Linux/Mac - Crontab (quotidien à 3h)
+crontab -e
+# Ajouter: 0 3 * * * cd /chemin/vers/maisonpardailhe/server && bash scripts/db_backup_docker.sh >> backups/backup_cron.log 2>&1
+
+# ═══════════════════════════════════════════════════════════════════
+# BACKUP DEPUIS LE CONTENEUR (alternative)
+# ═══════════════════════════════════════════════════════════════════
+
+# Exécuter le backup depuis le conteneur de l'application
+docker exec maisonpardailhe-server npm run db:backup:docker
+
+# Copier les backups du conteneur vers l'hôte
+docker cp maisonpardailhe-server:/app/backups ./backups-host
+
+# ═══════════════════════════════════════════════════════════════════
+# BACKUP VERS STOCKAGE EXTERNE
+# ═══════════════════════════════════════════════════════════════════
+
+# Copier vers un serveur distant (Windows)
+robocopy .\server\backups \\serveur-distant\backups\ /MIR /Z /LOG:backup_sync.log
+
+# Copier vers un serveur distant (Linux/Mac)
+rsync -avz --delete ./server/backups/ user@remote-server:/backups/maisonpardailhe/
+
+# Upload vers cloud (avec rclone)
+rclone sync ./server/backups/ remote:maisonpardailhe-backups/
+
+# ═══════════════════════════════════════════════════════════════════
+# RESTAURATION D'URGENCE
+# ═══════════════════════════════════════════════════════════════════
+
+# 1. Arrêter l'application
+docker-compose down
+
+# 2. Restaurer le backup
+cd server
+npm run db:restore:docker:latest
+
+# 3. Redémarrer l'application
+cd ..
+docker-compose up -d
+
+# 4. Vérifier les logs
+docker-compose logs -f
+
+# ═══════════════════════════════════════════════════════════════════
 # Sur le VPS - Configuration initiale (première fois seulement)
 # ═══════════════════════════════════════════════════════════════════
 

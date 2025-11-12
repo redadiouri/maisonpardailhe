@@ -1,75 +1,65 @@
-# .github/copilot-instructions.md
+## Purpose
 
-Purpose
--------
-Concise, actionable guidance to make an AI coding agent immediately productive in this repository. Focus on repository-specific patterns and commands that are discoverable in the codebase.
+Concise, actionable guidance to make an AI coding agent immediately productive in this repo.
 
-Big picture (what this repo is and why)
-------------------------------------
-- Frontend: static site in `maisonpardailhe/` (plain HTML/CSS/vanilla JS). Admin UI in `maisonpardailhe/admin/`.
-- Backend: Node + Express (CommonJS) in `server/`. MySQL via `mysql2/promise` (connection in `server/models/db.js`).
-- Real‑time: SSE for admin notifications: `server/utils/eventEmitter.js` → `maisonpardailhe/admin/js/admin.js`.
+## Big picture (what this repo is and why)
 
-Key files to read first
-----------------------
-- `server/server.js` — app bootstrap, sessions, CSRF, route mounting.
-- `server/routes/commandes.js` — order validation and transactional stock updates (SELECT ... FOR UPDATE). Read before modifying order flows.
-- `server/models/menu.js` — price_cents semantics and `menus.stock` behavior.
-- `server/models/db.js` — DB pool setup used by scripts/tests.
-- `server/data/schedules.js` — pickup locations and 15‑minute slot rules used by validation.
+- Frontend: static site in `maisonpardailhe/` (vanilla HTML/CSS/JS). Admin UI is a small SPA under `maisonpardailhe/admin/`.
+- Backend: Node + Express (CommonJS) in `server/`. MySQL 8+ via `mysql2/promise` (pool in `server/models/db.js`).
+- Real-time: SSE pushes from `server/utils/eventEmitter.js` to the admin SPA; a 10s heartbeat avoids Cloudflare 100s timeouts (see `/api/admin/commandes/stream`).
 
-Developer workflows (explicit)
-----------------------------
-Always run these from `server/` (many scripts/tests assume cwd=server):
+## Key files to read first
 
-PowerShell example:
+- `server/server.js` — bootstrap, Helmet CSP (dynamic nonces), session (MySQL store), CSRF and route mounting.
+- `server/routes/commandes.js` — CRITICAL: complex order validation and transactional stock updates (uses `SELECT ... FOR UPDATE`).
+- `server/models/menu.js` — prices as integer cents, slug generation, stock semantics.
+- `server/models/db.js` — DB pool; tests/scripts import this.
+- `server/data/schedules.js` — pickup locations and 15‑minute slot rules.
 
-    cp .env.example .env    # fill DB_*, SESSION_SECRET, optional SMTP_*
+## Developer workflows (explicit)
+
+Always run commands from the `server/` directory (many scripts/tests assume cwd=server).
+
+PowerShell quick start:
+
+    cd server
+    copy .env.example .env
     npm install
-    npm run dev             # dev server (pino-pretty logging in dev)
-    npm run migrate:latest  # apply knex migrations
-    npm test                # Jest + supertest tests
+    npm run dev
+    npm run migrate:latest
+    npm test -- --runInBand
 
-Testing notes
--------------
-- Tests live under `server/__tests__/`. Many tests bypass CSRF; follow existing test patterns to avoid csurf 403s.
-- For DB tests, prefer a dedicated test DB or mocking `server/models/db.js`.
+Helpful npm scripts: `db:backup`, `images:optimize`, `css:minify`, `build`, `benchmark:all` (see `package.json`).
 
-Repo-specific conventions (do NOT change lightly)
-----------------------------------------------
-- Prices: stored as integer cents in `menus.price_cents`. Convert to decimal only for presentation (divide by 100).
-- Orders payloads:
-  - Preferred: `items: [{menu_id, qty}]` — used by transactional stock flow.
-  - Legacy: `produit` string (e.g. `"pate×2;jambon×1"`) — retained for backward compatibility.
-- Dates & slots: `date_retrait` accepts `YYYY-MM-DD` or `DD/MM/YYYY`; must not be past or >30 days ahead. `creneau` must be 15‑minute aligned (see `server/data/schedules.js`).
-- Booleans: DB tinyint(0|1) → JS boolean mapping in models.
+## Repo-specific conventions (do NOT change lightly)
+
+- Prices: stored as integer cents in `menus.price_cents` — divide by 100 for presentation.
+- Orders: preferred payload `items: [{menu_id, qty}]`. Legacy `produit` string format still supported.
+- Dates & slots: `date_retrait` accepts `YYYY-MM-DD` or `DD/MM/YYYY`; not in the past or >30 days ahead. `creneau` must be 15‑minute aligned (see `server/data/schedules.js`).
 - Module system: CommonJS. Keep user-facing text in French where present.
 
-Integration and external points
-------------------------------
-- MySQL (`mysql2/promise`) — connection and pool in `server/models/db.js`.
-- Sessions: `express-session` with a MySQL-backed store (see `server/server.js`). Changes affect admin UI behavior.
-- Email: `server/utils/email.js` (SMTP used when `SMTP_HOST` present).
-- SSE: `server/utils/eventEmitter.js` → `maisonpardailhe/admin/js/admin.js` (browser listens to SSE endpoint exposed by admin routes).
+## Integration points & gotchas
 
-Files to avoid editing lightly
-----------------------------
-- `server/routes/commandes.js` — contains transactional stock logic and complex validation.
-- `server/models/menu.js` — price & stock semantics relied on by multiple modules.
-- `server/server.js` and `middleware/auth.js` — session, CSRF and SSE wiring.
+- Email: `server/utils/email.js` (Nodemailer). Unsubscribe tokens signed with HMAC-SHA256 using `EMAIL_SECRET` or `SESSION_SECRET`.
+- Sessions: `express-session` + `express-mysql-session`; prod cookie domain configured in `server/server.js` (cross-subdomain behavior matters for admin).
+- SSE: `server/utils/eventEmitter.js` → admin SPA (`maisonpardailhe/admin/js/admin.js`). In production use a DNS-only subdomain `sse.xn--maisonpardailh-okb.fr` to bypass Cloudflare.
+- Stripe: conditionally loaded in `routes/payment.js`; webhooks validated against `STRIPE_WEBHOOK_SECRET`.
 
-Concrete example (use when testing or reproducing flows)
-----------------------------------------------------
-Preferred order payload (JSON):
+## Files to avoid editing lightly
 
-    { "nom_complet":"Alice", "telephone":"0600000000", "date_retrait":"2025-11-10", "creneau":"12:30", "location":"roquettes", "items":[{"menu_id":2,"qty":1}] }
+- `server/routes/commandes.js` (transactional stock + validation)
+- `server/models/menu.js` (price/stock/slug logic)
+- `server/server.js` (CSP nonces, session/CSRF, CORS)
 
-Where to add tests
-------------------
-- Add focused tests in `server/__tests__/` using existing Jest + supertest patterns. When changing commandes or stock behavior, cover transactional flows and edge cases (out-of-stock mid-transaction, invalid dates/slots).
+## Tests & where to add them
 
-If something is unclear
-----------------------
-- Say which area to expand (runbook for DB setup, focused transactional tests, or French translation) and I will add it.
+- Tests live in `server/__tests__/`. Follow existing Jest + supertest patterns. Mock CSRF by setting `req.session._csrf` (see `security.test.js`).
+- For DB tests use a separate test DB (`DB_NAME=maisonpardailhe_test`) or mock `server/models/db.js`.
 
-Last updated: automated merge — preserved original points and added concise, repo-specific instructions.
+## Deployment notes
+
+- Dockerfile in `server/`; use `deploy/build-and-push.ps1` to build/push the image. `deploy/docker-compose.yml` runs Node + MySQL (+ optional Nginx).
+- Ensure `PROD_ALLOWED_ORIGINS`, `APP_URL`, `APP_HOST`, `EMAIL_SECRET` and SSE subdomain are set in production env.
+
+---
+Last updated: 2025-11-12

@@ -2423,3 +2423,106 @@ textarea {
         font-size: 0.95rem;
     }
 }
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 0;
+    padding: 1rem;
+}
+
+.pagination {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+}
+
+.pagination-info {
+    color: var(--gris-velin, #666);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #fff;
+    color: var(--noir-encre, #1a1a1a);
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--rouge-signature, #c24b3f);
+    color: #fff;
+    border-color: var(--rouge-signature, #c24b3f);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(194, 75, 63, 0.2);
+}
+
+.pagination-btn.active {
+    background: var(--rouge-signature, #c24b3f);
+    color: #fff;
+    border-color: var(--rouge-signature, #c24b3f);
+    font-weight: 600;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    color: #999;
+}
+
+.pagination-prev,
+.pagination-next {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* Pagination responsive */
+@media (max-width: 600px) {
+    .pagination {
+        gap: 0.75rem;
+    }
+    
+    .pagination-controls {
+        gap: 0.3rem;
+    }
+    
+    .pagination-btn {
+        min-width: 36px;
+        height: 36px;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
+    
+    .pagination-info {
+        font-size: 0.85rem;
+    }
+}
+
