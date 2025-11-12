@@ -442,6 +442,20 @@ app.use('/api/payment', paymentRoutes);
 app.use('/unsubscribe', unsubscribeRoutes);
 app.use('/api/schedules', schedulesRoutes);
 
+// Health endpoint for liveness/readiness checks
+app.get('/health', async (req, res) => {
+  const status = { ok: true, uptime: process.uptime() };
+  try {
+    const pool = require('./models/db');
+    await pool.query('SELECT 1');
+    status.db = 'ok';
+  } catch (e) {
+    status.db = 'fail';
+    status.ok = false;
+  }
+  res.json(status);
+});
+
 app.get('/commande/:id', (req, res) => {
   const id = Number(req.params.id || 0);
   if (!id) return res.status(400).send('ID invalide');
