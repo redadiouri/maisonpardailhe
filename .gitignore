@@ -54,6 +54,9 @@ server/backups/
 *.sql.gz
 *.dump
 
+# Ignore deployment env that contains secrets
+deploy/env.txt
+
 ## Uploaded files (keep structure, ignore content)
 maisonpardailhe/img/menus/*
 !maisonpardailhe/img/menus/.gitkeep
