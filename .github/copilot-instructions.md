@@ -7,6 +7,7 @@ Concise, actionable guidance to make an AI coding agent immediately productive i
 - Frontend: static site in `maisonpardailhe/` (vanilla HTML/CSS/JS). Admin UI is a small SPA under `maisonpardailhe/admin/`.
 - Backend: Node + Express (CommonJS) in `server/`. MySQL 8+ via `mysql2/promise` (pool in `server/models/db.js`).
 - Real-time: SSE pushes from `server/utils/eventEmitter.js` to the admin SPA; a 10s heartbeat avoids Cloudflare 100s timeouts (see `/api/admin/commandes/stream`).
+- Payments: Optional Stripe integration (loaded conditionally if `STRIPE_SECRET_KEY` is set). Webhook validation required for production.
 
 ## Key files to read first
 
@@ -20,16 +21,29 @@ Concise, actionable guidance to make an AI coding agent immediately productive i
 
 Always run commands from the `server/` directory (many scripts/tests assume cwd=server).
 
-PowerShell quick start:
+PowerShell quick start (Windows):
 
     cd server
     copy .env.example .env
+    # Edit .env with your DB credentials and secrets
     npm install
-    npm run dev
     npm run migrate:latest
+    npm run dev
     npm test -- --runInBand
 
-Helpful npm scripts: `db:backup`, `images:optimize`, `css:minify`, `build`, `benchmark:all` (see `package.json`).
+Bash quick start (Linux/Mac):
+
+    cd server
+    cp .env.example .env
+    # Edit .env with your DB credentials and secrets
+    npm install
+    npm run migrate:latest
+    npm run dev
+    npm test -- --runInBand
+
+Environment setup: Copy `server/.env.example` → `server/.env`. Required: `DB_*`, `SESSION_SECRET`. Optional: `STRIPE_*` (for payments), `SMTP_*` (for emails), `EMAIL_SECRET` (for unsubscribe tokens).
+
+Helpful npm scripts: `migrate:latest`, `migrate:rollback`, `db:backup`, `db:backup:docker`, `images:optimize`, `css:minify`, `build`, `benchmark:all` (see `package.json`).
 
 ## Repo-specific conventions (do NOT change lightly)
 
@@ -55,6 +69,8 @@ Helpful npm scripts: `db:backup`, `images:optimize`, `css:minify`, `build`, `ben
 
 - Tests live in `server/__tests__/`. Follow existing Jest + supertest patterns. Mock CSRF by setting `req.session._csrf` (see `security.test.js`).
 - For DB tests use a separate test DB (`DB_NAME=maisonpardailhe_test`) or mock `server/models/db.js`.
+- Run tests with `npm test -- --runInBand` (sequential execution required for DB tests).
+- Test files: `*.test.js` (Jest auto-discovers). Key examples: `commandes.transaction.test.js` (transactional stock), `schedules.test.js` (pickup slot validation), `security.test.js` (CSRF + sanitization).
 
 ## Deployment notes
 

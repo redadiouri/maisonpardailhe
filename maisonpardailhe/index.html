@@ -35,8 +35,13 @@
     <meta name="rating" content="general" />
     <meta name="language" content="FR" />
 
-    <link rel="icon" href="/img/logo.png" />
-    <link rel="apple-touch-icon" href="/img/logo.png" />
+    <!-- Favicons pour Google et navigateurs -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/img/logo.png" />
     <link rel="manifest" href="/manifest.json">
     <link rel="author" href="/humans.txt" />
     <meta name="theme-color" content="#c24b3f" />
@@ -55,7 +60,7 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
+      "@type": ["LocalBusiness", "FoodEstablishment"],
       "@id": "https://maisonpardailhe.fr/#business",
       "name": "Maison Pardailhé",
       "alternateName": "Charcuterie Pardailhé",
@@ -99,8 +104,8 @@
       ],
       "priceRange": "€€",
       "servesCuisine": "French",
-      "acceptsReservations": "true",
-      "paymentAccepted": "Cash, Credit Card",
+      "acceptsReservations": true,
+      "paymentAccepted": ["Cash", "Credit Card", "Debit Card"],
       "currenciesAccepted": "EUR",
       "areaServed": [
         {
@@ -126,10 +131,22 @@
               "@type": "Product",
               "name": "Pâté en croûte Haut-Garonnais",
               "description": "Notre pâté en croûte médaillé, spécialité de la maison",
+              "image": "https://maisonpardailhe.fr/img/pate_en_croute.png",
+              "brand": {
+                "@type": "Brand",
+                "name": "Maison Pardailhé"
+              },
               "offers": {
                 "@type": "Offer",
+                "url": "https://maisonpardailhe.fr/menu",
+                "priceCurrency": "EUR",
+                "price": "25.00",
+                "priceValidUntil": "2025-12-31",
                 "availability": "https://schema.org/InStock",
-                "priceCurrency": "EUR"
+                "seller": {
+                  "@type": "Organization",
+                  "name": "Maison Pardailhé"
+                }
               }
             }
           }
@@ -141,8 +158,72 @@
         "reviewCount": "127"
       },
       "sameAs": [
-        "https://www.facebook.com/maisonpardailhe",
-        "https://www.instagram.com/maisonpardailhe"
+        "https://web.facebook.com/maison.pardailhe/?locale=fr_FR",
+        "https://www.instagram.com/maison.pardailhe/?hl=fr"
+      ]
+    }
+    </script>
+    
+    <!-- Product Schema - Pâté en Croûte -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "Pâté en Croûte Haut-Garonnais - Médaillé d'Or",
+      "image": "https://maisonpardailhe.fr/img/pate_en_croute.png",
+      "description": "Pâté en croûte artisanal, 3 fois médaillé d'or au championnat de France. Pâte croustillante, farce généreuse et jus corsé.",
+      "brand": {
+        "@type": "Brand",
+        "name": "Maison Pardailhé"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://maisonpardailhe.fr/menu",
+        "priceCurrency": "EUR",
+        "price": "25.00",
+        "priceValidUntil": "2025-12-31",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "Maison Pardailhé"
+        }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "87"
+      },
+      "award": [
+        "Médaille d'Or - Championnat de France du Pâté en Croûte 2018",
+        "Médaille d'Or - Championnat de France du Pâté en Croûte 2020",
+        "Médaille d'Or - Championnat de France du Pâté en Croûte 2023"
+      ]
+    }
+    </script>
+    
+    <!-- Merchant/Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Maison Pardailhé",
+      "url": "https://maisonpardailhe.fr",
+      "logo": "https://maisonpardailhe.fr/img/logo.png",
+      "image": "https://maisonpardailhe.fr/img/pate_en_croute.png",
+      "description": "Artisan charcutier-traiteur à Roquettes & Toulouse. Pâté en croûte médaillé et traiteur sur-mesure.",
+      "email": "maisonpardailhe@gmail.com",
+      "telephone": "+33562480229",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Place de la République",
+        "addressLocality": "Roquettes",
+        "postalCode": "31120",
+        "addressRegion": "Haute-Garonne",
+        "addressCountry": "FR"
+      },
+      "sameAs": [
+        "https://web.facebook.com/maison.pardailhe/?locale=fr_FR",
+        "https://www.instagram.com/maison.pardailhe/?hl=fr"
       ]
     }
     </script>
@@ -347,17 +428,13 @@
             </div>
             <div class="footer-section footer-social">
                 <h4>Suivre</h4>
-                <a href="#" class="social-link">
+                <a href="https://www.instagram.com/maison.pardailhe/?hl=fr" class="social-link" target="_blank" rel="noopener noreferrer">
                     <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                     Instagram
                 </a>
-                <a href="#" class="social-link">
-                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                    Pinterest
-                </a>
-                <a href="#" class="social-link">
-                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                    Newsletter
+                <a href="https://web.facebook.com/maison.pardailhe/?locale=fr_FR" class="social-link" target="_blank" rel="noopener noreferrer">
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    Facebook
                 </a>
             </div>
         </div>
