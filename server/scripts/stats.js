@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-
 const db = require('../models/db');
 
 async function loadMenus() {
@@ -12,20 +11,21 @@ async function loadMenus() {
 
 function tryParseProduit(p) {
   if (!p) return null;
-    try {
+  try {
     const parsed = JSON.parse(p);
     if (Array.isArray(parsed)) return parsed;
-  } catch (e) {
-      }
+  } catch (e) {}
   return null;
 }
 
 async function main() {
   const menus = await loadMenus();
 
-  const [all] = await db.query('SELECT id, produit, statut, date_creation FROM commandes ORDER BY date_creation DESC');
+  const [all] = await db.query(
+    'SELECT id, produit, statut, date_creation FROM commandes ORDER BY date_creation DESC'
+  );
 
-    const accepted = all.filter(c => c.statut === 'en_cours' || c.statut === 'terminée');
+  const accepted = all.filter((c) => c.statut === 'en_cours' || c.statut === 'terminée');
 
   const totalOrders = accepted.length;
   const byStatus = {};
@@ -60,13 +60,18 @@ async function main() {
   for (const k of Object.keys(byStatus)) console.log(`  ${k}: ${byStatus[k]}`);
 
   console.log('\n--- Articles vendus (depuis commandes analysables) ---');
-  if (itemsSold.size === 0) console.log('Aucun item JSON détecté dans les commandes (produit stocké en format legacy)');
+  if (itemsSold.size === 0)
+    console.log('Aucun item JSON détecté dans les commandes (produit stocké en format legacy)');
   for (const [id, qty] of itemsSold.entries()) {
     const menu = menus.get(id);
     console.log(`  ${id} - ${menu ? menu.name : 'menu#' + id}: ${qty} pcs`);
   }
 
-  console.log('\nCA estimé (prix disponibles dans menus.price_cents):', (revenueCents / 100).toFixed(2), '€ (approx)');
+  console.log(
+    '\nCA estimé (prix disponibles dans menus.price_cents):',
+    (revenueCents / 100).toFixed(2),
+    '€ (approx)'
+  );
   process.exit(0);
 }
 

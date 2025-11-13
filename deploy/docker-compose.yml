@@ -30,7 +30,7 @@ services:
       # URLs et domaines
       APP_URL: ${APP_URL:-https://xn--maisonpardailh-okb.fr}
       APP_HOST: ${APP_HOST:-xn--maisonpardailh-okb.fr}
-      PROD_ALLOWED_ORIGINS: ${PROD_ALLOWED_ORIGINS:-https://xn--maisonpardailh-okb.fr,https://sse.xn--maisonpardailh-okb.fr}
+      PROD_ALLOWED_ORIGINS: ${PROD_ALLOWED_ORIGINS:-https://xn--maisonpardailh-okb.fr,https://admin.xn--maisonpardailh-okb.fr,https://sse.xn--maisonpardailh-okb.fr}
       
       # SMTP (optionnel)
       SMTP_HOST: ${SMTP_HOST:-}

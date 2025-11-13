@@ -2,7 +2,7 @@ const Menu = require('./menu');
 
 const Stock = {
   create: async (data) => {
-        const menuData = {
+    const menuData = {
       name: data.name,
       description: data.description || '',
       price_cents: data.price_cents || 0,
@@ -10,8 +10,8 @@ const Stock = {
       stock: data.quantity || 0,
       reference: data.reference || null,
       image_url: data.image_url || '',
-      available: data.available === undefined ? 1 : (data.available ? 1 : 0),
-      visible_on_menu: data.visible_on_menu === undefined ? 1 : (data.visible_on_menu ? 1 : 0)
+      available: data.available === undefined ? 1 : data.available ? 1 : 0,
+      visible_on_menu: data.visible_on_menu === undefined ? 1 : data.visible_on_menu ? 1 : 0
     };
     return await Menu.create(menuData);
   },
@@ -32,7 +32,7 @@ const Stock = {
     return await Menu.delete(id);
   },
   getAll: async () => {
-        return await Menu.getAll(false);
+    return await Menu.getAll(false);
   },
   getByReference: async (ref) => {
     return await Menu.getByReference(ref);

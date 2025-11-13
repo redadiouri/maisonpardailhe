@@ -4,7 +4,11 @@ const crypto = require('crypto');
 const logger = require('../logger');
 const Menu = require('../models/menu');
 let nodemailer;
-try { nodemailer = require('nodemailer'); } catch (e) { nodemailer = null; }
+try {
+  nodemailer = require('nodemailer');
+} catch (e) {
+  nodemailer = null;
+}
 
 const { formatForDisplay } = require('./dates');
 
@@ -12,7 +16,9 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const UNSUB_FILE = path.join(DATA_DIR, 'unsubscribes.json');
 
 async function ensureDataDir() {
-  try { await fs.mkdir(DATA_DIR, { recursive: true }); } catch (e) {  }
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+  } catch (e) {}
 }
 
 async function loadUnsubscribes() {
@@ -60,11 +66,20 @@ function verifyToken(token) {
     if (!crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(expected))) return null;
     const email = Buffer.from(b, 'base64url').toString('utf8');
     return email;
-  } catch (e) { return null; }
+  } catch (e) {
+    return null;
+  }
 }
 
 function hashEmail(e) {
-  try { return crypto.createHash('sha256').update(String(e || '')).digest('hex'); } catch (e) { return null; }
+  try {
+    return crypto
+      .createHash('sha256')
+      .update(String(e || ''))
+      .digest('hex');
+  } catch (e) {
+    return null;
+  }
 }
 
 function createTransporter() {
@@ -114,7 +129,11 @@ function escapeHtml(s) {
 async function sendMail({ to, subject, html, text, from } = {}) {
   const masked = maskEmail(to);
   const hashed = hashEmail(to);
-  const mailFrom = from || process.env.FROM_ADDRESS || process.env.EMAIL_FROM || `no-reply@${process.env.APP_HOST || 'localhost'}`;
+  const mailFrom =
+    from ||
+    process.env.FROM_ADDRESS ||
+    process.env.EMAIL_FROM ||
+    `no-reply@${process.env.APP_HOST || 'localhost'}`;
 
   const mailOptions = {
     from: mailFrom,
@@ -129,8 +148,13 @@ async function sendMail({ to, subject, html, text, from } = {}) {
   // Add List-Unsubscribe headers to improve deliverability and provide a clear unsubscribe path.
   try {
     const token = signToken(to);
-    const unsubscribeUrl = `${process.env.APP_URL || 'http://localhost:3001'}/unsubscribe?token=${encodeURIComponent(token)}`;
-    const postmaster = (String(mailFrom).match(/<([^>]+)>/) || [])[1] || (process.env.POSTMASTER_ADDRESS || (`postmaster@${process.env.APP_HOST || 'localhost'}`));
+    const unsubscribeUrl = `${
+      process.env.APP_URL || 'http://localhost:3001'
+    }/unsubscribe?token=${encodeURIComponent(token)}`;
+    const postmaster =
+      (String(mailFrom).match(/<([^>]+)>/) || [])[1] ||
+      process.env.POSTMASTER_ADDRESS ||
+      `postmaster@${process.env.APP_HOST || 'localhost'}`;
     const listUnsubValue = `<${unsubscribeUrl}>, <mailto:${postmaster}>`;
     mailOptions.headers = Object.assign({}, mailOptions.headers || {}, {
       'List-Unsubscribe': listUnsubValue,
@@ -142,22 +166,32 @@ async function sendMail({ to, subject, html, text, from } = {}) {
 
   const normalizeRecipients = (v) => {
     if (!v) return [];
-    if (Array.isArray(v)) return v.map(String).map(s => s.trim()).filter(Boolean);
-    return String(v).split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+    if (Array.isArray(v))
+      return v
+        .map(String)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    return String(v)
+      .split(/[,;\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
   };
   const recipients = normalizeRecipients(mailOptions.to);
   if (recipients.length === 0) {
-    logger.warn({ toMasked: masked, toHash: hashed }, 'No recipients defined for email, aborting send');
+    logger.warn(
+      { toMasked: masked, toHash: hashed },
+      'No recipients defined for email, aborting send'
+    );
     return { ok: false, reason: 'no-recipient' };
   }
   mailOptions.to = recipients.join(', ');
 
   try {
-    const envelopeFrom = process.env.SMTP_USER || (String(mailFrom).match(/<([^>]+)>/) || [])[1] || mailFrom;
+    const envelopeFrom =
+      process.env.SMTP_USER || (String(mailFrom).match(/<([^>]+)>/) || [])[1] || mailFrom;
     mailOptions.envelope = { from: envelopeFrom };
     mailOptions.envelope.to = recipients;
-  } catch (e) {
-  }
+  } catch (e) {}
 
   if (!transporter && nodemailer && process.env.NODE_ENV !== 'production') {
     try {
@@ -169,7 +203,10 @@ async function sendMail({ to, subject, html, text, from } = {}) {
         auth: { user: testAcct.user, pass: testAcct.pass }
       });
     } catch (e) {
-      logger.warn({ toMasked: masked }, 'nodemailer createTestAccount failed, falling back to console');
+      logger.warn(
+        { toMasked: masked },
+        'nodemailer createTestAccount failed, falling back to console'
+      );
     }
   }
 
@@ -186,7 +223,10 @@ async function sendMail({ to, subject, html, text, from } = {}) {
     if (nodemailer && typeof nodemailer.getTestMessageUrl === 'function') {
       previewUrl = nodemailer.getTestMessageUrl(res) || null;
     }
-    logger.info({ toMasked: masked, toHash: hashed, messageId: res.messageId, previewUrl }, 'Email sent');
+    logger.info(
+      { toMasked: masked, toHash: hashed, messageId: res.messageId, previewUrl },
+      'Email sent'
+    );
     return { ok: true, result: res, previewUrl };
   } catch (err) {
     logger.warn({ toMasked: masked, toHash: hashed, err: err && err.message }, 'Email send failed');
@@ -195,14 +235,22 @@ async function sendMail({ to, subject, html, text, from } = {}) {
 }
 
 async function sendCommandeEmail(type, commande, extra = {}) {
-  const to = (commande && commande.email && String(commande.email).includes('@')) ? String(commande.email).trim() : null;
+  const to =
+    commande && commande.email && String(commande.email).includes('@')
+      ? String(commande.email).trim()
+      : null;
   if (!to) {
-    logger.warn({ orderId: commande && commande.id, telephone: commande && commande.telephone }, 'No valid email recipient for commande, aborting send');
+    logger.warn(
+      { orderId: commande && commande.id, telephone: commande && commande.telephone },
+      'No valid email recipient for commande, aborting send'
+    );
     return { ok: false, reason: 'no-recipient' };
   }
 
   const token = signToken(to);
-  const unsubscribeUrl = `${process.env.APP_URL || 'http://localhost:3001'}/unsubscribe?token=${encodeURIComponent(token)}`;
+  const unsubscribeUrl = `${
+    process.env.APP_URL || 'http://localhost:3001'
+  }/unsubscribe?token=${encodeURIComponent(token)}`;
 
   const fmt = (cents) => {
     if (cents === undefined || cents === null) return '';
@@ -210,30 +258,45 @@ async function sendCommandeEmail(type, commande, extra = {}) {
   };
 
   let items = [];
-  try { const parsed = JSON.parse(commande.produit || '[]'); if (Array.isArray(parsed)) items = parsed; } catch (e) { items = []; }
+  try {
+    const parsed = JSON.parse(commande.produit || '[]');
+    if (Array.isArray(parsed)) items = parsed;
+  } catch (e) {
+    items = [];
+  }
 
   let itemsHtml = '';
   let computedTotal = null;
   if (items.length > 0) {
-    const ids = items.map(it => Number(it.menu_id)).filter(n => !Number.isNaN(n) && n > 0);
+    const ids = items.map((it) => Number(it.menu_id)).filter((n) => !Number.isNaN(n) && n > 0);
     const menuMap = await Menu.getByIds(ids);
-    itemsHtml = '<table style="border-collapse:collapse;width:100%"><thead><tr><th align="left">Produit</th><th align="right">Qté</th><th align="right">Prix</th></tr></thead><tbody>';
+    itemsHtml =
+      '<table style="border-collapse:collapse;width:100%"><thead><tr><th align="left">Produit</th><th align="right">Qté</th><th align="right">Prix</th></tr></thead><tbody>';
     let total = 0;
     for (const it of items) {
       const menuId = Number(it.menu_id);
       const qty = Number(it.qty || 0);
       const m = menuMap[menuId] || null;
-      const name = it.name || (m ? m.name : ('#' + menuId));
-      const priceCents = (it.price_cents !== undefined && it.price_cents !== null) ? Number(it.price_cents) : (m ? Number(m.price_cents || 0) : null);
+      const name = it.name || (m ? m.name : '#' + menuId);
+      const priceCents =
+        it.price_cents !== undefined && it.price_cents !== null
+          ? Number(it.price_cents)
+          : m
+          ? Number(m.price_cents || 0)
+          : null;
       const priceDisplay = priceCents ? fmt(priceCents) : '';
-      itemsHtml += `<tr><td>${escapeHtml(String(name))}</td><td align="right">${qty}</td><td align="right">${priceDisplay}</td></tr>`;
+      itemsHtml += `<tr><td>${escapeHtml(
+        String(name)
+      )}</td><td align="right">${qty}</td><td align="right">${priceDisplay}</td></tr>`;
       if (priceCents) total += Number(priceCents || 0) * qty;
     }
     itemsHtml += `</tbody></table>`;
     computedTotal = total;
   }
 
-  const baseOrderUrl = `${process.env.APP_URL || 'http://localhost:3001'}/commande.html?id=${commande.id || ''}`;
+  const baseOrderUrl = `${process.env.APP_URL || 'http://localhost:3001'}/commande.html?id=${
+    commande.id || ''
+  }`;
   const utm = 'src=email&utm_medium=email&utm_campaign=order_confirmation';
   const orderUrl = baseOrderUrl.includes('?') ? `${baseOrderUrl}&${utm}` : `${baseOrderUrl}?${utm}`;
   const orderButtonHtml = `<a href="${orderUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 16px;background:#c24b3f;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">Consulter la commande</a>`;
@@ -243,100 +306,154 @@ async function sendCommandeEmail(type, commande, extra = {}) {
   let text = '';
 
   const dateDisplay = formatForDisplay(commande.date_retrait || '', false);
-  const datetimeDisplay = formatForDisplay((commande.date_retrait && commande.creneau) ? `${commande.date_retrait}T${commande.creneau}:00` : commande.date_retrait, true);
+  const datetimeDisplay = formatForDisplay(
+    commande.date_retrait && commande.creneau
+      ? `${commande.date_retrait}T${commande.creneau}:00`
+      : commande.date_retrait,
+    true
+  );
 
   if (type === 'creation') {
     subject = 'Confirmation de votre commande — Maison Pardailhé';
     try {
-      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'creation.html'), 'utf8');
+      const tpl = await fs.readFile(
+        path.join(__dirname, '..', 'email_templates', 'creation.html'),
+        'utf8'
+      );
       let out = tpl;
       out = out.replace(/{{#if\s+itemsHtml}}([\s\S]*?){{\/if}}/g, itemsHtml || '');
       out = out.replace(/{{{\s*itemsHtml\s*}}}/g, itemsHtml || '');
       out = out.replace(/{{\s*itemsHtml\s*}}/g, itemsHtml || '');
       out = out.replace(/{{#if\s+total}}([\s\S]*?){{\/if}}/g, (m, inner) => {
-        return (commande.total_cents || computedTotal) ? inner : '';
+        return commande.total_cents || computedTotal ? inner : '';
       });
-      html = out.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+      html = out
+        .replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
         .replace(/{{date_retrait}}/g, escapeHtml(dateDisplay || ''))
         .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
         .replace(/{{datetime_retrait_display}}/g, escapeHtml(datetimeDisplay || ''))
         .replace(/{{location}}/g, escapeHtml(commande.location || ''))
         .replace(/{{orderButton}}/g, orderButtonHtml)
-  .replace(/{{orderUrl}}/g, orderUrl)
-  .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+        .replace(/{{orderUrl}}/g, orderUrl)
+        .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
     } catch (e) {
-      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Nous avons bien reçu votre commande pour le ${escapeHtml(datetimeDisplay || dateDisplay)} (${escapeHtml(commande.location || '')}).</p>`;
+      html = `<p>Bonjour ${escapeHtml(
+        commande.nom_complet || ''
+      )},</p><p>Nous avons bien reçu votre commande pour le ${escapeHtml(
+        datetimeDisplay || dateDisplay
+      )} (${escapeHtml(commande.location || '')}).</p>`;
       if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
-      if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
-  html += `<p>Vous pouvez consulter votre commande ici: ${orderButtonHtml}</p>`;
+      if (commande.total_cents || computedTotal)
+        html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
+      html += `<p>Vous pouvez consulter votre commande ici: ${orderButtonHtml}</p>`;
     }
-  text = `Bonjour ${commande.nom_complet || ''}\nNous avons reçu votre commande pour le ${datetimeDisplay || dateDisplay} (${commande.location || ''}).\nConsulter: ${orderUrl}`;
+    text = `Bonjour ${commande.nom_complet || ''}\nNous avons reçu votre commande pour le ${
+      datetimeDisplay || dateDisplay
+    } (${commande.location || ''}).\nConsulter: ${orderUrl}`;
   } else if (type === 'acceptation') {
     subject = 'Votre commande Maison Pardailhé est en traitement';
     try {
-      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'acceptation.html'), 'utf8');
+      const tpl = await fs.readFile(
+        path.join(__dirname, '..', 'email_templates', 'acceptation.html'),
+        'utf8'
+      );
       let out = tpl;
       out = out.replace(/{{#if\s+itemsHtml}}([\s\S]*?){{\/if}}/g, itemsHtml || '');
       out = out.replace(/{{{\s*itemsHtml\s*}}}/g, itemsHtml || '');
       out = out.replace(/{{\s*itemsHtml\s*}}/g, itemsHtml || '');
       out = out.replace(/{{#if\s+total}}([\s\S]*?){{\/if}}/g, (m, inner) => {
-        return (commande.total_cents || computedTotal) ? inner : '';
+        return commande.total_cents || computedTotal ? inner : '';
       });
-      html = out.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+      html = out
+        .replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
         .replace(/{{date_retrait}}/g, escapeHtml(dateDisplay || ''))
         .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
         .replace(/{{datetime_retrait_display}}/g, escapeHtml(datetimeDisplay || ''))
         .replace(/{{orderButton}}/g, orderButtonHtml)
-  .replace(/{{orderUrl}}/g, orderUrl)
-  .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+        .replace(/{{orderUrl}}/g, orderUrl)
+        .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
     } catch (e) {
-      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Bonne nouvelle — votre commande prévue le ${escapeHtml(datetimeDisplay || dateDisplay)} est maintenant en traitement.</p>`;
+      html = `<p>Bonjour ${escapeHtml(
+        commande.nom_complet || ''
+      )},</p><p>Bonne nouvelle — votre commande prévue le ${escapeHtml(
+        datetimeDisplay || dateDisplay
+      )} est maintenant en traitement.</p>`;
       if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
-      if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
-  html += `<p>Suivre votre commande: ${orderButtonHtml}</p>`;
-  html += `<p>Merci pour votre commande — à bientôt !</p>`;
+      if (commande.total_cents || computedTotal)
+        html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
+      html += `<p>Suivre votre commande: ${orderButtonHtml}</p>`;
+      html += `<p>Merci pour votre commande — à bientôt !</p>`;
     }
-  text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} est en traitement. Consulter: ${orderUrl}`;
+    text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${
+      datetimeDisplay || dateDisplay
+    } est en traitement. Consulter: ${orderUrl}`;
   } else if (type === 'refus') {
     subject = 'Votre commande Maison Pardailhé a été refusée';
     try {
-      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'refus.html'), 'utf8');
-      html = tpl.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+      const tpl = await fs.readFile(
+        path.join(__dirname, '..', 'email_templates', 'refus.html'),
+        'utf8'
+      );
+      html = tpl
+        .replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
         .replace(/{{date_retrait}}/g, escapeHtml(datetimeDisplay || dateDisplay))
         .replace(/{{reason}}/g, escapeHtml(extra.raison || ''));
     } catch (e) {
-  html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Malheureusement, votre commande prévue le ${escapeHtml(datetimeDisplay || dateDisplay)} a été refusée.</p><p>Raison : ${escapeHtml(extra.raison || '')}</p>`;
+      html = `<p>Bonjour ${escapeHtml(
+        commande.nom_complet || ''
+      )},</p><p>Malheureusement, votre commande prévue le ${escapeHtml(
+        datetimeDisplay || dateDisplay
+      )} a été refusée.</p><p>Raison : ${escapeHtml(extra.raison || '')}</p>`;
     }
-  text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} a été refusée.\nRaison: ${extra.raison || ''}`;
-  }
-  else if (type === 'terminee' || type === 'livree') {
+    text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${
+      datetimeDisplay || dateDisplay
+    } a été refusée.\nRaison: ${extra.raison || ''}`;
+  } else if (type === 'terminee' || type === 'livree') {
     subject = 'Votre commande a été livrée — Merci';
     try {
-      const tpl = await fs.readFile(path.join(__dirname, '..', 'email_templates', 'terminee.html'), 'utf8');
+      const tpl = await fs.readFile(
+        path.join(__dirname, '..', 'email_templates', 'terminee.html'),
+        'utf8'
+      );
       let out = tpl;
       out = out.replace(/{{#if\s+itemsHtml}}([\s\S]*?){{\/if}}/g, itemsHtml || '');
       out = out.replace(/{{{\s*itemsHtml\s*}}}/g, itemsHtml || '');
       out = out.replace(/{{\s*itemsHtml\s*}}/g, itemsHtml || '');
       out = out.replace(/{{#if\s+total}}([\s\S]*?){{\/if}}/g, (m, inner) => {
-        return (commande.total_cents || computedTotal) ? inner : '';
+        return commande.total_cents || computedTotal ? inner : '';
       });
-      html = out.replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
+      html = out
+        .replace(/{{customerName}}/g, escapeHtml(commande.nom_complet || ''))
         .replace(/{{date_retrait}}/g, escapeHtml(dateDisplay || ''))
         .replace(/{{creneau}}/g, escapeHtml(commande.creneau || ''))
         .replace(/{{datetime_retrait_display}}/g, escapeHtml(datetimeDisplay || ''))
         .replace(/{{orderButton}}/g, orderButtonHtml)
-  .replace(/{{orderUrl}}/g, orderUrl)
-  .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
+        .replace(/{{orderUrl}}/g, orderUrl)
+        .replace(/{{total}}/g, fmt(commande.total_cents || computedTotal) || '');
     } catch (e) {
-      html = `<p>Bonjour ${escapeHtml(commande.nom_complet || '')},</p><p>Nous confirmons que votre commande prévue le ${escapeHtml(datetimeDisplay || dateDisplay)} a été livrée.</p>`;
+      html = `<p>Bonjour ${escapeHtml(
+        commande.nom_complet || ''
+      )},</p><p>Nous confirmons que votre commande prévue le ${escapeHtml(
+        datetimeDisplay || dateDisplay
+      )} a été livrée.</p>`;
       if (itemsHtml) html += `<h4>Détails de la commande</h4>${itemsHtml}`;
-      if (commande.total_cents || computedTotal) html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
-  html += `<p>Merci de nous avoir fait confiance.</p>`;
+      if (commande.total_cents || computedTotal)
+        html += `<p><strong>Total:</strong> ${fmt(commande.total_cents || computedTotal)}</p>`;
+      html += `<p>Merci de nous avoir fait confiance.</p>`;
     }
-  text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${datetimeDisplay || dateDisplay} a été livrée. Consulter: ${orderUrl}`;
+    text = `Bonjour ${commande.nom_complet || ''}\nVotre commande du ${
+      datetimeDisplay || dateDisplay
+    } a été livrée. Consulter: ${orderUrl}`;
   }
 
   return sendMail({ to, subject, html, text });
 }
 
-module.exports = { sendMail, sendCommandeEmail, signToken, verifyToken, addUnsubscribe, isUnsubscribed };
+module.exports = {
+  sendMail,
+  sendCommandeEmail,
+  signToken,
+  verifyToken,
+  addUnsubscribe,
+  isUnsubscribed
+};

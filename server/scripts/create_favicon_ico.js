@@ -8,15 +8,15 @@ const path = require('path');
 async function createFaviconIco() {
   const logoPath = path.join(__dirname, '../../maisonpardailhe/img/logo.png');
   const faviconOutputPath = path.join(__dirname, '../../maisonpardailhe/favicon.ico');
-  
+
   console.log('🎨 Création du favicon.ico pour Google Search...');
-  
+
   try {
     if (!fs.existsSync(logoPath)) {
       console.error('❌ Logo non trouvé:', logoPath);
       process.exit(1);
     }
-    
+
     // Créer un favicon.ico en format PNG (32x32) - c'est le plus compatible
     // Note: Les vrais .ico multi-tailles nécessitent un package spécialisé
     await sharp(logoPath)
@@ -26,7 +26,7 @@ async function createFaviconIco() {
       })
       .png()
       .toFile(faviconOutputPath);
-    
+
     console.log('✅ Créé: favicon.ico (32x32 PNG)');
     console.log('');
     console.log('📌 IMPORTANT pour Google Search:');
@@ -38,7 +38,6 @@ async function createFaviconIco() {
     console.log('💡 Pour forcer la mise à jour Google:');
     console.log('   - Google Search Console → Demander une indexation');
     console.log('   - Attendre 2-4 semaines pour le cache Google');
-    
   } catch (error) {
     console.error('❌ Erreur:', error.message);
     process.exit(1);

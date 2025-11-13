@@ -15,22 +15,22 @@ const strictOptions = {
 function sanitize(dirty, strict = false) {
   if (!dirty) return '';
   if (typeof dirty !== 'string') return '';
-  
+
   const options = strict ? strictOptions : defaultOptions;
   return sanitizeHtml(dirty, options);
 }
 
 function sanitizeObject(obj, fields = [], strict = false) {
   if (!obj || typeof obj !== 'object') return obj;
-  
+
   const sanitized = { ...obj };
-  
+
   for (const field of fields) {
     if (sanitized[field] && typeof sanitized[field] === 'string') {
       sanitized[field] = sanitize(sanitized[field], strict);
     }
   }
-  
+
   return sanitized;
 }
 
@@ -50,12 +50,12 @@ function sanitizeMiddleware(fields = [], strict = false) {
     if (req.body) {
       req.body = sanitizeObject(req.body, fields, strict);
     }
-    
+
     if (req.query) {
       const queryFields = Object.keys(req.query);
       req.query = sanitizeObject(req.query, queryFields, true);
     }
-    
+
     next();
   };
 }

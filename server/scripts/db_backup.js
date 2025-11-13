@@ -8,8 +8,7 @@ const { spawn } = require('child_process');
 let mysqldumpPkg = null;
 try {
   mysqldumpPkg = require('mysqldump');
-} catch (e) {
-  }
+} catch (e) {}
 
 const DB_HOST = process.env.DB_HOST || '127.0.0.1';
 const DB_USER = process.env.DB_USER || 'root';
@@ -29,7 +28,7 @@ async function run() {
     console.log(`Writing backup to ${filename}`);
 
     if (mysqldumpPkg) {
-            await mysqldumpPkg({
+      await mysqldumpPkg({
         connection: {
           host: DB_HOST,
           user: DB_USER,
@@ -40,18 +39,15 @@ async function run() {
       });
       console.log('Backup complete (via mysqldump npm package)');
     } else {
-            await new Promise((resolve, reject) => {
-        const args = [
-          `-h${DB_HOST}`,
-          `-u${DB_USER}`,
-          `-p${DB_PASSWORD}`,
-          DB_NAME
-        ];
+      await new Promise((resolve, reject) => {
+        const args = [`-h${DB_HOST}`, `-u${DB_USER}`, `-p${DB_PASSWORD}`, DB_NAME];
         const dump = spawn('mysqldump', args, { stdio: ['ignore', 'pipe', 'pipe'] });
         const writeStream = fs.createWriteStream(filename);
         dump.stdout.pipe(writeStream);
         let stderr = '';
-        dump.stderr.on('data', (d) => { stderr += d.toString(); });
+        dump.stderr.on('data', (d) => {
+          stderr += d.toString();
+        });
         dump.on('close', (code) => {
           writeStream.end();
           if (code === 0) return resolve();

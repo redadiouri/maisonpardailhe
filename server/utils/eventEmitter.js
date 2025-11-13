@@ -6,26 +6,26 @@ class OrderEventEmitter extends EventEmitter {
     this.clients = new Set();
   }
 
-    addClient(res) {
+  addClient(res) {
     this.clients.add(res);
   }
 
-    removeClient(res) {
+  removeClient(res) {
     this.clients.delete(res);
   }
 
-    broadcastNewOrder(commande) {
+  broadcastNewOrder(commande) {
     const payload = JSON.stringify({ type: 'new_order', data: commande });
-    this.clients.forEach(client => {
+    this.clients.forEach((client) => {
       try {
         client.write(`data: ${payload}\n\n`);
       } catch (err) {
-                this.clients.delete(client);
+        this.clients.delete(client);
       }
     });
   }
 
-    getClientCount() {
+  getClientCount() {
     return this.clients.size;
   }
 }

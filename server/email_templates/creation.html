@@ -1,53 +1,119 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="color-scheme" content="light">
-    <meta name="supported-color-schemes" content="light">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
     <title>Confirmation de commande — Maison Pardailhé</title>
   </head>
-  <body style="margin:0;padding:0;background:#f5f5f7;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:680px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #f5f5f7;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="
+        max-width: 680px;
+        margin: 24px auto;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+      "
+    >
       <tr>
-        <td style="padding:18px 20px;background:linear-gradient(90deg,#8b2e25,#c24b3f);color:#fff;">
-          <h1 style="margin:0;font-size:18px;font-weight:700;">Maison Pardailhé — Confirmation de commande</h1>
+        <td
+          style="
+            padding: 18px 20px;
+            background: linear-gradient(90deg, #8b2e25, #c24b3f);
+            color: #fff;
+          "
+        >
+          <h1 style="margin: 0; font-size: 18px; font-weight: 700">
+            Maison Pardailhé — Confirmation de commande
+          </h1>
         </td>
       </tr>
       <tr>
-        <td style="padding:18px 20px;">
-          <p style="margin:0 0 12px 0;color:#111;">Bonjour <strong>{{customerName}}</strong>,</p>
-          <p style="margin:0 0 12px 0;color:#333;">Nous avons bien reçu votre commande pour le <strong>{{datetime_retrait_display}}</strong> <span style="color:#666">({{location}})</span>.</p>
+        <td style="padding: 18px 20px">
+          <p style="margin: 0 0 12px 0; color: #111">Bonjour <strong>{{customerName}}</strong>,</p>
+          <p style="margin: 0 0 12px 0; color: #333">
+            Nous avons bien reçu votre commande pour le
+            <strong>{{datetime_retrait_display}}</strong>
+            <span style="color: #666">({{location}})</span>.
+          </p>
 
           {{#if itemsHtml}}
-          <h3 style="margin:18px 0 8px 0;font-size:15px;color:#111;">Détails de la commande</h3>
-          <div style="margin-bottom:12px;">
-            {{{itemsHtml}}}
-          </div>
+          <h3 style="margin: 18px 0 8px 0; font-size: 15px; color: #111">Détails de la commande</h3>
+          <div style="margin-bottom: 12px">{{{itemsHtml}}}</div>
+          {{/if}} {{#if total}}
+          <p style="margin: 12px 0; font-size: 15px; color: #111">
+            Total: <strong>{{total}}</strong>
+          </p>
           {{/if}}
 
-          {{#if total}}
-          <p style="margin:12px 0;font-size:15px;color:#111;">Total: <strong>{{total}}</strong></p>
-          {{/if}}
-
-          <div style="margin:20px 0;text-align:center;">
-            <a href="{{orderUrl}}" style="display:inline-block;padding:12px 24px;background:#c24b3f;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;font-size:15px;" target="_blank" rel="noopener noreferrer">Consulter la commande</a>
+          <div style="margin: 20px 0; text-align: center">
+            <a
+              href="{{orderUrl}}"
+              style="
+                display: inline-block;
+                padding: 12px 24px;
+                background: #c24b3f;
+                color: #ffffff;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 15px;
+              "
+              target="_blank"
+              rel="noopener noreferrer"
+              >Consulter la commande</a
+            >
           </div>
-          
-          <p style="margin:12px 0;color:#333;font-size:13px;">Nous traiterons votre commande dans les meilleurs délais et vous confirmerons sa prise en charge sous 2h ouvrées.</p>
+
+          <p style="margin: 12px 0; color: #333; font-size: 13px">
+            Nous traiterons votre commande dans les meilleurs délais et vous confirmerons sa prise
+            en charge sous 2h ouvrées.
+          </p>
         </td>
       </tr>
       <tr>
-        <td style="padding:16px 20px;background:#f9f9f9;border-top:1px solid #e5e5e5;font-size:12px;color:#666;line-height:1.5;">
-          <p style="margin:0 0 8px 0;"><strong>Maison Pardailhé</strong></p>
-          <p style="margin:0 0 4px 0;">📍 Centre Commercial le Château, 31800 Roquettes</p>
-          <p style="margin:0 0 4px 0;">📍 Marché Victor Hugo, Loge 250, 31000 Toulouse</p>
-          <p style="margin:8px 0 4px 0;">
-            <a href="tel:+33612345678" style="color:#c24b3f;text-decoration:none;">📞 06 12 34 56 78</a> | 
-            <a href="mailto:contact@maisonpardailhe.fr" style="color:#c24b3f;text-decoration:none;">✉️ contact@maisonpardailhe.fr</a>
+        <td
+          style="
+            padding: 16px 20px;
+            background: #f9f9f9;
+            border-top: 1px solid #e5e5e5;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+          "
+        >
+          <p style="margin: 0 0 8px 0"><strong>Maison Pardailhé</strong></p>
+          <p style="margin: 0 0 4px 0">📍 Centre Commercial le Château, 31800 Roquettes</p>
+          <p style="margin: 0 0 4px 0">📍 Marché Victor Hugo, Loge 250, 31000 Toulouse</p>
+          <p style="margin: 8px 0 4px 0">
+            <a href="tel:+33612345678" style="color: #c24b3f; text-decoration: none"
+              >📞 06 12 34 56 78</a
+            >
+            |
+            <a
+              href="mailto:contact@maisonpardailhe.fr"
+              style="color: #c24b3f; text-decoration: none"
+              >✉️ contact@maisonpardailhe.fr</a
+            >
           </p>
-          <p style="margin:8px 0 0 0;font-size:11px;color:#999;">
-            Cet email est envoyé automatiquement suite à votre commande. Nous traiterons votre commande sous 2h ouvrées. Pour toute question, contactez-nous via notre site ou par email.
+          <p style="margin: 8px 0 0 0; font-size: 11px; color: #999">
+            Cet email est envoyé automatiquement suite à votre commande. Nous traiterons votre
+            commande sous 2h ouvrées. Pour toute question, contactez-nous via notre site ou par
+            email.
           </p>
         </td>
       </tr>

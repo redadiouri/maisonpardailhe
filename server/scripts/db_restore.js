@@ -2,7 +2,7 @@
 
 /**
  * Restauration d'un backup de base de données
- * 
+ *
  * Usage:
  *   node scripts/db_restore.js                    # Liste les backups disponibles
  *   node scripts/db_restore.js <fichier.sql>      # Restaure un backup spécifique
@@ -31,9 +31,10 @@ function listBackups() {
     return [];
   }
 
-  const files = fs.readdirSync(BACKUP_DIR)
-    .filter(f => f.startsWith('backup-') && f.endsWith('.sql'))
-    .map(f => ({
+  const files = fs
+    .readdirSync(BACKUP_DIR)
+    .filter((f) => f.startsWith('backup-') && f.endsWith('.sql'))
+    .map((f) => ({
       name: f,
       path: path.join(BACKUP_DIR, f),
       time: fs.statSync(path.join(BACKUP_DIR, f)).mtime.getTime(),
@@ -63,7 +64,7 @@ function displayBackups() {
     const size = (backup.size / (1024 * 1024)).toFixed(2);
     const dateStr = date.toLocaleString('fr-FR');
     const tag = idx === 0 ? ' [DERNIER]' : '';
-    
+
     console.log(`${idx + 1}. ${backup.name}${tag}`);
     console.log(`   📅 ${dateStr} | 💾 ${size} MB`);
   });

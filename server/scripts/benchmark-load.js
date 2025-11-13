@@ -25,7 +25,7 @@ function makeRequest(url) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
     const protocol = urlObj.protocol === 'https:' ? https : http;
-    
+
     const options = {
       hostname: urlObj.hostname,
       port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
@@ -40,7 +40,7 @@ function makeRequest(url) {
     const startTime = performance.now();
     const req = protocol.request(options, (res) => {
       let data = '';
-      res.on('data', chunk => data += chunk);
+      res.on('data', (chunk) => (data += chunk));
       res.on('end', () => {
         const duration = performance.now() - startTime;
         resolve({ statusCode: res.statusCode, duration });
@@ -71,37 +71,42 @@ async function worker() {
 
   while (running) {
     const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
-    
+
     try {
       const result = await makeRequest(endpoint);
       stats.requests++;
       stats.times.push(result.duration);
-      
+
       if (result.statusCode >= 200 && result.statusCode < 400) {
         stats.success++;
       } else {
         stats.errors++;
       }
-      
+
       stats.statusCodes[result.statusCode] = (stats.statusCodes[result.statusCode] || 0) + 1;
     } catch (err) {
       stats.requests++;
       stats.errors++;
       stats.errorTypes[err.error] = (stats.errorTypes[err.error] || 0) + 1;
     }
-    
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 50));
+
+    await new Promise((resolve) => setTimeout(resolve, Math.random() * 50));
   }
 }
 
 function printProgress(elapsed) {
   const rps = stats.requests / elapsed;
   const errorRate = stats.requests > 0 ? ((stats.errors / stats.requests) * 100).toFixed(2) : 0;
-  const avgTime = stats.times.length > 0 
-    ? (stats.times.reduce((a, b) => a + b, 0) / stats.times.length).toFixed(2) 
-    : 0;
+  const avgTime =
+    stats.times.length > 0
+      ? (stats.times.reduce((a, b) => a + b, 0) / stats.times.length).toFixed(2)
+      : 0;
 
-  process.stdout.write(`\r⏱️  ${elapsed.toFixed(0)}s | Users: ${currentConcurrent} | Requests: ${stats.requests} | RPS: ${rps.toFixed(2)} | Avg: ${avgTime}ms | Errors: ${errorRate}%   `);
+  process.stdout.write(
+    `\r⏱️  ${elapsed.toFixed(0)}s | Users: ${currentConcurrent} | Requests: ${
+      stats.requests
+    } | RPS: ${rps.toFixed(2)} | Avg: ${avgTime}ms | Errors: ${errorRate}%   `
+  );
 }
 
 async function runLoadTest() {
@@ -139,7 +144,7 @@ async function runLoadTest() {
     clearInterval(rampUpInterval);
   }, DURATION_SECONDS * 1000);
 
-  await new Promise(resolve => {
+  await new Promise((resolve) => {
     const checkInterval = setInterval(() => {
       if (!running && workers.length === 0) {
         clearInterval(checkInterval);
@@ -156,7 +161,9 @@ async function runLoadTest() {
 
   console.log(`\n📊 Summary:`);
   console.log(`  Total Requests: ${stats.requests}`);
-  console.log(`  Successful: ${stats.success} (${((stats.success / stats.requests) * 100).toFixed(2)}%)`);
+  console.log(
+    `  Successful: ${stats.success} (${((stats.success / stats.requests) * 100).toFixed(2)}%)`
+  );
   console.log(`  Errors: ${stats.errors} (${((stats.errors / stats.requests) * 100).toFixed(2)}%)`);
   console.log(`  Duration: ${totalDuration.toFixed(2)}s`);
   console.log(`  Requests/sec: ${(stats.requests / totalDuration).toFixed(2)}`);
@@ -182,13 +189,13 @@ async function runLoadTest() {
   console.log(`\n📈 Status Codes:`);
   Object.keys(stats.statusCodes)
     .sort()
-    .forEach(code => {
+    .forEach((code) => {
       console.log(`  ${code}: ${stats.statusCodes[code]}`);
     });
 
   if (Object.keys(stats.errorTypes).length > 0) {
     console.log(`\n❌ Error Types:`);
-    Object.keys(stats.errorTypes).forEach(type => {
+    Object.keys(stats.errorTypes).forEach((type) => {
       console.log(`  ${type}: ${stats.errorTypes[type]}`);
     });
   }
@@ -196,7 +203,7 @@ async function runLoadTest() {
   console.log('\n' + '═'.repeat(60) + '\n');
 }
 
-runLoadTest().catch(err => {
+runLoadTest().catch((err) => {
   console.error('Load test failed:', err);
   process.exit(1);
 });

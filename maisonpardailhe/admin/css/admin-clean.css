@@ -55,22 +55,34 @@
 }
 *{box-sizing:border-box}
 html{
-  
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: rgba(192, 41, 41, 0.2);
   overflow-x: hidden;
+  touch-action: pan-y pinch-zoom;
 }
 body.admin-bg{
   margin:0;min-height:100vh;background:linear-gradient(180deg,var(--bg),#0b0b0b);color:#fff;font-family:Inter, 'Segoe UI', Roboto, Arial, sans-serif;
-  
   -webkit-user-select: none;
   user-select: none;
-  
   -webkit-overflow-scrolling: touch;
-  
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+/* Amélioration tactile - zones de clic plus grandes sur mobile */
+@media (max-width: 768px) {
+  button, 
+  .btn, 
+  .tab-btn-vertical, 
+  a[role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
 }
 
 input, textarea, .commande-card, .admin-table{
@@ -709,7 +721,22 @@ input, textarea, .commande-card, .admin-table{
   font-family:inherit;
   font-size:16px;
   transition: box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+  touch-action: manipulation;
 }
+
+/* Mobile: empêcher le zoom automatique sur iOS */
+@media (max-width: 768px) {
+  .admin-main input,
+  .admin-main select,
+  .admin-main textarea,
+  .admin-main input[type="number"],
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 .admin-main textarea{min-height:120px; padding:12px}
 .admin-main input::placeholder{color: rgba(255,255,255,0.45)}
 .admin-main select{appearance:none; -webkit-appearance:none; -moz-appearance:none; background-image: linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.12) 50%), linear-gradient(135deg, rgba(255,255,255,0.12) 50%, transparent 50%); background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px); background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right:36px}
@@ -797,16 +824,17 @@ input, textarea, .commande-card, .admin-table{
     min-height: 100vh;
     border-radius: 0;
     box-shadow: none;
+    flex-direction: column;
   }
 
-  
+  /* Header mobile visible */
   .admin-mobile-header {
-    display: flex;
+    display: flex !important;
   }
 
-  
+  /* Sidebar en overlay - CACHÉE PAR DÉFAUT */
   .admin-sidebar {
-    position: fixed;
+    position: fixed !important;
     top: 0;
     left: 0;
     height: 100vh;
@@ -814,12 +842,17 @@ input, textarea, .commande-card, .admin-table{
     max-width: 85vw;
     transform: translateX(-100%);
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
-    z-index: 99;
+    z-index: 999;
     overflow-y: auto;
   }
 
   .sidebar-open .admin-sidebar {
-    transform: translateX(0);
+    transform: translateX(0) !important;
+  }
+  
+  /* Overlay actif */
+  .sidebar-overlay {
+    z-index: 998;
   }
 
   .sidebar-header {
@@ -841,6 +874,44 @@ input, textarea, .commande-card, .admin-table{
 
   .tab-content.active {
     max-height: none;
+  }
+  
+  /* Optimisations cartes commande mobile */
+  .commande-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+  
+  .commande-card .right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .commande-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  
+  .commande-actions .btn {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    font-size: 0.85rem;
+    padding: 10px 12px;
+  }
+  
+  /* Amélioration des inputs et select */
+  input, 
+  textarea, 
+  select {
+    font-size: 16px !important; /* Évite le zoom iOS */
+  }
+  
+  /* Espacement des éléments pour le tactile */
+  .btn + .btn {
+    margin-top: 0;
   }
 }
 
@@ -894,6 +965,45 @@ input, textarea, .commande-card, .admin-table{
   .btn-collapse {
     font-size: 0.85rem;
     padding: 10px;
+  }
+  
+  /* Cartes encore plus compactes */
+  .commande-card {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .commande-card .client {
+    font-size: 1rem;
+  }
+  
+  .commande-card .phone {
+    font-size: 0.85rem;
+  }
+  
+  .commande-card .product {
+    font-size: 0.9rem;
+    padding: 6px;
+  }
+  
+  .commande-card .meta {
+    font-size: 0.85rem;
+  }
+  
+  .commande-actions .btn {
+    font-size: 0.8rem;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+  
+  /* Boutons pleine largeur sur très petits écrans */
+  .header-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .header-row .btn {
+    width: 100%;
   }
 }
 
@@ -1084,11 +1194,11 @@ input, textarea, .commande-card, .admin-table{
   .admin-table tbody tr{display:block;margin:0 0 12px;background:rgba(0,0,0,0.06);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
   
   .admin-table tbody tr{margin:0 0 8px;padding:8px}
-  .admin-table tbody td{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-top:none;border-left:none;border-right:none}
+  .admin-table tbody td{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-top:none;border-left:none;border-right:none;min-height:44px}
   .admin-table tbody td + td{margin-top:6px}
   .admin-table tbody td:first-child{margin-top:0}
   
-  .admin-table tbody td::before{content:"";display:inline-block;font-weight:700;margin-right:8px;color:var(--muted);width:42%;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .admin-table tbody td::before{content:"";display:inline-block;font-weight:700;margin-right:8px;color:var(--muted);width:42%;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.85rem}
   .admin-table tbody td[data-label="Nom"]::before{content:"Nom"}
   .admin-table tbody td[data-label="Slug"]::before{content:"Slug"}
   .admin-table tbody td[data-label="Description"]::before{content:"Description"}
@@ -1098,32 +1208,92 @@ input, textarea, .commande-card, .admin-table{
   .admin-table tbody td[data-label="Disponible"]::before{content:"Disponible"}
   .admin-table tbody td[data-label="Visible"]::before{content:"Visible"}
   .admin-table tbody td[data-label="Actions"]::before{content:"Actions"}
-
   
+  /* Amélioration valeurs */
+  .admin-table tbody td > *:last-child {
+    text-align: right;
+    flex: 1;
+    word-break: break-word;
+  }
+  
+  /* Boutons actions en grille */
+  .admin-table tbody td[data-label="Actions"] {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .admin-table tbody td[data-label="Actions"]::before {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  
+  .admin-table tbody td[data-label="Actions"] > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+  
+  .admin-table tbody td[data-label="Actions"] .btn {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 8px;
+  }
+  
+  /* Styles boutons table (suite media query) */
   .admin-table .btn.small{padding:6px 8px;font-size:0.9rem;min-height:36px;border-radius:8px}
   .admin-table .btn.small svg{display:inline-block;vertical-align:middle;margin-right:6px}
   .admin-table .btn.small.danger{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#fff}
   .admin-table tbody td img{max-width:56px;height:auto;border-radius:6px}
 
-  
   .admin-table .btn.icon-only{padding:0;width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
   .admin-table .btn.icon-only svg{width:18px;height:18px;margin:0}
-    
-    .admin-table .btn.icon-only.danger{background:transparent;color:var(--muted);border:1px solid rgba(255,80,80,0.12);box-shadow:none}
-    .admin-table .btn.icon-only.danger svg{stroke: #ff8a8a}
-
-  
-  .toast-message{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5);font-weight:700;color:#fff}
-  .toast-message .toast-icon{width:18px;height:18px;flex:0 0 18px}
-  .toast-message .toast-text{line-height:1}
-  
-  .toast--success{background:linear-gradient(90deg,#1db954,#20c06b);color:#04220f}
-  .toast--error{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#330800}
-  .toast--info{background:linear-gradient(90deg,#5b9cff,#2b6cff);color:#071233}
+  .admin-table .btn.icon-only.danger{background:transparent;color:var(--muted);border:1px solid rgba(255,80,80,0.12);box-shadow:none}
+  .admin-table .btn.icon-only.danger svg{stroke: #ff8a8a}
   .admin-table .btn.icon-only:focus-visible{outline:3px solid rgba(255,100,100,0.16);outline-offset:2px}
   
   .admin-table tbody td span.value{display:inline-block;width:56%;text-align:right;color:var(--muted)}
   .admin-table tbody td img{max-width:64px;height:auto;border-radius:4px}
+}
+
+/* Toasts et notifications */
+.toast-message{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.5);font-weight:700;color:#fff;min-height:56px;font-size:0.95rem}
+.toast-message .toast-icon{width:20px;height:20px;flex:0 0 20px}
+.toast-message .toast-text{line-height:1.3;flex:1}
+
+.toast--success{background:linear-gradient(90deg,#1db954,#20c06b);color:#04220f}
+.toast--error{background:linear-gradient(90deg,#ff6b6b,#ff4a4a);color:#330800}
+.toast--info{background:linear-gradient(90deg,#5b9cff,#2b6cff);color:#071233}
+
+/* Toasts mobile optimisés */
+@media (max-width: 768px) {
+  .toast-message {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    z-index: 10000;
+    padding: 14px 18px;
+    font-size: 0.9rem;
+  }
+  
+  .toast-message .toast-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+}
+
+@media (max-width: 520px) {
+  .toast-message {
+    bottom: 16px;
+    width: calc(100% - 24px);
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
 }
 
 

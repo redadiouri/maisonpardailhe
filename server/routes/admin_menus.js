@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
     cb(null, 'menu-' + uniqueSuffix + ext);
   }
@@ -47,65 +47,77 @@ const upload = multer({
   }
 });
 
-router.get('/', auth, wrap(async (req, res) => {
-  const items = await Menu.getAll(false);
-  res.json(items);
-}));
+router.get(
+  '/',
+  auth,
+  wrap(async (req, res) => {
+    const items = await Menu.getAll(false);
+    res.json(items);
+  })
+);
 
-router.post('/', 
-  auth, 
+router.post(
+  '/',
+  auth,
   adminActionLimiter,
   sanitizeMiddleware(['name', 'description'], false),
   validate(menuSchema),
   wrap(async (req, res) => {
     const adminId = req.session?.admin?.id;
-  const Admin = require('../models/admin');
-  const current = await Admin.getById(adminId);
-  if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
-  const { name, description, price_cents, is_quote, stock, visible_on_menu, available } = req.body;
-  const id = await Menu.create({
-    name,
-    description: description || '',
-    price_cents,
-    is_quote: Boolean(is_quote),
-    stock,
-    visible_on_menu: visible_on_menu === undefined ? 1 : (visible_on_menu ? 1 : 0),
-    available: available === undefined ? 1 : (available ? 1 : 0)
-  });
-  res.status(201).json({ id });
-}));
+    const Admin = require('../models/admin');
+    const current = await Admin.getById(adminId);
+    if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
+    const { name, description, price_cents, is_quote, stock, visible_on_menu, available } =
+      req.body;
+    const id = await Menu.create({
+      name,
+      description: description || '',
+      price_cents,
+      is_quote: Boolean(is_quote),
+      stock,
+      visible_on_menu: visible_on_menu === undefined ? 1 : visible_on_menu ? 1 : 0,
+      available: available === undefined ? 1 : available ? 1 : 0
+    });
+    res.status(201).json({ id });
+  })
+);
 
-router.put('/:id', 
-  auth, 
+router.put(
+  '/:id',
+  auth,
   adminActionLimiter,
   sanitizeMiddleware(['name', 'description'], false),
   wrap(async (req, res) => {
     const adminId = req.session?.admin?.id;
-  const Admin = require('../models/admin');
-  const current = await Admin.getById(adminId);
-  if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
-  const id = Number(req.params.id);
-  if (!id) return res.status(400).json({ message: 'Invalid id' });
-  const affected = await Menu.update(id, req.body);
-  res.json({ affected });
-}));
+    const Admin = require('../models/admin');
+    const current = await Admin.getById(adminId);
+    if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ message: 'Invalid id' });
+    const affected = await Menu.update(id, req.body);
+    res.json({ affected });
+  })
+);
 
-router.delete('/:id', 
-  auth, 
+router.delete(
+  '/:id',
+  auth,
   adminActionLimiter,
   wrap(async (req, res) => {
     const adminId = req.session?.admin?.id;
-  const Admin = require('../models/admin');
-  const current = await Admin.getById(adminId);
-  if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
-  const id = Number(req.params.id);
-  if (!id) return res.status(400).json({ message: 'Invalid id' });
-  const affected = await Menu.delete(id);
-  res.json({ affected });
-}));
+    const Admin = require('../models/admin');
+    const current = await Admin.getById(adminId);
+    if (!current || !current.can_edit_menus) return res.status(403).json({ message: 'Forbidden' });
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ message: 'Invalid id' });
+    const affected = await Menu.delete(id);
+    res.json({ affected });
+  })
+);
 
 // Route pour uploader une image de menu
-router.post('/:id/upload-image',
+router.post(
+  '/:id/upload-image',
   auth,
   adminActionLimiter,
   wrap(async (req, res, next) => {
@@ -121,7 +133,7 @@ router.post('/:id/upload-image',
   wrap(async (req, res) => {
     const id = Number(req.params.id);
     if (!id) return res.status(400).json({ message: 'Invalid id' });
-    
+
     if (!req.file) {
       return res.status(400).json({ message: 'Aucune image fournie' });
     }
@@ -130,30 +142,30 @@ router.post('/:id/upload-image',
     const uploadedPath = req.file.path;
     const optimizedFilename = `optimized-${req.file.filename}`;
     const optimizedPath = path.join(path.dirname(uploadedPath), optimizedFilename);
-    
+
     try {
       // Redimensionner et optimiser : max 1200px de largeur, qualité 90
       await sharp(uploadedPath)
-        .resize(1200, null, { 
+        .resize(1200, null, {
           withoutEnlargement: true,
           fit: 'inside'
         })
         .jpeg({ quality: 90, mozjpeg: true })
         .toFile(optimizedPath);
-      
+
       // Supprimer l'image originale non optimisée
       await fs.unlink(uploadedPath);
-      
+
       // Utiliser l'image optimisée
       const imageUrl = `/img/menus/${optimizedFilename}`;
-      
+
       // Récupérer l'ancienne image pour la supprimer
       const menu = await Menu.getById(id);
       const oldImageUrl = menu?.image_url;
-      
+
       // Mettre à jour le menu avec la nouvelle image
       await Menu.update(id, { image_url: imageUrl });
-      
+
       // Supprimer l'ancienne image si elle existe
       if (oldImageUrl && oldImageUrl.startsWith('/img/menus/')) {
         try {
@@ -163,7 +175,7 @@ router.post('/:id/upload-image',
           // Ignorer si le fichier n'existe pas
         }
       }
-      
+
       res.json({ success: true, image_url: imageUrl });
     } catch (err) {
       // En cas d'erreur d'optimisation, supprimer le fichier uploadé
@@ -176,7 +188,8 @@ router.post('/:id/upload-image',
 );
 
 // Route pour supprimer l'image d'un menu
-router.delete('/:id/image',
+router.delete(
+  '/:id/image',
   auth,
   adminActionLimiter,
   wrap(async (req, res) => {
@@ -186,15 +199,15 @@ router.delete('/:id/image',
     if (!current || !current.can_edit_menus) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    
+
     const id = Number(req.params.id);
     if (!id) return res.status(400).json({ message: 'Invalid id' });
-    
+
     const menu = await Menu.getById(id);
     if (!menu) return res.status(404).json({ message: 'Menu introuvable' });
-    
+
     const imageUrl = menu.image_url;
-    
+
     // Supprimer l'image du disque
     if (imageUrl && imageUrl.startsWith('/img/menus/')) {
       try {
@@ -204,10 +217,10 @@ router.delete('/:id/image',
         // Ignorer si le fichier n'existe pas
       }
     }
-    
+
     // Mettre à jour le menu pour retirer l'URL de l'image
     await Menu.update(id, { image_url: '' });
-    
+
     res.json({ success: true });
   })
 );

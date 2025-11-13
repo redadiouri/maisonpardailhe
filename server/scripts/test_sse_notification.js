@@ -39,16 +39,14 @@ function getCsrfToken() {
 async function testSSE() {
   console.log('Testing SSE notifications for new orders...\n');
 
-    const testOrder = {
+  const testOrder = {
     nom_complet: 'Test Client SSE',
     telephone: '0612345678',
     email: 'test@example.com',
     date_retrait: '2025-11-15',
     creneau: '12:30',
     location: 'roquettes',
-    items: [
-      { menu_id: 1, qty: 2 }
-    ]
+    items: [{ menu_id: 1, qty: 2 }]
   };
 
   console.log('Sending test order:');
@@ -59,7 +57,7 @@ async function testSSE() {
   console.log('3. You are logged into the admin panel\n');
 
   try {
-        console.log('Getting CSRF token...');
+    console.log('Getting CSRF token...');
     const csrfToken = await getCsrfToken();
     if (csrfToken) {
       console.log('✓ CSRF token obtained\n');
@@ -78,7 +76,7 @@ async function testSSE() {
       }
     };
 
-        if (csrfToken) {
+    if (csrfToken) {
       options.headers['X-CSRF-Token'] = csrfToken;
     }
 
@@ -92,7 +90,7 @@ async function testSSE() {
       res.on('end', () => {
         try {
           const response = JSON.parse(data);
-          
+
           if (res.statusCode === 201) {
             console.log('✅ Order created successfully!');
             console.log('Order ID:', response.id);
@@ -102,7 +100,10 @@ async function testSSE() {
             console.log('   - Hear a two-tone beep sound');
             console.log('   - The order list automatically updated\n');
           } else {
-            console.error('❌ Failed to create order:', response.message || `Status ${res.statusCode}`);
+            console.error(
+              '❌ Failed to create order:',
+              response.message || `Status ${res.statusCode}`
+            );
             console.error('Response:', response);
           }
         } catch (error) {

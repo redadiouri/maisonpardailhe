@@ -12,12 +12,28 @@ const TEMPLATE_INFO = {
   'creation.html': {
     name: 'Confirmation de commande',
     description: 'Email envoyé au client lors de la création de sa commande',
-    variables: ['customerName', 'date_retrait', 'creneau', 'location', 'itemsHtml', 'total', 'produit']
+    variables: [
+      'customerName',
+      'date_retrait',
+      'creneau',
+      'location',
+      'itemsHtml',
+      'total',
+      'produit'
+    ]
   },
   'acceptation.html': {
     name: 'Commande acceptée',
     description: 'Email envoyé au client quand sa commande est acceptée',
-    variables: ['customerName', 'date_retrait', 'creneau', 'location', 'itemsHtml', 'total', 'produit']
+    variables: [
+      'customerName',
+      'date_retrait',
+      'creneau',
+      'location',
+      'itemsHtml',
+      'total',
+      'produit'
+    ]
   },
   'refus.html': {
     name: 'Commande refusée',
@@ -40,12 +56,12 @@ router.get('/', async (req, res) => {
   try {
     const files = await fs.readdir(TEMPLATES_DIR);
     const templates = files
-      .filter(f => f.endsWith('.html') && !f.endsWith('.backup'))
-      .map(filename => ({
+      .filter((f) => f.endsWith('.html') && !f.endsWith('.backup'))
+      .map((filename) => ({
         filename,
         ...TEMPLATE_INFO[filename]
       }));
-    
+
     res.json({ templates });
   } catch (err) {
     logger.error({ err }, 'Failed to list templates');
@@ -56,14 +72,14 @@ router.get('/', async (req, res) => {
 router.get('/:filename', async (req, res) => {
   try {
     const filename = normalizeFilename(req.params.filename);
-    
+
     if (filename.includes('..') || filename.includes('/')) {
       return res.status(400).json({ error: 'Nom de fichier invalide' });
     }
 
     const filePath = path.join(TEMPLATES_DIR, filename);
     const content = await fs.readFile(filePath, 'utf8');
-    
+
     res.json({
       filename,
       content,
@@ -78,10 +94,7 @@ router.get('/:filename', async (req, res) => {
   }
 });
 
-router.put('/:filename', 
-  adminActionLimiter,
-  validate(emailTemplateSchema),
-  async (req, res) => {
+router.put('/:filename', adminActionLimiter, validate(emailTemplateSchema), async (req, res) => {
   try {
     const filename = normalizeFilename(req.params.filename);
     const { content } = req.body;
@@ -96,7 +109,7 @@ router.put('/:filename',
 
     const filePath = path.join(TEMPLATES_DIR, filename);
     const backupPath = path.join(TEMPLATES_DIR, `${filename}.backup`);
-    
+
     try {
       const oldContent = await fs.readFile(filePath, 'utf8');
       await fs.writeFile(backupPath, oldContent, 'utf8');
@@ -106,12 +119,12 @@ router.put('/:filename',
     }
 
     await fs.writeFile(filePath, content, 'utf8');
-    
+
     logger.info({ filename }, 'Email template updated');
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Template mis à jour avec succès',
-      filename 
+      filename
     });
   } catch (err) {
     logger.error({ err, filename: req.params.filename }, 'Failed to update template');
@@ -135,10 +148,10 @@ router.post('/:filename/restore', async (req, res) => {
     await fs.writeFile(filePath, backupContent, 'utf8');
 
     logger.info({ filename }, 'Email template restored from backup');
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Template restauré avec succès',
-      filename 
+      filename
     });
   } catch (err) {
     if (err.code === 'ENOENT') {

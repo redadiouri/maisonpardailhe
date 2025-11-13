@@ -5,7 +5,7 @@
  * - Crée un dump SQL horodaté
  * - Garde les N derniers backups (défini par MAX_BACKUPS)
  * - Supprime automatiquement les anciens backups
- * 
+ *
  * Usage: node scripts/db_backup_auto.js
  */
 
@@ -34,7 +34,8 @@ async function createBackup() {
   }
 
   // Nom du fichier avec horodatage
-  const timestamp = new Date().toISOString()
+  const timestamp = new Date()
+    .toISOString()
     .replace(/T/, '_')
     .replace(/\..+/, '')
     .replace(/:/g, '-');
@@ -61,7 +62,7 @@ async function createBackup() {
       DB_NAME
     ];
 
-    const dump = spawn('mysqldump', args, { 
+    const dump = spawn('mysqldump', args, {
       stdio: ['ignore', 'pipe', 'pipe']
     });
 
@@ -99,9 +100,10 @@ function listBackups() {
     return [];
   }
 
-  const files = fs.readdirSync(BACKUP_DIR)
-    .filter(f => f.startsWith('backup-') && f.endsWith('.sql'))
-    .map(f => ({
+  const files = fs
+    .readdirSync(BACKUP_DIR)
+    .filter((f) => f.startsWith('backup-') && f.endsWith('.sql'))
+    .map((f) => ({
       name: f,
       path: path.join(BACKUP_DIR, f),
       time: fs.statSync(path.join(BACKUP_DIR, f)).mtime.getTime()
@@ -116,7 +118,7 @@ function listBackups() {
  */
 function rotateBackups() {
   const backups = listBackups();
-  
+
   if (backups.length <= MAX_BACKUPS) {
     console.log(`📂 ${backups.length} backup(s) au total (max: ${MAX_BACKUPS})`);
     return;
@@ -125,7 +127,7 @@ function rotateBackups() {
   const toDelete = backups.slice(MAX_BACKUPS);
   console.log(`🗑️  Suppression de ${toDelete.length} ancien(s) backup(s)...`);
 
-  toDelete.forEach(backup => {
+  toDelete.forEach((backup) => {
     try {
       fs.unlinkSync(backup.path);
       console.log(`   ✓ Supprimé: ${backup.name}`);
@@ -142,7 +144,7 @@ function rotateBackups() {
  */
 function showBackupSummary() {
   const backups = listBackups();
-  
+
   if (backups.length === 0) {
     console.log('ℹ️  Aucun backup trouvé');
     return;
@@ -150,7 +152,7 @@ function showBackupSummary() {
 
   console.log('\n📊 Backups disponibles:');
   console.log('─'.repeat(60));
-  
+
   backups.slice(0, 5).forEach((backup, idx) => {
     const date = new Date(backup.time);
     const size = (fs.statSync(backup.path).size / (1024 * 1024)).toFixed(2);

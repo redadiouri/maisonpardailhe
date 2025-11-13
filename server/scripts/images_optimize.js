@@ -9,7 +9,9 @@ const DEFAULT_IMG_DIR = path.join(__dirname, '..', '..', 'maisonpardailhe', 'img
 const IMG_DIR = process.env.TARGET_DIR ? path.resolve(process.env.TARGET_DIR) : DEFAULT_IMG_DIR;
 const OUT_DIR = path.join(IMG_DIR, 'optimized');
 
-const widths = [400, 800, 1200, 1600]; const webpQuality = 82; const jpegQuality = 85; 
+const widths = [400, 800, 1200, 1600];
+const webpQuality = 82;
+const jpegQuality = 85;
 async function ensureDir(p) {
   await fs.promises.mkdir(p, { recursive: true });
 }
@@ -28,19 +30,20 @@ async function processImage(file) {
     const image = sharp(inputPath);
     const info = await image.metadata();
 
-        const webpFilename = `${name}.webp`;
+    const webpFilename = `${name}.webp`;
     const webpPath = path.join(OUT_DIR, webpFilename);
     await image.webp({ quality: webpQuality }).toFile(webpPath);
     meta.outputs.push({ format: 'webp', path: webpPath, width: info.width, height: info.height });
 
-        for (const w of widths) {
-      if (!info.width || info.width < w) continue;       const resizedName = `${name}-${w}.webp`;
+    for (const w of widths) {
+      if (!info.width || info.width < w) continue;
+      const resizedName = `${name}-${w}.webp`;
       const resizedPath = path.join(OUT_DIR, resizedName);
       await image.resize({ width: w }).webp({ quality: webpQuality }).toFile(resizedPath);
       meta.outputs.push({ format: 'webp', path: resizedPath, width: w });
     }
 
-        if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
+    if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
       const optimizedName = `${name}-opt${ext}`;
       const optimizedPath = path.join(OUT_DIR, optimizedName);
       if (ext === '.png') {
@@ -48,7 +51,12 @@ async function processImage(file) {
       } else {
         await image.jpeg({ quality: jpegQuality, mozjpeg: true }).toFile(optimizedPath);
       }
-      meta.outputs.push({ format: ext.replace('.', ''), path: optimizedPath, width: info.width, height: info.height });
+      meta.outputs.push({
+        format: ext.replace('.', ''),
+        path: optimizedPath,
+        width: info.width,
+        height: info.height
+      });
     }
 
     return meta;
@@ -62,7 +70,7 @@ async function main() {
   console.log('Image optimizer — reading from', IMG_DIR);
   await ensureDir(OUT_DIR);
   const files = await fs.promises.readdir(IMG_DIR);
-  const images = files.filter(f => isImage(f) && !f.startsWith('.'));
+  const images = files.filter((f) => isImage(f) && !f.startsWith('.'));
   if (!images.length) {
     console.log('No source images found in', IMG_DIR);
     return;
@@ -82,5 +90,8 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(2); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(2);
+  });
 }

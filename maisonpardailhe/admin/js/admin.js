@@ -457,6 +457,22 @@ if (document.getElementById('logoutBtn')) {
   function isMobile() {
     return window.innerWidth < 768;
   }
+  
+  // Prévenir le double-tap zoom sur boutons
+  function preventDoubleTapZoom() {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+  }
+  
+  if (isMobile()) {
+    preventDoubleTapZoom();
+  }
 
   function initSidebarAccessibility() {
     if (sidebar) {

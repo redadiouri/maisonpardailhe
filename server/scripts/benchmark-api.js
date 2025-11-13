@@ -9,7 +9,7 @@ const ITERATIONS = parseInt(process.env.ITERATIONS || '100', 10);
 function makeRequest(url, method = 'GET', data = null, headers = {}) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
-    
+
     const options = {
       hostname: urlObj.hostname,
       port: urlObj.port || 443,
@@ -17,7 +17,7 @@ function makeRequest(url, method = 'GET', data = null, headers = {}) {
       method: method,
       headers: {
         'User-Agent': 'API-Benchmark/1.0',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         ...headers
       },
       rejectUnauthorized: false
@@ -32,8 +32,8 @@ function makeRequest(url, method = 'GET', data = null, headers = {}) {
     const startTime = performance.now();
     const req = https.request(options, (res) => {
       let responseData = '';
-      
-      res.on('data', (chunk) => responseData += chunk);
+
+      res.on('data', (chunk) => (responseData += chunk));
       res.on('end', () => {
         const duration = performance.now() - startTime;
         try {
@@ -65,11 +65,11 @@ function makeRequest(url, method = 'GET', data = null, headers = {}) {
 async function benchmarkEndpoint(name, url, method = 'GET', data = null) {
   console.log(`\n📍 Testing: ${name}`);
   console.log(`   URL: ${url}`);
-  
+
   const times = [];
   const statusCodes = {};
   let errors = 0;
-  
+
   for (let i = 0; i < ITERATIONS; i++) {
     try {
       const result = await makeRequest(url, method, data);
@@ -78,38 +78,46 @@ async function benchmarkEndpoint(name, url, method = 'GET', data = null) {
     } catch (err) {
       errors++;
     }
-    
+
     if ((i + 1) % 10 === 0) {
       process.stdout.write(`\r   Progress: ${i + 1}/${ITERATIONS}`);
     }
   }
-  
+
   process.stdout.write(`\r   Progress: ${ITERATIONS}/${ITERATIONS}\n`);
-  
+
   if (times.length === 0) {
     console.log('   ❌ All requests failed\n');
     return;
   }
-  
+
   times.sort((a, b) => a - b);
   const avg = times.reduce((a, b) => a + b, 0) / times.length;
   const median = times[Math.floor(times.length / 2)];
   const p95 = times[Math.floor(times.length * 0.95)];
   const min = times[0];
   const max = times[times.length - 1];
-  
+
   console.log(`   Results:`);
   console.log(`     Average: ${avg.toFixed(2)}ms`);
   console.log(`     Median: ${median.toFixed(2)}ms`);
   console.log(`     Min: ${min.toFixed(2)}ms`);
   console.log(`     Max: ${max.toFixed(2)}ms`);
   console.log(`     P95: ${p95.toFixed(2)}ms`);
-  console.log(`     Success: ${times.length}/${ITERATIONS} (${((times.length/ITERATIONS)*100).toFixed(2)}%)`);
-  
+  console.log(
+    `     Success: ${times.length}/${ITERATIONS} (${((times.length / ITERATIONS) * 100).toFixed(
+      2
+    )}%)`
+  );
+
   if (Object.keys(statusCodes).length > 0) {
-    console.log(`     Status Codes: ${Object.keys(statusCodes).map(c => `${c}:${statusCodes[c]}`).join(', ')}`);
+    console.log(
+      `     Status Codes: ${Object.keys(statusCodes)
+        .map((c) => `${c}:${statusCodes[c]}`)
+        .join(', ')}`
+    );
   }
-  
+
   if (errors > 0) {
     console.log(`     ❌ Errors: ${errors}`);
   }
@@ -133,7 +141,7 @@ async function runAPIBenchmark() {
   console.log('═'.repeat(60) + '\n');
 }
 
-runAPIBenchmark().catch(err => {
+runAPIBenchmark().catch((err) => {
   console.error('API benchmark failed:', err);
   process.exit(1);
 });

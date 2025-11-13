@@ -131,7 +131,7 @@ describe('Security & Validation Tests', () => {
   describe('CSRF Protection (Integration)', () => {
     // Note: Ces tests nécessitent que l'app soit initialisée
     // Pour l'instant, on vérifie juste que le middleware CSRF est configuré
-    
+
     it('should have CSRF middleware configured', () => {
       const csurf = require('csurf');
       expect(typeof csurf).toBe('function');
@@ -190,7 +190,7 @@ describe('Commandes Validation Security', () => {
       "'; DROP TABLE commandes--"
     ];
 
-    validPhones.forEach(phone => {
+    validPhones.forEach((phone) => {
       it(`should accept valid phone: ${phone}`, () => {
         // Test que la sanitization ne casse pas les formats valides
         const clean = sanitize(phone, true);
@@ -198,7 +198,7 @@ describe('Commandes Validation Security', () => {
       });
     });
 
-    invalidPhones.forEach(phone => {
+    invalidPhones.forEach((phone) => {
       it(`should handle invalid phone safely: ${phone}`, () => {
         const clean = sanitize(phone, true);
         expect(clean).not.toContain('<script>');
@@ -211,12 +211,12 @@ describe('Commandes Validation Security', () => {
       const maliciousDates = [
         "2025-01-01'; DROP TABLE commandes--",
         '<script>alert(1)</script>',
-        "../../etc/passwd",
-        "null",
-        "undefined"
+        '../../etc/passwd',
+        'null',
+        'undefined'
       ];
 
-      maliciousDates.forEach(date => {
+      maliciousDates.forEach((date) => {
         const clean = sanitize(date, true);
         expect(clean).not.toContain('<script>');
         expect(clean).not.toContain('<iframe');
@@ -233,7 +233,7 @@ describe('Commandes Validation Security', () => {
         { menu_id: 'null', qty: 'infinity' }
       ];
 
-      maliciousItems.forEach(item => {
+      maliciousItems.forEach((item) => {
         const cleanId = sanitize(String(item.menu_id), true);
         expect(cleanId).not.toContain('<script>');
         expect(cleanId).not.toContain('<iframe');

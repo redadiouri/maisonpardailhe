@@ -4,6 +4,5 @@ module.exports = async () => {
     if (app && typeof app.shutdown === 'function') {
       await app.shutdown();
     }
-  } catch (e) {
-      }
+  } catch (e) {}
 };

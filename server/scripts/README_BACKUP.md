@@ -7,17 +7,20 @@ Le système de backup pour environnement Docker est maintenant prêt à l'emploi
 ## 📁 Fichiers créés
 
 ### Scripts de backup/restauration
+
 - ✅ `server/scripts/db_backup_docker.ps1` - Backup depuis l'hôte (Windows)
 - ✅ `server/scripts/db_backup_docker.sh` - Backup depuis l'hôte (Linux/Mac)
 - ✅ `server/scripts/db_restore_docker.ps1` - Restauration (Windows)
 - ✅ `server/scripts/db_restore_docker.sh` - Restauration (Linux/Mac)
 
 ### Documentation
+
 - ✅ `docs/docker-backup.md` - Guide complet pour environnement Docker
 - ✅ `docs/database-backup.md` - Guide général (non-Docker)
 - ✅ `deploy/cmd.txt` - Commandes de déploiement mises à jour
 
 ### Configuration
+
 - ✅ `server/package.json` - Scripts npm ajoutés
 
 ## 🚀 Utilisation rapide
@@ -37,6 +40,7 @@ npm run db:backup:docker
 ```
 
 **Résultat attendu:**
+
 ```
 ✓ Backup créé avec succès (X.XX MB)
 📂 30 backup(s) au total (max: 30)
@@ -82,7 +86,7 @@ MAX_BACKUPS=30
 services:
   db:
     image: mysql:8.0
-    container_name: maisonpardailhe-db  # ← Doit correspondre à DB_CONTAINER_NAME
+    container_name: maisonpardailhe-db # ← Doit correspondre à DB_CONTAINER_NAME
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
@@ -135,11 +139,13 @@ crontab -e
 ## 🎯 Prochaines étapes
 
 1. **Démarrer Docker:**
+
    ```bash
    docker-compose up -d
    ```
 
 2. **Tester le backup:**
+
    ```bash
    cd server
    npm run db:backup:docker

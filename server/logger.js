@@ -1,10 +1,11 @@
 try {
   const pino = require('pino');
 
-    const env = process.env.NODE_ENV || 'development';
-  const defaultLevel = process.env.LOG_LEVEL || (env === 'production' ? 'info' : (env === 'test' ? 'warn' : 'debug'));
+  const env = process.env.NODE_ENV || 'development';
+  const defaultLevel =
+    process.env.LOG_LEVEL || (env === 'production' ? 'info' : env === 'test' ? 'warn' : 'debug');
 
-    const redact = {
+  const redact = {
     paths: [
       'req.headers.authorization',
       'req.headers.cookie',
@@ -22,28 +23,36 @@ try {
     censor: '[REDACTED]'
   };
 
-    const stdSerializers = pino.stdSerializers || require('pino-std-serializers');
+  const stdSerializers = pino.stdSerializers || require('pino-std-serializers');
 
   let logger;
 
-        if (process.env.LOG_FILE) {
+  if (process.env.LOG_FILE) {
     const dest = pino.destination({ dest: process.env.LOG_FILE, sync: false });
     logger = pino({ level: defaultLevel, redact, serializers: stdSerializers }, dest);
   } else if (env !== 'production') {
-        try {
-      const transport = pino.transport ? pino.transport({ target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:standard' } }) : null;
-      logger = transport ? pino({ level: defaultLevel, redact, serializers: stdSerializers }, transport) : pino({ level: defaultLevel, redact, serializers: stdSerializers });
+    try {
+      const transport = pino.transport
+        ? pino.transport({
+            target: 'pino-pretty',
+            options: { colorize: true, translateTime: 'SYS:standard' }
+          })
+        : null;
+      logger = transport
+        ? pino({ level: defaultLevel, redact, serializers: stdSerializers }, transport)
+        : pino({ level: defaultLevel, redact, serializers: stdSerializers });
     } catch (e) {
-            logger = pino({ level: defaultLevel, redact, serializers: stdSerializers });
+      logger = pino({ level: defaultLevel, redact, serializers: stdSerializers });
     }
   } else {
-        logger = pino({ level: defaultLevel, redact, serializers: stdSerializers });
+    logger = pino({ level: defaultLevel, redact, serializers: stdSerializers });
   }
 
   module.exports = logger;
 } catch (e) {
-    const LEVELS = { error: 0, warn: 1, info: 2, debug: 3 };
-  const configured = process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
+  const LEVELS = { error: 0, warn: 1, info: 2, debug: 3 };
+  const configured =
+    process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
   const minLevel = LEVELS[configured] ?? 2;
 
   function shouldLog(level) {
@@ -51,9 +60,18 @@ try {
   }
 
   module.exports = {
-    info: (...args) => { if (shouldLog('info')) console.log('[INFO]', ...args); },
-    warn: (...args) => { if (shouldLog('warn')) console.warn('[WARN]', ...args); },
-    error: (...args) => { if (shouldLog('error')) console.error('[ERROR]', ...args); },
-    debug: (...args) => { if (shouldLog('debug')) (console.debug ? console.debug(...args) : console.log('[DEBUG]', ...args)); }
+    info: (...args) => {
+      if (shouldLog('info')) console.log('[INFO]', ...args);
+    },
+    warn: (...args) => {
+      if (shouldLog('warn')) console.warn('[WARN]', ...args);
+    },
+    error: (...args) => {
+      if (shouldLog('error')) console.error('[ERROR]', ...args);
+    },
+    debug: (...args) => {
+      if (shouldLog('debug'))
+        console.debug ? console.debug(...args) : console.log('[DEBUG]', ...args);
+    }
   };
 }

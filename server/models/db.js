@@ -7,12 +7,13 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
-    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '15', 10),
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '15', 10),
   queueLimit: 0,
-    enableKeepAlive: true,
+  enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-    connectTimeout: 10000,     charset: 'utf8mb4',
-    timezone: '+00:00'
+  connectTimeout: 10000,
+  charset: 'utf8mb4',
+  timezone: '+00:00'
 });
 
 module.exports = pool;
@@ -23,8 +24,6 @@ try {
       if (pool && typeof pool.end === 'function') {
         await pool.end();
       }
-    } catch (e) {
-          }
+    } catch (e) {}
   });
-} catch (e) {
-  }
+} catch (e) {}

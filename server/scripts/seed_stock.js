@@ -3,28 +3,82 @@
 const Stock = require('../models/stock');
 
 const ITEMS = [
-  { name: "Pâté en croûte Maison", reference: 'PATE-CROUTE', quantity: 20, image_url: '', available: true },
-  { name: 'Jambon blanc médaillé', reference: 'JAMBON', quantity: 50, image_url: '', available: true },
-  { name: 'Saucisse de Toulouse', reference: 'SAUCISSE', quantity: 40, image_url: '', available: true },
+  {
+    name: 'Pâté en croûte Maison',
+    reference: 'PATE-CROUTE',
+    quantity: 20,
+    image_url: '',
+    available: true
+  },
+  {
+    name: 'Jambon blanc médaillé',
+    reference: 'JAMBON',
+    quantity: 50,
+    image_url: '',
+    available: true
+  },
+  {
+    name: 'Saucisse de Toulouse',
+    reference: 'SAUCISSE',
+    quantity: 40,
+    image_url: '',
+    available: true
+  },
   { name: 'Terrine aux cèpes', reference: 'TERRINE', quantity: 30, image_url: '', available: true },
-  { name: 'Rillettes de canard', reference: 'RILLETTES', quantity: 50, image_url: '', available: true },
+  {
+    name: 'Rillettes de canard',
+    reference: 'RILLETTES',
+    quantity: 50,
+    image_url: '',
+    available: true
+  },
   { name: 'Coppa affinée', reference: 'COPPA', quantity: 40, image_url: '', available: true },
-  { name: 'Poulet fermier Label Rouge', reference: 'POULET', quantity: 20, image_url: '', available: true },
-  { name: 'Travers caramélisés', reference: 'TRAVERS', quantity: 30, image_url: '', available: true },
+  {
+    name: 'Poulet fermier Label Rouge',
+    reference: 'POULET',
+    quantity: 20,
+    image_url: '',
+    available: true
+  },
+  {
+    name: 'Travers caramélisés',
+    reference: 'TRAVERS',
+    quantity: 30,
+    image_url: '',
+    available: true
+  },
   { name: 'Porcelet de fête', reference: 'PORCELET', quantity: 5, image_url: '', available: true },
-  { name: 'Pickles de légumes', reference: 'PICKLES', quantity: 60, image_url: '', available: true },
-  { name: "Gelée de piment d'Espelette", reference: 'GELEE-PIMENT', quantity: 60, image_url: '', available: true },
-  { name: 'Moutarde noire maison', reference: 'MOUTARDE', quantity: 80, image_url: '', available: true },
+  {
+    name: 'Pickles de légumes',
+    reference: 'PICKLES',
+    quantity: 60,
+    image_url: '',
+    available: true
+  },
+  {
+    name: "Gelée de piment d'Espelette",
+    reference: 'GELEE-PIMENT',
+    quantity: 60,
+    image_url: '',
+    available: true
+  },
+  {
+    name: 'Moutarde noire maison',
+    reference: 'MOUTARDE',
+    quantity: 80,
+    image_url: '',
+    available: true
+  }
 ];
 
 async function upsertItem(item) {
   const existing = await Stock.getByReference(item.reference);
   if (existing) {
-        const update = {
+    const update = {
       quantity: item.quantity,
-      available: item.available,
+      available: item.available
     };
-        if (!existing.name && item.name) update.name = item.name;
+    if (!existing.name && item.name) update.name = item.name;
     await Stock.update(existing.id, update);
     return { action: 'updated', id: existing.id };
   } else {

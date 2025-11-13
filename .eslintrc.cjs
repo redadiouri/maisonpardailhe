@@ -5,7 +5,7 @@ module.exports = {
     es2021: true,
     jest: true
   },
-  extends: ["eslint:recommended", "plugin:jest/recommended", "prettier"],
+  extends: ["eslint:recommended", "prettier"],
   parserOptions: {
     ecmaVersion: 2021
   },

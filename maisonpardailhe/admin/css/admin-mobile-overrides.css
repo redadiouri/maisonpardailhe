@@ -1,0 +1,59 @@
+/* Mobile visual polish overrides (loaded after minified CSS) */
+
+@media (max-width: 768px) {
+  /* Do not enlarge native checkboxes/radios; use comfy label instead */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: auto;
+    min-height: auto;
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Nicer label pill around checkboxes/radios */
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .admin-main label {
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Menu form: stack fields, tidy spacing */
+  #menu-form {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+  #menu-form .btn.primary {
+    width: 100%;
+  }
+
+  /* Menu table: horizontal scroll when needed */
+  #menu-table-container {
+    overflow-x: auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+  #menu-table {
+    min-width: 700px !important;
+    width: auto !important;
+  }
+
+  /* Email templates: ensure vertical stacking stays clean */
+  .email-templates-container {
+    gap: 16px;
+  }
+
+  /* Charts and KPIs: full width cards on small screens */
+  .stat-card,
+  .stats-chart-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

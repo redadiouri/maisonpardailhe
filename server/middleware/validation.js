@@ -14,16 +14,10 @@ const commandeSchema = Joi.object({
       'string.pattern.base': 'Le nom contient des caractères invalides'
     }),
 
-  email: Joi.string()
-    .trim()
-    .email()
-    .max(255)
-    .optional()
-    .allow('', null)
-    .messages({
-      'string.email': 'L\'adresse email n\'est pas valide',
-      'string.max': 'L\'email ne peut pas dépasser 255 caractères'
-    }),
+  email: Joi.string().trim().email().max(255).optional().allow('', null).messages({
+    'string.email': "L'adresse email n'est pas valide",
+    'string.max': "L'email ne peut pas dépasser 255 caractères"
+  }),
 
   telephone: Joi.string()
     .trim()
@@ -31,7 +25,7 @@ const commandeSchema = Joi.object({
     .required()
     .messages({
       'string.empty': 'Le téléphone est requis',
-      'string.pattern.base': 'Le numéro de téléphone n\'est pas valide'
+      'string.pattern.base': "Le numéro de téléphone n'est pas valide"
     }),
 
   date_retrait: Joi.string()
@@ -49,17 +43,13 @@ const commandeSchema = Joi.object({
     .required()
     .messages({
       'string.empty': 'Le créneau horaire est requis',
-      'string.pattern.base': 'Format d\'heure invalide (HH:MM attendu)'
+      'string.pattern.base': "Format d'heure invalide (HH:MM attendu)"
     }),
 
-  location: Joi.string()
-    .trim()
-    .valid('roquettes', 'mairie', 'autre')
-    .required()
-    .messages({
-      'string.empty': 'Le lieu de retrait est requis',
-      'any.only': 'Lieu de retrait invalide'
-    }),
+  location: Joi.string().trim().valid('roquettes', 'mairie', 'autre').required().messages({
+    'string.empty': 'Le lieu de retrait est requis',
+    'any.only': 'Lieu de retrait invalide'
+  }),
 
   produit: Joi.string()
     .trim()
@@ -89,62 +79,30 @@ const commandeSchema = Joi.object({
       'array.min': 'Au moins un produit doit être sélectionné'
     }),
 
-  remarques: Joi.string()
-    .trim()
-    .max(1000)
-    .optional()
-    .allow('', null),
+  remarques: Joi.string().trim().max(1000).optional().allow('', null),
 
-  precisions: Joi.string()
-    .trim()
-    .max(1000)
-    .optional()
-    .allow('', null),
+  precisions: Joi.string().trim().max(1000).optional().allow('', null),
 
-  total_cents: Joi.number()
-    .integer()
-    .min(0)
-    .optional()
-    .allow(null)
+  total_cents: Joi.number().integer().min(0).optional().allow(null)
 });
 
 const menuSchema = Joi.object({
-  name: Joi.string()
-    .trim()
-    .min(1)
-    .max(255)
-    .required()
-    .messages({
-      'string.empty': 'Le nom du menu est requis',
-      'string.max': 'Le nom ne peut pas dépasser 255 caractères'
-    }),
+  name: Joi.string().trim().min(1).max(255).required().messages({
+    'string.empty': 'Le nom du menu est requis',
+    'string.max': 'Le nom ne peut pas dépasser 255 caractères'
+  }),
 
-  description: Joi.string()
-    .trim()
-    .max(2000)
-    .optional()
-    .allow('', null),
+  description: Joi.string().trim().max(2000).optional().allow('', null),
 
-  price_cents: Joi.number()
-    .integer()
-    .min(0)
-    .max(1000000)
-    .required()
-    .messages({
-      'number.base': 'Le prix doit être un nombre',
-      'number.min': 'Le prix ne peut pas être négatif',
-      'number.max': 'Le prix est trop élevé'
-    }),
+  price_cents: Joi.number().integer().min(0).max(1000000).required().messages({
+    'number.base': 'Le prix doit être un nombre',
+    'number.min': 'Le prix ne peut pas être négatif',
+    'number.max': 'Le prix est trop élevé'
+  }),
 
-  stock: Joi.number()
-    .integer()
-    .min(0)
-    .max(10000)
-    .optional()
-    .default(0)
-    .messages({
-      'number.min': 'Le stock ne peut pas être négatif'
-    }),
+  stock: Joi.number().integer().min(0).max(10000).optional().default(0).messages({
+    'number.min': 'Le stock ne peut pas être négatif'
+  }),
 
   is_quote: Joi.alternatives()
     .try(Joi.boolean(), Joi.number().valid(0, 1))
@@ -163,17 +121,11 @@ const menuSchema = Joi.object({
 });
 
 const adminSchema = Joi.object({
-  username: Joi.string()
-    .trim()
-    .alphanum()
-    .min(3)
-    .max(50)
-    .required()
-    .messages({
-      'string.empty': 'Le nom d\'utilisateur est requis',
-      'string.alphanum': 'Le nom d\'utilisateur ne peut contenir que des lettres et chiffres',
-      'string.min': 'Le nom d\'utilisateur doit contenir au moins 3 caractères'
-    }),
+  username: Joi.string().trim().alphanum().min(3).max(50).required().messages({
+    'string.empty': "Le nom d'utilisateur est requis",
+    'string.alphanum': "Le nom d'utilisateur ne peut contenir que des lettres et chiffres",
+    'string.min': "Le nom d'utilisateur doit contenir au moins 3 caractères"
+  }),
 
   password: Joi.string()
     .min(8)
@@ -183,46 +135,31 @@ const adminSchema = Joi.object({
     .messages({
       'string.empty': 'Le mot de passe est requis',
       'string.min': 'Le mot de passe doit contenir au moins 8 caractères',
-      'string.pattern.base': 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
+      'string.pattern.base':
+        'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
     }),
 
-  email: Joi.string()
-    .trim()
-    .email()
-    .max(255)
-    .optional()
-    .allow('', null),
+  email: Joi.string().trim().email().max(255).optional().allow('', null),
 
-  role: Joi.string()
-    .valid('admin', 'super_admin', 'viewer')
-    .default('admin')
+  role: Joi.string().valid('admin', 'super_admin', 'viewer').default('admin')
 });
 
 const loginSchema = Joi.object({
-  username: Joi.string()
-    .trim()
-    .required()
-    .messages({
-      'string.empty': 'Le nom d\'utilisateur est requis'
-    }),
+  username: Joi.string().trim().required().messages({
+    'string.empty': "Le nom d'utilisateur est requis"
+  }),
 
-  password: Joi.string()
-    .required()
-    .messages({
-      'string.empty': 'Le mot de passe est requis'
-    })
+  password: Joi.string().required().messages({
+    'string.empty': 'Le mot de passe est requis'
+  })
 });
 
 const emailTemplateSchema = Joi.object({
-  content: Joi.string()
-    .min(10)
-    .max(50000)
-    .required()
-    .messages({
-      'string.empty': 'Le contenu du template est requis',
-      'string.min': 'Le contenu est trop court',
-      'string.max': 'Le contenu est trop long'
-    })
+  content: Joi.string().min(10).max(50000).required().messages({
+    'string.empty': 'Le contenu du template est requis',
+    'string.min': 'Le contenu est trop court',
+    'string.max': 'Le contenu est trop long'
+  })
 });
 
 const validate = (schema) => {
@@ -233,11 +170,11 @@ const validate = (schema) => {
     });
 
     if (error) {
-      const errors = error.details.map(detail => ({
+      const errors = error.details.map((detail) => ({
         field: detail.path.join('.'),
         message: detail.message
       }));
-      
+
       return res.status(400).json({
         error: 'Validation échouée',
         details: errors

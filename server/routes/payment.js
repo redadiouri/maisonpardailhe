@@ -36,23 +36,20 @@ router.get('/config', (req, res) => {
 router.post('/create-checkout-session', async (req, res) => {
   try {
     if (!stripe) {
-      return res.status(500).json({ 
-        error: 'Stripe n\'est pas configuré. Veuillez ajouter STRIPE_SECRET_KEY dans .env' 
+      return res.status(500).json({
+        error: "Stripe n'est pas configuré. Veuillez ajouter STRIPE_SECRET_KEY dans .env"
       });
     }
 
     const { commande_id } = req.body;
-    
+
     if (!commande_id) {
       return res.status(400).json({ error: 'ID de commande manquant' });
     }
 
     // Récupérer la commande
-    const [rows] = await db.execute(
-      'SELECT * FROM commandes WHERE id = ?',
-      [commande_id]
-    );
-    
+    const [rows] = await db.execute('SELECT * FROM commandes WHERE id = ?', [commande_id]);
+
     const commande = rows[0];
     if (!commande) {
       return res.status(404).json({ error: 'Commande introuvable' });
@@ -65,7 +62,7 @@ router.post('/create-checkout-session', async (req, res) => {
 
     // Calculer le montant (total_cents)
     const amount = commande.total_cents || 0;
-    
+
     if (amount <= 0) {
       return res.status(400).json({ error: 'Montant invalide pour le paiement' });
     }
@@ -84,12 +81,12 @@ router.post('/create-checkout-session', async (req, res) => {
             currency: 'eur',
             product_data: {
               name: `Commande #${commande_id} - Maison Pardailhé`,
-              description: `Retrait prévu le ${commande.date_retrait} à ${commande.creneau}`,
+              description: `Retrait prévu le ${commande.date_retrait} à ${commande.creneau}`
             },
-            unit_amount: amount, // en centimes
+            unit_amount: amount // en centimes
           },
-          quantity: 1,
-        },
+          quantity: 1
+        }
       ],
       mode: 'payment',
       success_url: successUrl,
@@ -99,15 +96,15 @@ router.post('/create-checkout-session', async (req, res) => {
       metadata: {
         commande_id: String(commande_id),
         nom_complet: commande.nom_complet,
-        telephone: commande.telephone,
-      },
+        telephone: commande.telephone
+      }
     });
 
     // Sauvegarder l'ID de session dans la base de données
-    await db.execute(
-      'UPDATE commandes SET stripe_checkout_session_id = ? WHERE id = ?',
-      [session.id, commande_id]
-    );
+    await db.execute('UPDATE commandes SET stripe_checkout_session_id = ? WHERE id = ?', [
+      session.id,
+      commande_id
+    ]);
 
     logger.info({ commande_id, session_id: session.id }, 'Stripe checkout session créée');
 
@@ -115,10 +112,9 @@ router.post('/create-checkout-session', async (req, res) => {
       sessionId: session.id,
       url: session.url
     });
-
   } catch (error) {
     logger.error({ error: error.message, stack: error.stack }, 'Erreur création session Stripe');
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erreur lors de la création de la session de paiement',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -153,10 +149,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
     // Gérer les événements
     switch (event.type) {
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
         const session = event.data.object;
         const commande_id = session.metadata.commande_id || session.client_reference_id;
-        
+
         if (commande_id) {
           // Marquer la commande comme payée
           await db.execute(
@@ -168,10 +164,11 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
              WHERE id = ?`,
             [session.payment_intent, session.payment_method_types?.[0] || 'card', commande_id]
           );
-          
+
           logger.info({ commande_id, session_id: session.id }, 'Paiement confirmé via webhook');
         }
         break;
+      }
 
       case 'payment_intent.payment_failed':
         logger.warn({ event_type: event.type }, 'Paiement échoué');
@@ -182,7 +179,6 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     }
 
     res.json({ received: true });
-
   } catch (error) {
     logger.error({ error: error.message }, 'Erreur traitement webhook Stripe');
     res.status(500).send('Erreur serveur');
@@ -196,12 +192,12 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 router.get('/status/:commande_id', async (req, res) => {
   try {
     const { commande_id } = req.params;
-    
+
     const [rows] = await db.execute(
       'SELECT statut_paiement, date_paiement, methode_paiement FROM commandes WHERE id = ?',
       [commande_id]
     );
-    
+
     const commande = rows[0];
     if (!commande) {
       return res.status(404).json({ error: 'Commande introuvable' });
@@ -213,7 +209,6 @@ router.get('/status/:commande_id', async (req, res) => {
       methode_paiement: commande.methode_paiement,
       is_paid: commande.statut_paiement === 'paye'
     });
-
   } catch (error) {
     logger.error({ error: error.message }, 'Erreur récupération statut paiement');
     res.status(500).json({ error: 'Erreur serveur' });

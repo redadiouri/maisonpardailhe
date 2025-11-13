@@ -3,7 +3,7 @@
 /**
  * Backup de base de données via Node.js pur (sans mysqldump)
  * Utilise mysql2 pour extraire les données et générer un fichier SQL
- * 
+ *
  * Usage: node scripts/db_backup_node.js
  */
 
@@ -36,21 +36,21 @@ function escapeValue(value) {
  */
 function generateInsert(tableName, rows) {
   if (rows.length === 0) return '';
-  
+
   const columns = Object.keys(rows[0]);
-  const columnsList = columns.map(c => `\`${c}\``).join(', ');
-  
+  const columnsList = columns.map((c) => `\`${c}\``).join(', ');
+
   let sql = `-- Données pour la table \`${tableName}\`\n`;
   sql += `INSERT INTO \`${tableName}\` (${columnsList}) VALUES\n`;
-  
-  const values = rows.map(row => {
-    const vals = columns.map(col => escapeValue(row[col]));
+
+  const values = rows.map((row) => {
+    const vals = columns.map((col) => escapeValue(row[col]));
     return `(${vals.join(', ')})`;
   });
-  
+
   sql += values.join(',\n');
   sql += ';\n\n';
-  
+
   return sql;
 }
 
@@ -67,7 +67,7 @@ async function getTableStructure(connection, tableName) {
  */
 async function getTables(connection) {
   const [rows] = await connection.query('SHOW TABLES');
-  return rows.map(r => Object.values(r)[0]);
+  return rows.map((r) => Object.values(r)[0]);
 }
 
 /**
@@ -83,7 +83,8 @@ async function createBackup() {
     }
 
     // Nom du fichier
-    const timestamp = new Date().toISOString()
+    const timestamp = new Date()
+      .toISOString()
       .replace(/T/, '_')
       .replace(/\..+/, '')
       .replace(/:/g, '-');
@@ -105,7 +106,7 @@ async function createBackup() {
 
     // Obtenir toutes les tables
     const [tableRows] = await connection.query('SHOW TABLES');
-    const tables = tableRows.map(r => Object.values(r)[0]);
+    const tables = tableRows.map((r) => Object.values(r)[0]);
     console.log(`   Tables: ${tables.length}`);
 
     // Pour chaque table
@@ -115,7 +116,7 @@ async function createBackup() {
       // Structure de la table
       sqlContent += `-- Structure de la table \`${table}\`\n`;
       sqlContent += `DROP TABLE IF EXISTS \`${table}\`;\n`;
-      
+
       const [createRows] = await connection.query(`SHOW CREATE TABLE \`${table}\``);
       sqlContent += createRows[0]['Create Table'] + ';\n\n';
 
@@ -138,7 +139,7 @@ async function createBackup() {
 
     return filepath;
   } catch (error) {
-    console.error('Détails de l\'erreur:', error);
+    console.error("Détails de l'erreur:", error);
     throw new Error(`Erreur lors du backup: ${error.message}`);
   } finally {
     if (connection) {
@@ -155,9 +156,10 @@ function listBackups() {
     return [];
   }
 
-  const files = fs.readdirSync(BACKUP_DIR)
-    .filter(f => f.startsWith('backup-') && f.endsWith('.sql'))
-    .map(f => ({
+  const files = fs
+    .readdirSync(BACKUP_DIR)
+    .filter((f) => f.startsWith('backup-') && f.endsWith('.sql'))
+    .map((f) => ({
       name: f,
       path: path.join(BACKUP_DIR, f),
       time: fs.statSync(path.join(BACKUP_DIR, f)).mtime.getTime()
@@ -172,7 +174,7 @@ function listBackups() {
  */
 function rotateBackups() {
   const backups = listBackups();
-  
+
   if (backups.length <= MAX_BACKUPS) {
     console.log(`📂 ${backups.length} backup(s) au total (max: ${MAX_BACKUPS})`);
     return;
@@ -181,7 +183,7 @@ function rotateBackups() {
   const toDelete = backups.slice(MAX_BACKUPS);
   console.log(`🗑️  Suppression de ${toDelete.length} ancien(s) backup(s)...`);
 
-  toDelete.forEach(backup => {
+  toDelete.forEach((backup) => {
     try {
       fs.unlinkSync(backup.path);
       console.log(`   ✓ Supprimé: ${backup.name}`);
@@ -198,7 +200,7 @@ function rotateBackups() {
  */
 function showBackupSummary() {
   const backups = listBackups();
-  
+
   if (backups.length === 0) {
     console.log('ℹ️  Aucun backup trouvé');
     return;
@@ -206,7 +208,7 @@ function showBackupSummary() {
 
   console.log('\n📊 Backups disponibles:');
   console.log('─'.repeat(60));
-  
+
   backups.slice(0, 5).forEach((backup, idx) => {
     const date = new Date(backup.time);
     const size = (fs.statSync(backup.path).size / (1024 * 1024)).toFixed(2);

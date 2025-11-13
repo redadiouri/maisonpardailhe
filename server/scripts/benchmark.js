@@ -16,14 +16,14 @@ const stats = {
   totalTime: 0,
   times: [],
   statusCodes: {},
-  errors: []
+  errorsList: []
 };
 
 function makeRequest(url, method = 'GET', data = null, headers = {}) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
     const protocol = urlObj.protocol === 'https:' ? https : http;
-    
+
     const options = {
       hostname: urlObj.hostname,
       port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
@@ -45,7 +45,7 @@ function makeRequest(url, method = 'GET', data = null, headers = {}) {
     const startTime = performance.now();
     const req = protocol.request(options, (res) => {
       let responseData = '';
-      
+
       res.on('data', (chunk) => {
         responseData += chunk;
       });
@@ -53,7 +53,7 @@ function makeRequest(url, method = 'GET', data = null, headers = {}) {
       res.on('end', () => {
         const endTime = performance.now();
         const duration = endTime - startTime;
-        
+
         resolve({
           statusCode: res.statusCode,
           duration: duration,
@@ -83,24 +83,24 @@ function makeRequest(url, method = 'GET', data = null, headers = {}) {
 async function testEndpoint(name, url, method = 'GET', data = null) {
   try {
     const result = await makeRequest(url, method, data);
-    
+
     stats.requests++;
     stats.times.push(result.duration);
     stats.totalTime += result.duration;
-    
+
     if (result.statusCode >= 200 && result.statusCode < 400) {
       stats.success++;
     } else {
       stats.errors++;
     }
-    
+
     stats.statusCodes[result.statusCode] = (stats.statusCodes[result.statusCode] || 0) + 1;
-    
+
     return result;
   } catch (err) {
     stats.requests++;
     stats.errors++;
-    stats.errors.push(err.error || err.message);
+    stats.errorsList.push(err.error || err.message);
     return { error: err.error || err.message, duration: err.duration || 0 };
   }
 }
@@ -119,7 +119,7 @@ async function runUserSession() {
   for (let i = 0; i < REQUESTS_PER_USER; i++) {
     const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
     await testEndpoint(endpoint.name, endpoint.url, endpoint.method);
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+    await new Promise((resolve) => setTimeout(resolve, Math.random() * 100));
   }
 }
 
@@ -150,28 +150,30 @@ async function runBenchmark() {
   await warmup();
 
   const startTime = performance.now();
-  
+
   const users = [];
   for (let i = 0; i < CONCURRENT_USERS; i++) {
     users.push(runUserSession());
   }
-  
+
   await Promise.all(users);
-  
+
   const endTime = performance.now();
   const totalDuration = (endTime - startTime) / 1000;
 
   console.log('\n' + '═'.repeat(60));
   console.log('  RESULTS');
   console.log('═'.repeat(60));
-  
+
   console.log(`\n📊 Summary:`);
   console.log(`  Total Requests: ${stats.requests}`);
-  console.log(`  Successful: ${stats.success} (${((stats.success / stats.requests) * 100).toFixed(2)}%)`);
+  console.log(
+    `  Successful: ${stats.success} (${((stats.success / stats.requests) * 100).toFixed(2)}%)`
+  );
   console.log(`  Errors: ${stats.errors} (${((stats.errors / stats.requests) * 100).toFixed(2)}%)`);
   console.log(`  Total Duration: ${totalDuration.toFixed(2)}s`);
   console.log(`  Requests/sec: ${(stats.requests / totalDuration).toFixed(2)}`);
-  
+
   if (stats.times.length > 0) {
     stats.times.sort((a, b) => a - b);
     const avg = stats.times.reduce((a, b) => a + b, 0) / stats.times.length;
@@ -180,7 +182,7 @@ async function runBenchmark() {
     const p99 = stats.times[Math.floor(stats.times.length * 0.99)];
     const min = stats.times[0];
     const max = stats.times[stats.times.length - 1];
-    
+
     console.log(`\n⏱️  Response Times (ms):`);
     console.log(`  Average: ${avg.toFixed(2)}ms`);
     console.log(`  Median: ${median.toFixed(2)}ms`);
@@ -189,14 +191,14 @@ async function runBenchmark() {
     console.log(`  P95: ${p95.toFixed(2)}ms`);
     console.log(`  P99: ${p99.toFixed(2)}ms`);
   }
-  
+
   console.log(`\n📈 Status Codes:`);
   Object.keys(stats.statusCodes)
     .sort()
-    .forEach(code => {
+    .forEach((code) => {
       console.log(`  ${code}: ${stats.statusCodes[code]} requests`);
     });
-  
+
   if (stats.errors.length > 0 && stats.errors.length <= 10) {
     console.log(`\n❌ Errors:`);
     stats.errors.forEach((err, i) => {
@@ -205,13 +207,12 @@ async function runBenchmark() {
   } else if (stats.errors.length > 10) {
     console.log(`\n❌ Too many errors to display (${stats.errors.length} total)`);
   }
-  
+
   console.log('\n' + '═'.repeat(60));
-  
-  const avgResponseTime = stats.times.length > 0 
-    ? stats.times.reduce((a, b) => a + b, 0) / stats.times.length 
-    : 0;
-  
+
+  const avgResponseTime =
+    stats.times.length > 0 ? stats.times.reduce((a, b) => a + b, 0) / stats.times.length : 0;
+
   if (avgResponseTime < 100) {
     console.log('✅ Excellent performance! (<100ms avg)');
   } else if (avgResponseTime < 300) {
@@ -221,11 +222,11 @@ async function runBenchmark() {
   } else {
     console.log('❌ Poor performance (>1s avg) - optimization needed');
   }
-  
+
   console.log('═'.repeat(60) + '\n');
 }
 
-runBenchmark().catch(err => {
+runBenchmark().catch((err) => {
   console.error('Benchmark failed:', err);
   process.exit(1);
 });

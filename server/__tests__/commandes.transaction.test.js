@@ -2,8 +2,13 @@ const request = require('supertest');
 const express = require('express');
 
 // Mocks: middleware and side-effects so we can test transactional flow
-jest.mock('../middleware/validation', () => ({ validate: () => (req, res, next) => next(), commandeSchema: {} }));
-jest.mock('../middleware/sanitize', () => ({ sanitizeMiddleware: () => (req, res, next) => next() }));
+jest.mock('../middleware/validation', () => ({
+  validate: () => (req, res, next) => next(),
+  commandeSchema: {}
+}));
+jest.mock('../middleware/sanitize', () => ({
+  sanitizeMiddleware: () => (req, res, next) => next()
+}));
 jest.mock('../middleware/rateLimits', () => ({ commandeLimiter: (req, res, next) => next() }));
 jest.mock('../models/commande', () => ({ create: jest.fn(), getById: jest.fn() }));
 jest.mock('../utils/email', () => ({ sendCommandeEmail: jest.fn() }));

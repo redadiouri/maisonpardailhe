@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
   }
   try {
     await addUnsubscribe(email);
-        const parts = String(email).split('@');
+    const parts = String(email).split('@');
     let displayed = '***';
     if (parts.length === 2) {
       const name = parts[0];
@@ -21,7 +21,9 @@ router.get('/', async (req, res) => {
       const visible = name.length > 1 ? name[0] + '***' : '*';
       displayed = `${visible}@${domain}`;
     }
-    res.send(`<html><head><meta charset="utf-8"><title>Désabonnement</title></head><body><h1>Adresse désabonnée</h1><p>L'adresse <strong>${displayed}</strong> a été retirée de la liste de diffusion.</p></body></html>`);
+    res.send(
+      `<html><head><meta charset="utf-8"><title>Désabonnement</title></head><body><h1>Adresse désabonnée</h1><p>L'adresse <strong>${displayed}</strong> a été retirée de la liste de diffusion.</p></body></html>`
+    );
   } catch (e) {
     logger.error('Failed to add unsubscribe: %o', e && (e.stack || e));
     res.status(500).send('<h1>Erreur serveur</h1>');

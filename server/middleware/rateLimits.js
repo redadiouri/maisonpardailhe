@@ -57,13 +57,13 @@ const apiLimiter = createLimiter({
 const emailLimiter = createLimiter({
   windowMs: 60 * 60 * 1000,
   max: isProd ? 3 : 10,
-  message: 'Trop d\'envois d\'emails. Veuillez réessayer dans une heure.'
+  message: "Trop d'envois d'emails. Veuillez réessayer dans une heure."
 });
 
 const adminActionLimiter = createLimiter({
   windowMs: 1 * 60 * 1000,
   max: isProd ? 50 : 100,
-  message: 'Trop d\'actions administratives. Veuillez ralentir.'
+  message: "Trop d'actions administratives. Veuillez ralentir."
 });
 
 module.exports = {

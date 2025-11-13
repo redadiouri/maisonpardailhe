@@ -8,7 +8,7 @@ async function addAdmin(username, password) {
   process.exit();
 }
 
-const [,, username, password] = process.argv;
+const [, , username, password] = process.argv;
 if (!username || !password) {
   console.log('Usage: node add_admin.js <username> <password>');
   process.exit(1);

@@ -27,7 +27,9 @@ router.get('/', auth, async (req, res, next) => {
   try {
     const list = await loadNotifications();
     res.json(list);
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 });
 
 router.put('/:id/read', auth, async (req, res, next) => {
@@ -35,14 +37,19 @@ router.put('/:id/read', auth, async (req, res, next) => {
     const id = req.params.id;
     let list = await loadNotifications();
     let found = false;
-    list = list.map(n => {
-      if (n.id === id) { found = true; return Object.assign({}, n, { read: true, read_at: new Date().toISOString() }); }
+    list = list.map((n) => {
+      if (n.id === id) {
+        found = true;
+        return Object.assign({}, n, { read: true, read_at: new Date().toISOString() });
+      }
       return n;
     });
     if (!found) return res.status(404).json({ message: 'Not found' });
     await saveNotifications(list);
     res.json({ ok: true });
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 });
 
 router.delete('/:id', auth, async (req, res, next) => {
@@ -50,11 +57,13 @@ router.delete('/:id', auth, async (req, res, next) => {
     const id = req.params.id;
     let list = await loadNotifications();
     const before = list.length;
-    list = list.filter(n => n.id !== id);
+    list = list.filter((n) => n.id !== id);
     if (list.length === before) return res.status(404).json({ message: 'Not found' });
     await saveNotifications(list);
     res.json({ ok: true });
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 });
 
 module.exports = router;

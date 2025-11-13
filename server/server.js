@@ -41,116 +41,128 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(helmet({
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        'https://cdn.jsdelivr.net',
-        'https://maps.googleapis.com',
-        'https://maps.gstatic.com',
-        'https://www.googletagmanager.com',
-        'https://www.google-analytics.com',
-        'https://js.stripe.com',
-        (req, res) => `'nonce-${res.locals.nonce}'`
-      ],
-      styleSrc: [
-        "'self'",
-        'https://cdn.jsdelivr.net',
-        'https://fonts.googleapis.com',
-        'https://cdn.1gsldjv.net',
-        'https://*.1gsldjv.net',
-        'https://*.jsdelivr.net',
-        "'unsafe-inline'"
-      ],
-      styleSrcElem: [
-        "'self'",
-        'https://cdn.jsdelivr.net',
-        'https://fonts.googleapis.com',
-        'https://cdn.1gsldjv.net',
-        'https://*.1gsldjv.net',
-        'https://*.jsdelivr.net',
-        "'unsafe-inline'"
-      ],
-      imgSrc: [
-        "'self'",
-        'data:',
-        'https://images.unsplash.com',
-        'https://cdn.jsdelivr.net',
-        'https://*.tile.openstreetmap.org',
-        'https://tile.openstreetmap.org',
-        'https://*.googleapis.com',
-        'https://maps.googleapis.com',
-        'https://maps.gstatic.com',
-        'https://*.gstatic.com',
-        'https://maps.goopleapis.com',
-        'https://r.static.com'
-      ],
-      connectSrc: [
-        "'self'",
-        'https://cdn.jsdelivr.net',
-        'https://images.unsplash.com',
-        'https://*.googleapis.com',
-        'https://maps.googleapis.com',
-        'https://www.google-analytics.com',
-        'https://fonts.googleapis.com',
-        'https://fonts.gstatic.com',
-        'https://cdn.1gsldjv.net',
-        'https://*.gstatic.com',
-        'https://xn--maisonpardailh-okb.fr',
-        'https://sse.xn--maisonpardailh-okb.fr',
-        'https://api.stripe.com'
-      ],
-      frameSrc: [
-        "'self'",
-        'https://www.google.com',
-        'https://maps.google.com',
-        'https://js.stripe.com'
-      ],
-      fontSrc: [
-        "'self'",
-        'https://fonts.gstatic.com',
-        'https://cdn.1gsldjv.net',
-        'https://*.1gsldjv.net',
-        'https://cdn.jsdelivr.net',
-        'https://*.jsdelivr.net',
-        'data:'
-      ],
-      manifestSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      frameAncestors: ["'none'"],
-      baseUri: ["'self'"],
-      formAction: ["'self'"],
-      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  },
-  referrerPolicy: {
-    policy: 'strict-origin-when-cross-origin'
-  },
-  noSniff: true,
-  xssFilter: true,
-  hidePoweredBy: true
-}));
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          'https://cdn.jsdelivr.net',
+          'https://maps.googleapis.com',
+          'https://maps.gstatic.com',
+          'https://www.googletagmanager.com',
+          'https://www.google-analytics.com',
+          'https://js.stripe.com',
+          (req, res) => `'nonce-${res.locals.nonce}'`
+        ],
+        styleSrc: [
+          "'self'",
+          'https://cdn.jsdelivr.net',
+          'https://fonts.googleapis.com',
+          'https://cdn.1gsldjv.net',
+          'https://*.1gsldjv.net',
+          'https://*.jsdelivr.net',
+          "'unsafe-inline'"
+        ],
+        styleSrcElem: [
+          "'self'",
+          'https://cdn.jsdelivr.net',
+          'https://fonts.googleapis.com',
+          'https://cdn.1gsldjv.net',
+          'https://*.1gsldjv.net',
+          'https://*.jsdelivr.net',
+          "'unsafe-inline'"
+        ],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'https://images.unsplash.com',
+          'https://cdn.jsdelivr.net',
+          'https://*.tile.openstreetmap.org',
+          'https://tile.openstreetmap.org',
+          'https://*.googleapis.com',
+          'https://maps.googleapis.com',
+          'https://maps.gstatic.com',
+          'https://*.gstatic.com',
+          'https://maps.goopleapis.com',
+          'https://r.static.com'
+        ],
+        connectSrc: [
+          "'self'",
+          'https://cdn.jsdelivr.net',
+          'https://images.unsplash.com',
+          'https://*.googleapis.com',
+          'https://maps.googleapis.com',
+          'https://www.google-analytics.com',
+          'https://fonts.googleapis.com',
+          'https://fonts.gstatic.com',
+          'https://cdn.1gsldjv.net',
+          'https://*.gstatic.com',
+          'https://xn--maisonpardailh-okb.fr',
+          'https://sse.xn--maisonpardailh-okb.fr',
+          'https://api.stripe.com'
+        ],
+        frameSrc: [
+          "'self'",
+          'https://www.google.com',
+          'https://maps.google.com',
+          'https://js.stripe.com'
+        ],
+        fontSrc: [
+          "'self'",
+          'https://fonts.gstatic.com',
+          'https://cdn.1gsldjv.net',
+          'https://*.1gsldjv.net',
+          'https://cdn.jsdelivr.net',
+          'https://*.jsdelivr.net',
+          'data:'
+        ],
+        manifestSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
+      }
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    },
+    referrerPolicy: {
+      policy: 'strict-origin-when-cross-origin'
+    },
+    noSniff: true,
+    xssFilter: true,
+    hidePoweredBy: true
+  })
+);
 
 let allowedOrigins;
 if (process.env.NODE_ENV === 'production') {
   if (process.env.PROD_ALLOWED_ORIGINS) {
-    allowedOrigins = process.env.PROD_ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean);
+    allowedOrigins = process.env.PROD_ALLOWED_ORIGINS.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
   } else if (process.env.APP_URL) {
-        allowedOrigins = [process.env.APP_URL];
+    allowedOrigins = [process.env.APP_URL];
   } else {
-                logger.warn('PROD_ALLOWED_ORIGINS not set in production — allowing all origins. Set PROD_ALLOWED_ORIGINS to restrict CORS.');
-    allowedOrigins = null;   }
+    logger.warn(
+      'PROD_ALLOWED_ORIGINS not set in production — allowing all origins. Set PROD_ALLOWED_ORIGINS to restrict CORS.'
+    );
+    allowedOrigins = null;
+  }
 } else {
-  allowedOrigins = ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:5500', 'http://127.0.0.1:5500'];
+  allowedOrigins = [
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500'
+  ];
 }
 
 // Fichiers publics servis AVANT tout middleware
@@ -159,34 +171,40 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // Servir les fichiers statiques publics en premier (y compris manifest.json)
-app.use(express.static(path.join(__dirname, '../maisonpardailhe'), { 
-  maxAge: 0, // Pas de cache pour debug
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('manifest.json')) {
-      res.setHeader('Content-Type', 'application/manifest+json');
-      res.setHeader('Access-Control-Allow-Origin', '*');
+app.use(
+  express.static(path.join(__dirname, '../maisonpardailhe'), {
+    maxAge: 0, // Pas de cache pour debug
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('manifest.json')) {
+        res.setHeader('Content-Type', 'application/manifest+json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
     }
-  }
-}));
+  })
+);
 
-app.use(cors({
-  origin: function(origin, callback) {
-        if (!origin) return callback(null, true);
-        if (!allowedOrigins) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
-    return callback(new Error('Origin not allowed by CORS'));
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (!allowedOrigins) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+      return callback(new Error('Origin not allowed by CORS'));
+    },
+    credentials: true
+  })
+);
 
-app.use(compression({
+app.use(
+  compression({
     threshold: 1024,
     level: 6,
     filter: (req, res) => {
-    if (req.headers['x-no-compression']) return false;
-    return compression.filter(req, res);
-  }
-}));
+      if (req.headers['x-no-compression']) return false;
+      return compression.filter(req, res);
+    }
+  })
+);
 
 app.use(globalLimiter);
 
@@ -195,10 +213,12 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-this';
 if (!process.env.SESSION_SECRET) {
-  logger.warn('Warning: SESSION_SECRET not set in .env — using fallback. Set SESSION_SECRET for production.');
+  logger.warn(
+    'Warning: SESSION_SECRET not set in .env — using fallback. Set SESSION_SECRET for production.'
+  );
 }
 if (process.env.NODE_ENV === 'production') {
-    app.set('trust proxy', 1);
+  app.set('trust proxy', 1);
 }
 
 const sessionStoreOptions = {
@@ -207,7 +227,7 @@ const sessionStoreOptions = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-    createDatabaseTable: true
+  createDatabaseTable: true
 };
 const mysql2 = require('mysql2/promise');
 const sessionConnection = mysql2.createPool({
@@ -225,29 +245,31 @@ try {
       if (sessionConnection && typeof sessionConnection.end === 'function') {
         await sessionConnection.end();
       }
-    } catch (e) {
-          }
+    } catch (e) {}
   });
-} catch (e) {
-  }
+} catch (e) {}
 
 const sessionPoolForStore = {
   query: (...args) => sessionConnection.query(...args)
 };
 
-app.use(session({
-  key: 'mp.sid',
-  secret: SESSION_SECRET,
-  store: new MySQLStore(sessionStoreOptions, sessionPoolForStore),
-  resave: false,
-  saveUninitialized: false,
-      rolling: true,
-  cookie: {
-    secure: (process.env.NODE_ENV === 'production'),     httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 1000 * 60 * 60,
-    domain: process.env.NODE_ENV === 'production' ? '.xn--maisonpardailh-okb.fr' : undefined   }
-}));
+app.use(
+  session({
+    key: 'mp.sid',
+    secret: SESSION_SECRET,
+    store: new MySQLStore(sessionStoreOptions, sessionPoolForStore),
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60,
+      domain: process.env.NODE_ENV === 'production' ? '.xn--maisonpardailh-okb.fr' : undefined
+    }
+  })
+);
 
 const csrfProtection = csurf();
 
@@ -268,16 +290,15 @@ app.get('/api/csrf-token', (req, res) => {
   }
 });
 
-    app.get('/api/config', (req, res) => {
-    res.json({
-      timezone: process.env.TIMEZONE || 'Europe/Paris',
-      appUrl: process.env.APP_URL || `http://localhost:${PORT}`
-    });
+app.get('/api/config', (req, res) => {
+  res.json({
+    timezone: process.env.TIMEZONE || 'Europe/Paris',
+    appUrl: process.env.APP_URL || `http://localhost:${PORT}`
   });
-
+});
 
 app.get(['/admin', '/admin/'], (req, res) => {
-    if (req.session && req.session.admin) {
+  if (req.session && req.session.admin) {
     return res.redirect(302, '/admin/dashboard');
   }
   return res.redirect(302, '/admin/login');
@@ -285,25 +306,28 @@ app.get(['/admin', '/admin/'], (req, res) => {
 const oneHour = 1000 * 60 * 60;
 const sevenDays = 1000 * 60 * 60 * 24 * 7;
 const oneYear = 1000 * 60 * 60 * 24 * 365;
-const staticMaxAge = (process.env.NODE_ENV === 'production') ? sevenDays : oneHour;
+const staticMaxAge = process.env.NODE_ENV === 'production' ? sevenDays : oneHour;
 
 function setStaticHeaders(res, filePath) {
   if (filePath.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache');
   } else if (filePath.endsWith('.json')) {
     res.setHeader('Cache-Control', 'no-cache');
   } else if (filePath.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i)) {
-        const imageMaxAge = (process.env.NODE_ENV === 'production') ? oneYear : sevenDays;
-    res.setHeader('Cache-Control', `public, max-age=${Math.floor(imageMaxAge/1000)}, immutable`);
+    const imageMaxAge = process.env.NODE_ENV === 'production' ? oneYear : sevenDays;
+    res.setHeader('Cache-Control', `public, max-age=${Math.floor(imageMaxAge / 1000)}, immutable`);
   } else {
-        res.setHeader('Cache-Control', `public, max-age=${Math.floor(staticMaxAge/1000)}`);
+    res.setHeader('Cache-Control', `public, max-age=${Math.floor(staticMaxAge / 1000)}`);
   }
 }
 
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const cleanPath = req.path.replace(/\.html$/, '');
-    return res.redirect(301, cleanPath + (req.url.includes('?') ? '?' + req.url.split('?')[1] : ''));
+    return res.redirect(
+      301,
+      cleanPath + (req.url.includes('?') ? '?' + req.url.split('?')[1] : '')
+    );
   }
   next();
 });
@@ -312,11 +336,10 @@ app.use((req, res, next) => {
   try {
     const p = req.path || '';
     if (!p.startsWith('/admin') && p.match(/(^|\/)index\.html$/i)) {
-            const target = p.replace(/index\.html$/i, '') || '/';
+      const target = p.replace(/index\.html$/i, '') || '/';
       return res.redirect(301, target);
     }
-  } catch (e) {
-      }
+  } catch (e) {}
   return next();
 });
 
@@ -343,18 +366,18 @@ const injectNonce = (filePath) => {
         logger.error('Error reading file %s: %o', filePath, err);
         return res.status(500).send('Internal Server Error');
       }
-      
+
       // Injecter le nonce dans toutes les balises <script> qui n'ont pas déjà un attribut nonce
       const nonce = res.locals.nonce;
       const htmlWithNonce = html.replace(/<script(?!\s+[^>]*nonce=)/g, `<script nonce="${nonce}"`);
-      
+
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(htmlWithNonce);
     });
   };
 };
 
-Object.keys(routeToFile).forEach(route => {
+Object.keys(routeToFile).forEach((route) => {
   app.get(route, (req, res) => {
     const file = routeToFile[route];
     // Injecter le nonce pour les pages admin
@@ -367,8 +390,13 @@ Object.keys(routeToFile).forEach(route => {
 
 // express.static déjà défini en haut du fichier (ligne ~154)
 // app.use(express.static(...)) commenté pour éviter doublon
-app.use('/admin', express.static(path.join(__dirname, '../maisonpardailhe/admin'), { maxAge: staticMaxAge, setHeaders: (res, filePath) => setStaticHeaders(res, filePath) }));
-
+app.use(
+  '/admin',
+  express.static(path.join(__dirname, '../maisonpardailhe/admin'), {
+    maxAge: staticMaxAge,
+    setHeaders: (res, filePath) => setStaticHeaders(res, filePath)
+  })
+);
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at: %o reason: %o', promise, reason);
@@ -398,14 +426,16 @@ const logStartupInfo = () => {
 
 const checkDatabase = async () => {
   try {
-        const pool = require('./models/db');
+    const pool = require('./models/db');
     await pool.query('SELECT 1');
     logger.info('Database check: OK');
   } catch (err) {
     logger.warn('Database check: FAILED');
     if (err && err.code) logger.warn('DB error code: %s', err.code);
     if (err && err.message) logger.warn('DB message: %s', err.message.split('\n')[0]);
-    logger.warn('Tip: verify DB_HOST/DB_USER/DB_PASSWORD/DB_NAME in server/.env (or server/.env.example)');
+    logger.warn(
+      'Tip: verify DB_HOST/DB_USER/DB_PASSWORD/DB_NAME in server/.env (or server/.env.example)'
+    );
   }
 };
 
@@ -500,7 +530,6 @@ if (require.main === module) {
       logger.warn('Error closing session connection pool: %o', e && e.message);
     }
 
-    
     try {
       const pool = require('./models/db');
       if (pool && typeof pool.end === 'function') {
