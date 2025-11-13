@@ -1,5 +1,31 @@
 const apiBase = '/api/admin';
 
+// Enregistrement du Service Worker pour PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin/' })
+      .then((registration) => {
+        console.log('✅ Service Worker enregistré:', registration.scope);
+        
+        // Vérifier les mises à jour toutes les heures
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+      })
+      .catch((error) => {
+        console.log('❌ Échec enregistrement Service Worker:', error);
+      });
+  });
+}
+
+// Gérer l'installation de l'app (bouton "Installer l'app")
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('💡 L\'app peut être installée');
+});
+
 // URL SSE: utiliser un sous-domaine sans proxy Cloudflare pour éviter les timeout 524
 // En production: https://sse.votre-domaine.com/api/admin/commandes/stream
 // En développement: /api/admin/commandes/stream (même domaine)

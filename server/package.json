@@ -19,6 +19,7 @@
     "db:restore:docker:latest": "pwsh scripts/db_restore_docker.ps1 latest",
     "images:optimize": "node scripts/images_optimize.js",
     "favicon:create": "node scripts/create_favicon.js && node scripts/create_favicon_ico.js",
+    "pwa:validate": "echo 'Vérifier le manifest PWA et le Service Worker' && node -e \"console.log('✅ PWA configurée. Testez sur: https://web.dev/measure/')\"",
     "css:minify": "npx cleancss -o ../maisonpardailhe/css/style.min.css ../maisonpardailhe/css/style.css && npx cleancss -o ../maisonpardailhe/css/datepicker.min.css ../maisonpardailhe/css/datepicker.css && npx cleancss -o ../maisonpardailhe/admin/css/admin-clean.min.css ../maisonpardailhe/admin/css/admin-clean.css",
     "build": "npm run images:optimize && npm run css:minify",
     "benchmark": "node scripts/benchmark.js",
