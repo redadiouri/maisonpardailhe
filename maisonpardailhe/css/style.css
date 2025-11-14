@@ -2660,3 +2660,395 @@ textarea {
     }
 }
 
+/* ========================================
+   MOBILE OPTIMIZATIONS (< 480px)
+   ======================================== */
+
+@media (max-width: 480px) {
+    /* Typography mobile */
+    body {
+        font-size: 15px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        line-height: 1.2;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    h3 {
+        font-size: 1.2rem;
+    }
+
+    /* Header mobile */
+    .nav-container {
+        padding: 0.75rem 1rem;
+    }
+
+    .brand-logo {
+        width: 45px;
+        height: 45px;
+    }
+
+    .brand-name {
+        font-size: 1rem;
+    }
+
+    /* Hero section mobile */
+    .hero {
+        min-height: 50vh;
+        padding: 2rem 1rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        padding: 0 0.5rem;
+    }
+
+    /* Page hero mobile */
+    .page-hero {
+        padding: 3rem 1rem;
+        min-height: 35vh;
+    }
+
+    .page-hero h1 {
+        font-size: 1.6rem;
+    }
+
+    .page-hero p {
+        font-size: 0.95rem;
+    }
+
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    /* Sections mobile */
+    section {
+        padding: 2.5rem 1rem;
+    }
+
+    .section-title {
+        font-size: 1.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Grid mobile - force single column */
+    .grid,
+    .grid--two,
+    .grid--three,
+    .menu-grid,
+    .services-grid,
+    .award-grid,
+    .identity-showcase,
+    .contact-grid,
+    .info-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem;
+    }
+
+    /* Cards mobile */
+    .card,
+    .menu-card,
+    .service-card,
+    .award-card,
+    .showcase-card,
+    .contact-card,
+    .info-card {
+        padding: 1.25rem;
+    }
+
+    .media-card img,
+    .menu-card__image img,
+    .service-card__media img,
+    .showcase-card img {
+        aspect-ratio: 16/9;
+        max-height: 200px;
+    }
+
+    /* Buttons mobile */
+    .btn {
+        padding: 0.85rem 1.25rem;
+        font-size: 0.9rem;
+        width: 100%;
+        display: block;
+        text-align: center;
+    }
+
+    .btn-outline {
+        padding: 0.75rem 1.25rem;
+    }
+
+    .cta-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .cta-group .btn {
+        width: 100%;
+    }
+
+    /* Forms mobile */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important; /* Prevent zoom on iOS */
+        padding: 0.85rem;
+    }
+
+    label {
+        font-size: 0.9rem;
+    }
+
+    /* Selection panel mobile */
+    .selection-panel {
+        position: fixed;
+        top: 10%;
+        left: 5%;
+        right: 5%;
+        width: auto;
+        max-height: 80vh;
+        padding: 1.25rem;
+    }
+
+    .selection-item {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .selection-item__info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .selection-item__image {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Footer mobile */
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+    }
+
+    .footer-section h4 {
+        font-size: 1.1rem;
+    }
+
+    .footer-section a {
+        font-size: 0.95rem;
+    }
+
+    /* Identity split mobile */
+    .identity-split {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .identity-split.reverse {
+        grid-template-columns: 1fr;
+    }
+
+    /* Services hero mobile */
+    .services-hero__inner {
+        padding: 2rem 1rem;
+    }
+
+    .services-cta__panel {
+        padding: 2rem 1.25rem;
+    }
+
+    .services-cta__actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .services-cta__actions .btn {
+        width: 100%;
+    }
+
+    /* Contact map mobile */
+    #contact-map {
+        min-height: 300px !important;
+    }
+
+    .map-grid {
+        gap: 1rem;
+    }
+
+    .map-caption {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    /* Order/Commande page mobile */
+    .order-container {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .order-card {
+        padding: 1.25rem;
+    }
+
+    .order-header {
+        padding: 2rem 1.25rem;
+    }
+
+    .order-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .order-header p {
+        font-size: 0.95rem;
+    }
+
+    .products-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* Error page mobile */
+    .error-hero {
+        padding: 2rem 1rem;
+        min-height: 50vh;
+    }
+
+    .error-code {
+        font-size: 5rem;
+    }
+
+    .error-title {
+        font-size: 1.4rem;
+    }
+
+    .error-desc {
+        font-size: 0.95rem;
+    }
+
+    .error-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .error-actions .btn {
+        width: 100%;
+    }
+
+    /* Info cards mobile */
+    .info-card__section h4 {
+        font-size: 1rem;
+    }
+
+    .info-hours,
+    .contact-hours {
+        font-size: 0.9rem;
+    }
+
+    /* Time slots mobile */
+    .cc-time-container {
+        gap: 0.5rem;
+    }
+
+    .time-slot {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    /* Datepicker mobile */
+    .datepicker {
+        width: 90vw;
+        max-width: 320px;
+    }
+
+    /* Navigation mobile improvements */
+    .nav-links {
+        padding: 1rem;
+    }
+
+    .nav-links li a {
+        padding: 0.85rem;
+        font-size: 1rem;
+    }
+
+    /* Improve touch targets */
+    button,
+    a,
+    input[type="button"],
+    input[type="submit"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+    }
+
+    section,
+    .container {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+}
+
+/* ========================================
+   EXTRA SMALL MOBILE (< 360px)
+   ======================================== */
+
+@media (max-width: 360px) {
+    body {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    .brand-name {
+        font-size: 0.9rem;
+    }
+
+    .page-hero {
+        padding: 2.5rem 0.75rem;
+    }
+
+    section {
+        padding: 2rem 0.75rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .card,
+    .menu-card,
+    .service-card {
+        padding: 1rem;
+    }
+
+    .selection-panel {
+        left: 2.5%;
+        right: 2.5%;
+        padding: 1rem;
+    }
+
+    .footer {
+        padding: 2rem 0.75rem;
+    }
+}
+
+

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Récapitulatif commande — Maison Pardailhé</title>
+      <title>Récapitulatif commande — Maison Pardailhé</title>
   <meta name="description" content="Récapitulatif de votre commande Maison Pardailhé. Consultez le détail, horaires et lieu de retrait." />
   <link rel="canonical" href="https://maisonpardailhé.fr/commande" />
   
@@ -16,13 +16,14 @@
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#c24b3f" />
 
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
   
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/animations.css">
-  <link rel="stylesheet" href="/css/datepicker.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/datepicker.css">
 </head>
 <body>
   <header>
@@ -38,7 +39,7 @@
             </button>
             <nav>
                 <ul class="nav-links">
-                    <li><a href="/" aria-current="page">Accueil</a></li>
+                    <li><a href="/">Accueil</a></li>
                     <li><a href="/menu">Menu</a></li>
                     <li><a href="/services">Services</a></li>
                     <li><a href="/identite">Identité</a></li>
@@ -49,18 +50,20 @@
         </div>
     </header>
 
-  <main style="max-width:1100px;margin:28px auto;padding:0 16px;">
-    <div style="text-align:center;margin-bottom:32px;">
-      <h1 id="page-title" style="margin-bottom:8px;">Récapitulatif commande</h1>
-      <p id="page-sub" style="color:var(--gris-velin);margin:0;">Chargement…</p>
-    </div>
+  <main>
+    <section>
+      <div style="text-align:center;margin-bottom:32px;">
+        <h2 class="section-title" id="page-title" style="margin-bottom:8px;">Récapitulatif commande</h2>
+        <p id="page-sub" class="section-subtitle" style="margin:0;">Chargement…</p>
+      </div>
 
-    <div id="recap-spinner" style="display:block;margin:40px 0;text-align:center;">
-      <span class="btn-spinner" aria-hidden="true" style="width:40px;height:40px;border-width:4px;vertical-align:middle;margin-bottom:16px;display:inline-block;"></span>
-      <div id="recap-spin-text" style="color:var(--gris-velin);font-size:1.1rem;">Récupération des informations de la commande…</div>
-    </div>
+      <div id="recap-spinner" style="display:block;margin:40px 0;text-align:center;">
+        <span class="btn-spinner" aria-hidden="true" style="width:40px;height:40px;border-width:4px;vertical-align:middle;margin-bottom:16px;display:inline-block;"></span>
+        <div id="recap-spin-text" style="color:var(--gris-velin);font-size:1.1rem;">Récupération des informations de la commande…</div>
+      </div>
 
-    <div id="recap" style="display:none"></div>
+      <div id="recap" style="display:none"></div>
+    </section>
   </main>
 
   <style>
@@ -357,7 +360,51 @@
     }
   </style>
 
+  <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section footer-about">
+                <h4>Maison Pardailhé</h4>
+                <p>Artisan charcutier-traiteur à Roquettes & Toulouse. Excellence rouge et noir, créations faites maison, service sur-mesure.</p>
+            </div>
+            <div class="footer-section footer-links">
+                <h4>Explorer</h4>
+                <a href="/menu">
+                    <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" x2="18" y1="17" y2="17"/></svg>
+                    Menu
+                </a>
+                <a href="/services">
+                    <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+                    Services
+                </a>
+                <a href="/identite">
+                    <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Notre identité
+                </a>
+                <a href="/contact">
+                    <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    Nous écrire
+                </a>
+            </div>
+            <div class="footer-section footer-social">
+                <h4>Suivre</h4>
+                <a href="https://www.instagram.com/maison.pardailhe/?hl=fr" class="social-link" target="_blank" rel="noopener noreferrer">
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                    Instagram
+                </a>
+                <a href="https://web.facebook.com/maison.pardailhe/?locale=fr_FR" class="social-link" target="_blank" rel="noopener noreferrer">
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    Facebook
+                </a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 Maison Pardailhé. Tous droits réservés.</p>
+        </div>
+    </footer>
+
   <script src="/js/commande.js"></script>
+  <script src="/js/app.js"></script>
   <script src="/js/seo.js" defer></script>
 </body>
 </html>
+

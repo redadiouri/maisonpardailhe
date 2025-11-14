@@ -175,10 +175,38 @@
       return;
     }
     
-    itemsToShow.forEach(m => {
+    itemsToShow.forEach((m, index) => {
       const card = renderMenuCard(m);
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(30px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      card.dataset.animateOnScroll = 'true';
       root.appendChild(card);
     });
+    
+    // Initialiser l'animation au scroll
+    initScrollAnimation();
+  }
+  
+  function initScrollAnimation() {
+    const cards = document.querySelectorAll('[data-animate-on-scroll="true"]');
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, 0);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    });
+    
+    cards.forEach(card => observer.observe(card));
   }
 
     if (document.readyState === 'loading') {

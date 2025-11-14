@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maison Pardailhé - Charcutier Traiteur | Pâté en Croûte Médaillé</title>
+        <title>Maison Pardailhé - Charcutier Traiteur | Pâté en Croûte Médaillé</title>
     <meta name="description" content="🏆 Maison Pardailhé - Artisan charcutier-traiteur primé à Roquettes (31120) & marché Victor Hugo Toulouse. Pâté en croûte médaillé, charcuterie fine artisanale. Click & Collect. ☎️ 05 62 48 02 29" />
     <link rel="canonical" href="https://maisonpardailhé.fr/" />
 
@@ -391,11 +391,11 @@
                         <option value="toulouse">Toulouse – Boutique Maison Pardailhé (Marché Victor Hugo)</option>
                     </select>
 
-                    <label for="cc-time">Créneau souhaité</label>
+                    <label id="cc-time-label">Créneau souhaité</label>
                     
-                    <div id="cc-time-container" class="cc-time-container" aria-describedby="cc-time-note" role="list"></div>
+                    <div id="cc-time-container" class="cc-time-container" aria-describedby="cc-time-note" aria-labelledby="cc-time-label" role="list"></div>
                     <input id="cc-time" name="cc-time" type="hidden" aria-hidden="true">
-                    <p id="cc-time-note" class="form-hint">Indiquez l’heure précise souhaitée.</p>
+                    <p id="cc-time-note" class="form-hint">Indiquez l'heure précise souhaitée.</p>
 
                     <label for="cc-notes">Précisions</label>
                     <textarea id="cc-notes" name="cc-notes" placeholder="Quantités, accompagnements, instructions particulières..."></textarea>
@@ -460,3 +460,6 @@
     <link rel="stylesheet" href="/css/skeleton.css">
 </body>
 </html>
+
+
+
