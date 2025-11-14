@@ -1,0 +1,462 @@
+/* ============================================
+   ANIMATIONS MODERNES - MAISON PARDAILHÉ
+   ============================================ */
+
+/* Animation du logo */
+@keyframes logoGlow {
+    0%, 100% {
+        text-shadow: 
+            0 0 5px rgba(194, 75, 63, 0.3),
+            0 0 10px rgba(194, 75, 63, 0.2);
+    }
+    50% {
+        text-shadow: 
+            0 0 10px rgba(194, 75, 63, 0.5),
+            0 0 20px rgba(194, 75, 63, 0.3),
+            0 0 30px rgba(194, 75, 63, 0.2);
+    }
+}
+
+@keyframes logoRotate {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    50% {
+        transform: rotate(5deg) scale(1.1);
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+@keyframes logoShine {
+    0% {
+        filter: brightness(1) drop-shadow(0 0 5px rgba(194, 75, 63, 0.3));
+    }
+    50% {
+        filter: brightness(1.2) drop-shadow(0 0 15px rgba(194, 75, 63, 0.6));
+    }
+    100% {
+        filter: brightness(1) drop-shadow(0 0 5px rgba(194, 75, 63, 0.3));
+    }
+}
+
+.brand {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brand-logo {
+    filter: drop-shadow(0 0 8px rgba(194, 75, 63, 0.4));
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brand:hover .brand-logo {
+    animation: logoRotate 0.6s ease-in-out, logoShine 1s ease-in-out;
+    filter: drop-shadow(0 0 20px rgba(194, 75, 63, 0.8)) drop-shadow(0 0 40px rgba(194, 75, 63, 0.4));
+}
+
+.brand-name {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.brand-name span {
+    animation: logoGlow 2s ease-in-out infinite;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.brand:hover .brand-name span {
+    animation: logoGlow 1s ease-in-out infinite;
+    transform: scale(1.1);
+}
+
+/* Animation du hero */
+@keyframes heroFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes heroLogoPulse {
+    /* Subtil pulse: reduced scale & shadow for a more professional look */
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.20;
+        filter: drop-shadow(0 0 30px rgba(194, 75, 63, 0.45)) 
+                drop-shadow(0 0 60px rgba(194, 75, 63, 0.28))
+                drop-shadow(0 0 90px rgba(194, 75, 63, 0.16));
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.24;
+        filter: drop-shadow(0 0 45px rgba(194, 75, 63, 0.6)) 
+                drop-shadow(0 0 90px rgba(194, 75, 63, 0.36))
+                drop-shadow(0 0 135px rgba(194, 75, 63, 0.24));
+    }
+}
+
+.hero-content {
+    animation: heroFadeIn 1s ease-out;
+}
+
+.hero-divider {
+    animation: heroFadeIn 1.2s ease-out;
+}
+
+.hero-subtitle {
+    animation: heroFadeIn 1.4s ease-out;
+}
+
+/* Animations au scroll */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInRotate {
+    from {
+        opacity: 0;
+        transform: translateY(30px) rotate(-5deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) rotate(0);
+    }
+}
+
+/* Classes pour les éléments animés */
+.animate-on-scroll {
+    opacity: 0;
+    transition: none;
+}
+
+.animate-on-scroll.animated {
+    animation-duration: 0.8s;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Différents styles d'animation */
+.animate-fade-up {
+    animation-name: fadeInUp;
+}
+
+.animate-fade-left {
+    animation-name: fadeInLeft;
+}
+
+.animate-fade-right {
+    animation-name: fadeInRight;
+}
+
+.animate-scale {
+    animation-name: scaleIn;
+}
+
+.animate-slide-rotate {
+    animation-name: slideInRotate;
+}
+
+/* Délais pour créer un effet en cascade */
+.animate-delay-1 {
+    animation-delay: 0.1s;
+}
+
+.animate-delay-2 {
+    animation-delay: 0.2s;
+}
+
+.animate-delay-3 {
+    animation-delay: 0.3s;
+}
+
+.animate-delay-4 {
+    animation-delay: 0.4s;
+}
+
+.animate-delay-5 {
+    animation-delay: 0.5s;
+}
+
+.animate-delay-6 {
+    animation-delay: 0.6s;
+}
+
+/* Animation pour les cartes */
+.card {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.4s ease;
+}
+
+.card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(194, 75, 63, 0.2);
+}
+
+.card img {
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.4s ease;
+}
+
+.card:hover img {
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+
+/* Animation pour les titres de section */
+.section-title {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.section-title::after {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.3s ease;
+}
+
+.section-title.animated::after {
+    animation: underlineExpand 0.8s ease-out forwards;
+}
+
+@keyframes underlineExpand {
+    from {
+        width: 0;
+    }
+    to {
+        width: 80px;
+    }
+}
+
+/* Animation pour les info-cards */
+.info-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 15px 30px rgba(0, 0, 0, 0.25),
+        0 0 15px rgba(194, 75, 63, 0.15);
+}
+
+/* Animation pour le formulaire */
+.contact-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input, select, textarea {
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.2),
+        0 0 0 3px rgba(194, 75, 63, 0.2);
+}
+
+/* Animation des boutons */
+.btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 10px 25px rgba(194, 75, 63, 0.4),
+        0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+    transform: translateY(-1px);
+}
+
+/* Animation du footer */
+.footer-section a {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+}
+
+.footer-section a:hover {
+    transform: translateX(5px);
+    color: var(--rouge-intense, #c24b3f);
+}
+
+.social-link {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.social-link:hover {
+    transform: translateY(-3px) scale(1.05);
+}
+
+.social-link svg {
+    transition: all 0.3s ease;
+}
+
+.social-link:hover svg {
+    transform: rotate(10deg);
+}
+
+/* Animation de chargement de la page */
+@keyframes pageLoad {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body {
+    animation: pageLoad 0.6s ease-out;
+}
+
+/* Optimisation des performances */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .brand-name span {
+        animation: none;
+    }
+}
+
+/* Animation responsive pour mobile */
+@media (max-width: 768px) {
+    .card:hover {
+        transform: translateY(-4px) scale(1.01);
+    }
+    
+    /* Réduire animations sur mobile pour meilleures performances */
+    .brand-logo {
+        filter: drop-shadow(0 0 5px rgba(194, 75, 63, 0.3));
+    }
+    
+    .brand:hover .brand-logo {
+        animation: logoShine 0.8s ease-in-out;
+        filter: drop-shadow(0 0 12px rgba(194, 75, 63, 0.6));
+    }
+    
+    .hero::after {
+        animation: heroLogoPulse 10s ease-in-out infinite;
+    }
+    
+    /* Désactiver certaines animations sur touch pour éviter les problèmes */
+    @media (hover: none) and (pointer: coarse) {
+        .card:hover {
+            transform: none;
+        }
+        
+        .info-card:hover {
+            transform: none;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            transform: none;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    /* Simplifier animations sur petits écrans */
+    .brand-name span {
+        animation: none;
+    }
+    
+    .hero-content,
+    .hero-divider,
+    .hero-subtitle {
+        animation: none;
+        opacity: 1;
+    }
+    
+    body {
+        animation: none;
+    }
+}
+/* Additional safety: completely disable hero decorative logo animations on small touch devices */
+@media (hover: none) and (pointer: coarse), (max-width: 480px) {
+    .hero::after {
+        display: none !important;
+        animation: none !important;
+        opacity: 0 !important;
+        filter: none !important;
+        mix-blend-mode: normal !important;
+    }
+}

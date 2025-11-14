@@ -5,20 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notre identité – Maison Pardailhe</title>
     <meta name="description" content="Maison Pardailhé — notre histoire, notre équipe et nos récompenses. Artisan charcutier engagé pour le terroir occitan." />
-    <link rel="canonical" href="https://maisonpardailhe.fr/identite" />
+    <link rel="canonical" href="https://maisonpardailhé.fr/identite" />
 
     
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Notre identité – Maison Pardailhe" />
     <meta property="og:description" content="Notre équipe, notre histoire et nos récompenses — découvrez la Maison Pardailhé." />
-    <meta property="og:image" content="https://maisonpardailhe.fr/img/lequipe.png" />
-    <meta property="og:url" content="https://maisonpardailhe.fr/identite" />
+    <meta property="og:image" content="https://maisonpardailhé.fr/img/lequipe.png" />
+    <meta property="og:url" content="https://maisonpardailhé.fr/identite" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:site_name" content="Maison Pardailhé" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="icon" href="/img/logo.png" />
-    <link rel="apple-touch-icon" href="/img/logo.png" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="MyWebSite" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#c24b3f" />
     <meta name="robots" content="index,follow" />
 
@@ -28,6 +32,8 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/datepicker.css">
 
     
     <script type="application/ld+json">
@@ -46,12 +52,10 @@
         "award": "Médaille d'or - Pâté en croûte Haut-Garonnais"
       }
     }
-    </script>
-</head>
-<body>
     <header>
         <div class="nav-container">
             <a href="/" class="brand">
+                <img src="/img/logo.png" alt="Maison Pardailhé" class="brand-logo" width="60" height="60">
                 <span class="brand-name">Maison <span>Pardailhé</span></span>
             </a>
             <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
@@ -61,12 +65,16 @@
             </button>
             <nav>
                 <ul class="nav-links">
-                    <li><a href="/">Accueil</a></li>
+                    <li><a href="/" aria-current="page">Accueil</a></li>
                     <li><a href="/menu">Menu</a></li>
                     <li><a href="/services">Services</a></li>
-                    <li><a href="/identite" aria-current="page">Identité</a></li>
+                    <li><a href="/identite">Identité</a></li>
                     <li><a href="/contact">Contact</a></li>
                     <li><a href="/#click-collect" class="btn">Click &amp; Collecte</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
                 </ul>
             </nav>
         </div>

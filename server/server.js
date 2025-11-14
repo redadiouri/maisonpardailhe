@@ -56,6 +56,7 @@ app.use(
           'https://www.googletagmanager.com',
           'https://www.google-analytics.com',
           'https://js.stripe.com',
+          'https://static.cloudflareinsights.com',
           (req, res) => `'nonce-${res.locals.nonce}'`
         ],
         styleSrc: [
@@ -103,7 +104,9 @@ app.use(
           'https://*.gstatic.com',
           'https://xn--maisonpardailh-okb.fr',
           'https://sse.xn--maisonpardailh-okb.fr',
-          'https://api.stripe.com'
+          'https://api.stripe.com',
+          'https://static.cloudflareinsights.com',
+          'https://cloudflareinsights.com'
         ],
         frameSrc: [
           "'self'",

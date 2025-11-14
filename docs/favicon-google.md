@@ -13,8 +13,8 @@
 Après déploiement, vérifiez que ces URLs fonctionnent :
 
 ```
-https://maisonpardailhe.fr/favicon.ico
-https://maisonpardailhe.fr/favicon-32x32.png
+https://maisonpardailhé.fr/favicon.ico
+https://maisonpardailhé.fr/favicon-32x32.png
 ```
 
 ### 2. Critères Google pour afficher le favicon
@@ -32,11 +32,11 @@ Google a des exigences strictes :
 
 #### Test 1 : Rich Results Test
 1. Aller sur : https://search.google.com/test/rich-results
-2. Entrer : `https://maisonpardailhe.fr`
+2. Entrer : `https://maisonpardailhé.fr`
 3. Vérifier que le favicon apparaît dans la prévisualisation
 
 #### Test 2 : Dans le navigateur
-1. Ouvrir : `https://maisonpardailhe.fr`
+1. Ouvrir : `https://maisonpardailhé.fr`
 2. Le favicon doit apparaître dans l'onglet
 
 ### 4. Soumettre à Google Search Console
@@ -47,12 +47,12 @@ Google a des exigences strictes :
 
 2. **Demander une ré-indexation**
    - Aller dans "Inspection d'URL"
-   - Entrer : `https://maisonpardailhe.fr`
+   - Entrer : `https://maisonpardailhé.fr`
    - Cliquer sur "Demander une indexation"
 
 3. **Soumettre le sitemap**
    - Aller dans "Sitemaps"
-   - Ajouter : `https://maisonpardailhe.fr/sitemap.xml`
+   - Ajouter : `https://maisonpardailhé.fr/sitemap.xml`
 
 ### 5. Délai d'affichage
 
@@ -82,7 +82,7 @@ Si le favicon ne change pas après plusieurs semaines :
 
 ## 🚀 Après le déploiement
 
-1. Vérifier : `https://maisonpardailhe.fr/favicon.ico` (code 200)
+1. Vérifier : `https://maisonpardailhé.fr/favicon.ico` (code 200)
 2. Tester Rich Results
 3. Demander indexation dans Search Console
 4. Attendre 2-4 semaines

@@ -5,7 +5,7 @@
 ### Configuration initiale
 1. Aller sur : https://search.google.com/search-console
 2. Cliquer sur "Ajouter une propriété"
-3. Choisir "Préfixe d'URL" et entrer : `https://maisonpardailhe.fr`
+3. Choisir "Préfixe d'URL" et entrer : `https://maisonpardailhé.fr`
 4. Vérifier la propriété :
    - **Méthode recommandée** : Balise HTML
    - Copier la balise `<meta name="google-site-verification" content="...">` 
@@ -21,11 +21,11 @@
 ### Demander l'indexation
 1. Aller dans "Inspection d'URL"
 2. Entrer chaque URL importante :
-   - `https://maisonpardailhe.fr/`
-   - `https://maisonpardailhe.fr/menu`
-   - `https://maisonpardailhe.fr/commande`
-   - `https://maisonpardailhe.fr/services`
-   - `https://maisonpardailhe.fr/contact`
+   - `https://maisonpardailhé.fr/`
+   - `https://maisonpardailhé.fr/menu`
+   - `https://maisonpardailhé.fr/commande`
+   - `https://maisonpardailhé.fr/services`
+   - `https://maisonpardailhé.fr/contact`
 3. Cliquer sur "Demander l'indexation" pour chaque page
 
 ---
@@ -40,7 +40,7 @@
    - **Catégorie** : Charcuterie
    - **Adresse** : Place de la République, 31120 Roquettes
    - **Téléphone** : 05 62 48 02 29
-   - **Site web** : https://maisonpardailhe.fr
+   - **Site web** : https://maisonpardailhé.fr
    - **Horaires** : 
      - Mar-Sam : 09h00-13h00, 16h00-19h30
      - Dim : 08h30-13h00
@@ -58,9 +58,9 @@
 
 1. Aller sur : https://www.bing.com/webmasters
 2. Se connecter avec compte Microsoft
-3. Ajouter le site : `https://maisonpardailhe.fr`
+3. Ajouter le site : `https://maisonpardailhé.fr`
 4. Vérifier (balise HTML ou fichier XML)
-5. Soumettre sitemap : `https://maisonpardailhe.fr/sitemap.xml`
+5. Soumettre sitemap : `https://maisonpardailhé.fr/sitemap.xml`
 
 ---
 
@@ -101,7 +101,7 @@
 - Adresse : Place de la République, 31120 Roquettes
 - Téléphone : 05 62 48 02 29
 - Email : maisonpardailhe@gmail.com
-- Site web : https://maisonpardailhe.fr
+- Site web : https://maisonpardailhé.fr
 - Description : Artisan charcutier-traiteur primé. Pâté en croûte médaillé, charcuterie fine artisanale. Click & Collect disponible.
 
 ---

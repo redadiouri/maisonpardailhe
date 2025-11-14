@@ -15,7 +15,7 @@ L'interface d'administration est maintenant une **Progressive Web App (PWA)** in
 
 1. **Ouvrir le site admin** dans Chrome sur Android :
    ```
-   https://maisonpardailhe.fr/admin/
+   https://maisonpardailhé.fr/admin/
    ```
 
 2. **Attendre le popup d'installation**
@@ -32,7 +32,7 @@ L'interface d'administration est maintenant une **Progressive Web App (PWA)** in
 
 ### Méthode 2 : Depuis le menu Chrome
 
-1. Ouvrir `https://maisonpardailhe.fr/admin/` dans Chrome
+1. Ouvrir `https://maisonpardailhé.fr/admin/` dans Chrome
 2. Menu ⋮ (3 points en haut à droite)
 3. Sélectionner **"Ajouter à l'écran d'accueil"**
 4. Personnaliser le nom si besoin
@@ -40,7 +40,7 @@ L'interface d'administration est maintenant une **Progressive Web App (PWA)** in
 
 ## 📱 Installation sur iOS (iPhone/iPad)
 
-1. Ouvrir `https://maisonpardailhe.fr/admin/` dans **Safari**
+1. Ouvrir `https://maisonpardailhé.fr/admin/` dans **Safari**
 2. Appuyer sur l'icône de partage 📤 (en bas)
 3. Faire défiler et appuyer sur **"Sur l'écran d'accueil"**
 4. Appuyer sur **"Ajouter"**
@@ -73,7 +73,7 @@ L'interface d'administration est maintenant une **Progressive Web App (PWA)** in
 3. L'app devrait apparaître comme une app normale
 
 ### Tester l'installation
-1. Ouvrir `https://maisonpardailhe.fr/admin/` dans Chrome
+1. Ouvrir `https://maisonpardailhé.fr/admin/` dans Chrome
 2. Ouvrir les **DevTools** (F12)
 3. Onglet **Application** → **Manifest**
 4. Vérifier que le manifest se charge correctement

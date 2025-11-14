@@ -30,7 +30,7 @@ async function createFaviconIco() {
     console.log('✅ Créé: favicon.ico (32x32 PNG)');
     console.log('');
     console.log('📌 IMPORTANT pour Google Search:');
-    console.log('   1. Le fichier doit être à: https://maisonpardailhe.fr/favicon.ico');
+    console.log('   1. Le fichier doit être à: https://maisonpardailhé.fr/favicon.ico');
     console.log('   2. Format: carré, min 48x48px (Google préfère 256x256px)');
     console.log('   3. Google met plusieurs jours/semaines à mettre à jour');
     console.log('   4. Tester avec: https://search.google.com/test/rich-results');
